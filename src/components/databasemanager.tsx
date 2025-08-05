@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiRequest } from '../config/api';
 
 interface DatabaseConfig {
   host: string;
@@ -28,10 +29,9 @@ export default function DatabaseManager() {
 
   const checkConnection = async () => {
     try {
-      const response = await fetch('http://localhost:3006/api/health');
-      const data = await response.json();
+      const data = await apiRequest('/api/health');
       
-      if (response.ok && data.status === 'ok') {
+      if (data.status === 'ok') {
         setIsConnected(true);
         setConnectionStatus('数据库连接正常');
       } else {
@@ -47,10 +47,9 @@ export default function DatabaseManager() {
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3006/api/health');
-      const data = await response.json();
+      const data = await apiRequest('/api/health');
       
-      if (response.ok && data.status === 'ok') {
+      if (data.status === 'ok') {
         setIsConnected(true);
         setConnectionStatus('连接成功');
       } else {
