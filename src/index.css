@@ -1,0 +1,166 @@
+@import url('/fonts/inter.css');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #165DFF;
+  --color-secondary: #36CFC9;
+  --color-light: #f8fafc;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+  /* 备用显示机制：2秒后自动显示 */
+  animation: fadeInBackup 2s ease forwards;
+}
+
+.fade-in.visible {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+@keyframes fadeInBackup {
+  0% { opacity: 0; transform: translateY(20px); }
+  80% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Text Clamp Utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Glass Card Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px 0 rgba(31, 38, 135, 0.15);
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e2e8f0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #165DFF, #36CFC9);
+  transition: width 1s ease;
+}
+
+/* Timeline Styles */
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #165DFF;
+}
+
+.timeline-line {
+  width: 2px;
+  background-color: #e2e8f0;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu.open {
+  transform: translateX(0);
+}
+
+/* Navigation */
+.nav-scrolled {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom Button Styles */
+.gradient-btn {
+  background: linear-gradient(90deg, #165DFF, #36CFC9);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.gradient-btn:hover {
+  box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.outline-btn {
+  border: 1px solid #165DFF;
+  color: #165DFF;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.outline-btn:hover {
+  background: #165DFF;
+  color: white;
+}
+
+/* Form Elements */
+.form-input {
+  @apply w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#165DFF] focus:border-[#165DFF] outline-none transition;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-slate-700 mb-1;
+}

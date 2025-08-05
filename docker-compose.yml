@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  database:
+    image: postgres:15-alpine
+    container_name: hjxlog-database
+    environment:
+      POSTGRES_DB: hjxlog
+      POSTGRES_USER: jianxian
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - hjxlog-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jianxian -d hjxlog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: hjxlog-backend
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: hjxlog
+      DB_USER: jianxian
+      DB_PASSWORD: 123456
+      PORT: 3006
+      NODE_ENV: production
+    ports:
+      - "3006:3006"
+    networks:
+      - hjxlog-network
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./server/uploads:/app/uploads
+
+  # 前端应用
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hjxlog-frontend
+    ports:
+      - "3001:80"
+    networks:
+      - hjxlog-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hjxlog-network:
+    driver: bridge
