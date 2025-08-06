@@ -22,14 +22,20 @@
     // 核心React库在构建时已经分离到vendor chunk
   ];
   
-  // 创建预加载链接
-  function preloadResource(href, as, type = null, crossorigin = null) {
+  // 优化的预加载函数
+  function preloadResource(href, as, options = {}) {
     const link = document.createElement('link');
-    link.rel = 'preload';
+    link.rel = options.rel || 'preload';
     link.href = href;
     link.as = as;
-    if (type) link.type = type;
-    if (crossorigin) link.crossOrigin = crossorigin;
+    
+    if (options.type) link.type = options.type;
+    if (options.crossorigin) link.crossOrigin = options.crossorigin;
+    if (options.fetchPriority) link.fetchPriority = options.fetchPriority;
+    
+    if (options.onload) {
+      link.onload = options.onload;
+    }
     
     // 添加错误处理
     link.onerror = function() {
@@ -37,16 +43,49 @@
     };
     
     document.head.appendChild(link);
+    return link;
+  }
+
+  // 智能预加载策略
+  function smartPreload(resources) {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const isSlowConnection = connection && (connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g');
+    
+    resources.forEach(resource => {
+      if (isSlowConnection && resource.priority !== 'high') {
+        return; // 慢速网络下只加载高优先级资源
+      }
+      
+      setTimeout(() => {
+        preloadResource(resource.href, resource.as, resource.options);
+      }, resource.delay || 0);
+    });
   }
   
-  // 预加载CSS资源
-  criticalResources.forEach(url => {
-    preloadResource(url, 'style');
-  });
-  
-  // 预加载图片资源
-  imageResources.forEach(url => {
-    preloadResource(url, 'image');
+  // 定义关键资源
+  const optimizedResources = [
+    // 高优先级 CSS
+    { href: '/fonts/inter.css', as: 'style', priority: 'high', options: { fetchPriority: 'high' } },
+    { href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', as: 'style', priority: 'high', options: { type: 'text/css', crossorigin: 'anonymous', fetchPriority: 'high' } },
+    
+    // 低优先级图片
+    { href: '/favicon.svg', as: 'image', priority: 'low', delay: 100, options: { fetchPriority: 'low' } },
+    { href: '/default-avatar.svg', as: 'image', priority: 'low', delay: 200, options: { fetchPriority: 'low' } },
+    { href: '/apple-touch-icon.png', as: 'image', priority: 'low', delay: 300, options: { fetchPriority: 'low' } }
+  ];
+
+  // 大型模块延迟预加载
+  const heavyModules = [
+    { href: '/assets/echarts-*.js', as: 'script', priority: 'medium', delay: 1000, options: { fetchPriority: 'low' } },
+    { href: '/assets/markdown-*.js', as: 'script', priority: 'medium', delay: 1500, options: { fetchPriority: 'low' } }
+  ];
+
+  // 执行智能预加载
+  smartPreload(optimizedResources);
+
+  // 页面加载后预加载大型模块
+  window.addEventListener('load', () => {
+    setTimeout(() => smartPreload(heavyModules), 2000);
   });
   
   // 预取下一页面可能需要的资源
@@ -64,7 +103,7 @@
       // 预取博客和作品页面的关键资源
       prefetchResource('/api/blogs');
       prefetchResource('/api/works');
-    }, 2000);
+    }, 5000); // 延迟到5秒后执行
   });
   
   // 使用Intersection Observer预加载即将进入视口的内容

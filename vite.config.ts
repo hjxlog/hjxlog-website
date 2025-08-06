@@ -13,14 +13,34 @@ export default defineConfig({
     // 代码分割优化
     rollupOptions: {
       output: {
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: {
-          // 将大型第三方库分离到单独的chunk
-          'echarts': ['echarts', 'echarts-for-react'],
-          'three': ['three'],
-          'framer-motion': ['framer-motion'],
-          'markdown': ['react-markdown', '@uiw/react-md-editor', 'remark-gfm'],
+          // React 核心库 - 最高优先级
+          'react-core': ['react', 'react-dom'],
+          'react-router': ['react-router-dom'],
+          
+          // ECharts 相关 - 大型图表库
+          echarts: ['echarts'],
+          'echarts-react': ['echarts-for-react'],
+          
+          // Markdown 相关
+          'markdown-core': ['react-markdown'],
+          'markdown-editor': ['@uiw/react-md-editor'],
+          'markdown-plugins': ['remark-gfm'],
+          
+          // 语法高亮
           'syntax-highlighter': ['react-syntax-highlighter'],
-          'vendor': ['react', 'react-dom', 'react-router-dom']
+          
+          // 3D 库
+          three: ['three'],
+          
+          // 动画库
+          'framer-motion': ['framer-motion'],
+          
+          // 其他第三方库
+            vendor: ['axios', 'clsx', 'tailwind-merge', 'zod']
         }
       }
     },
@@ -29,11 +49,19 @@ export default defineConfig({
     terserOptions: {
       compress: {
         drop_console: true,
-        drop_debugger: true
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'],
+        passes: 2
+      },
+      mangle: {
+        safari10: true
+      },
+      format: {
+        comments: false
       }
     },
     // 设置chunk大小警告阈值
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 800
   },
   // 开发服务器优化
   server: {
