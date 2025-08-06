@@ -5,8 +5,18 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
 
-// 懒加载ECharts组件
-const ReactECharts = lazy(() => import('echarts-for-react'));
+// 动态导入 ECharts 组件，支持 CDN 回退
+const ReactECharts = lazy(() => {
+  // 检查 CDN 是否加载成功
+  if (typeof window !== 'undefined' && window.echarts) {
+    return import('echarts-for-react');
+  }
+  // CDN 失败时的回退
+  return import('echarts-for-react').catch(() => {
+    console.warn('ECharts CDN 加载失败，使用本地版本');
+    return import('echarts-for-react');
+  });
+});
 
 // 主页面组件
 export default function Home() {
@@ -415,7 +425,14 @@ export default function Home() {
                       <span className="ml-2 text-slate-600">加载图表中...</span>
                     </div>
                   }>
-                    <ReactECharts option={radarOption} style={{ height: '320px', width: '100%' }} />
+                    <div className="chart-container">
+                      <ReactECharts 
+                        option={radarOption} 
+                        style={{ height: '320px', width: '100%' }}
+                        opts={{ renderer: 'canvas' }}
+                        lazyUpdate={true}
+                      />
+                    </div>
                   </Suspense>
                 </div>
               </div>

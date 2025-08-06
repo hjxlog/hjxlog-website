@@ -11,8 +11,32 @@ import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+// 代码高亮组件
+const CodeBlock = ({ language, children }: { language: string; children: string }) => {
+  const codeRef = React.useRef<HTMLElement>(null);
+  
+  React.useEffect(() => {
+    if (codeRef.current && typeof window !== 'undefined' && (window as any).Prism) {
+      (window as any).Prism.highlightElement(codeRef.current);
+    }
+  }, [children]);
+  
+  return (
+    <pre className="language-" style={{
+      background: '#2d3748',
+      color: '#e2e8f0',
+      padding: '1rem',
+      borderRadius: '0.5rem',
+      fontSize: '0.875rem',
+      lineHeight: '1.5',
+      overflow: 'auto'
+    }}>
+      <code ref={codeRef} className={`language-${language}`}>
+        {children}
+      </code>
+    </pre>
+  );
+};
 
 interface BlogPost {
   id: number;
@@ -400,13 +424,10 @@ const BlogDetail: React.FC = () => {
                   const match = /language-(\w+)/.exec(className || '');
                   const isInline = !match;
                   return !isInline ? (
-                    <SyntaxHighlighter
-                      style={tomorrow as any}
-                      language={match[1]}
-                      PreTag="div"
-                    >
-                      {String(children).replace(/\n$/, '')}
-                    </SyntaxHighlighter>
+                    <CodeBlock
+                       language={match[1]}
+                       children={String(children).replace(/\n$/, '')}
+                     />
                   ) : (
                     <code className={className} {...props}>
                       {children}

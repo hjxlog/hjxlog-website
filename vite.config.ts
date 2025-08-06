@@ -8,30 +8,32 @@ function getPlugins() {
 }
 
 export default defineConfig({
-  plugins: getPlugins(),
+  plugins: [react(), tsconfigPaths()],
   build: {
-    // 代码分割优化
     rollupOptions: {
+      external: [
+        // 将大型库设为外部依赖，使用 CDN
+        'echarts'
+      ],
       output: {
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
+        globals: {
+          'echarts': 'echarts'
+        },
         manualChunks: {
           // React 核心库 - 最高优先级
           'react-core': ['react', 'react-dom'],
           'react-router': ['react-router-dom'],
           
-          // ECharts 相关 - 大型图表库
-          echarts: ['echarts'],
+          // ECharts React 包装器（保留）
           'echarts-react': ['echarts-for-react'],
           
           // Markdown 相关
           'markdown-core': ['react-markdown'],
           'markdown-editor': ['@uiw/react-md-editor'],
           'markdown-plugins': ['remark-gfm'],
-          
-          // 语法高亮
-          'syntax-highlighter': ['react-syntax-highlighter'],
           
           // 3D 库
           three: ['three'],
@@ -40,7 +42,7 @@ export default defineConfig({
           'framer-motion': ['framer-motion'],
           
           // 其他第三方库
-            vendor: ['axios', 'clsx', 'tailwind-merge', 'zod']
+          vendor: ['axios', 'clsx', 'tailwind-merge', 'zod']
         }
       }
     },
