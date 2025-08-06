@@ -4,8 +4,65 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useBackToTop } from '@/hooks/useBackToTop';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { apiRequest } from '../config/api';
+// 动态导入 Markdown 相关模块
+const ReactMarkdown = React.lazy(() => import('react-markdown'));
+
+// Markdown 包装组件
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  return (
+    <React.Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded">加载内容...</div>}>
+      <ReactMarkdown 
+        components={{
+          code({ className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const isInline = !match;
+            return !isInline ? (
+              <CodeBlock
+                 language={match[1]}
+                 children={String(children).replace(/\n$/, '')}
+               />
+            ) : (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          img({ src, alt, ...props }: any) {
+            return (
+              <div className="my-6 text-center">
+                <img 
+                  src={src} 
+                  alt={alt} 
+                  className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
+                  {...props}
+                />
+                {alt && (
+                  <p className="text-sm text-gray-500 mt-2 italic">{alt}</p>
+                )}
+              </div>
+            );
+          },
+          a({ href, children, ...props }: any) {
+            return (
+              <a 
+                href={href} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#165DFF] hover:text-[#0E42D2] underline"
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          }
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </React.Suspense>
+  );
+};
 // 代码高亮组件
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
   const codeRef = React.useRef<HTMLElement>(null);
@@ -32,8 +89,6 @@ const CodeBlock = ({ language, children }: { language: string; children: string 
     </pre>
   );
 };
-import { apiRequest } from '../config/api';
-
 interface WorkDetail {
   id: number;
   title: string;
@@ -98,10 +153,12 @@ export default function WorkDetail() {
     try {
       const result = await apiRequest(`/api/works?category=${encodeURIComponent(category)}&limit=6`);
       
-      if (result.success) {
+      if (result.success && Array.isArray(result.data)) {
         // 过滤掉当前作品，只取前3个
         const filtered = result.data.filter((work: WorkDetail) => work.id !== currentId).slice(0, 3);
         setRelatedWorks(filtered);
+      } else {
+        setRelatedWorks([]);
       }
     } catch (error) {
       console.error('获取相关作品失败:', error);
@@ -201,55 +258,7 @@ export default function WorkDetail() {
 
                 {/* 项目内容 */}
                 <div className="prose prose-slate max-w-none">
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      code({ className, children, ...props }: any) {
-                        const match = /language-(\w+)/.exec(className || '');
-                        const isInline = !match;
-                        return !isInline ? (
-                           <CodeBlock
-                             language={match[1]}
-                             children={String(children).replace(/\n$/, '')}
-                           />
-                         ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        );
-                      },
-                      img({ src, alt, ...props }: any) {
-                        return (
-                          <div className="my-6 text-center">
-                            <img 
-                              src={src} 
-                              alt={alt} 
-                              className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
-                              {...props}
-                            />
-                            {alt && (
-                              <p className="text-sm text-gray-500 mt-2 italic">{alt}</p>
-                            )}
-                          </div>
-                        );
-                      },
-                      a({ href, children, ...props }: any) {
-                        return (
-                          <a 
-                            href={href} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[#165DFF] hover:text-[#0E42D2] underline"
-                            {...props}
-                          >
-                            {children}
-                          </a>
-                        );
-                      }
-                    }}
-                  >
-                    {work.content}
-                  </ReactMarkdown>
+                  <MarkdownRenderer content={work.content} />
                 </div>
               </div>
 

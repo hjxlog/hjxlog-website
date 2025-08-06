@@ -12,28 +12,19 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: [
-        // 将大型库设为外部依赖，使用 CDN
-        'echarts'
+        // 外部依赖配置
       ],
       output: {
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         globals: {
-          'echarts': 'echarts'
+          // 全局变量配置
         },
         manualChunks: {
           // React 核心库 - 最高优先级
           'react-core': ['react', 'react-dom'],
           'react-router': ['react-router-dom'],
-          
-          // ECharts React 包装器（保留）
-          'echarts-react': ['echarts-for-react'],
-          
-          // Markdown 相关
-          'markdown-core': ['react-markdown'],
-          'markdown-editor': ['@uiw/react-md-editor'],
-          'markdown-plugins': ['remark-gfm'],
           
           // 3D 库
           three: ['three'],
@@ -77,9 +68,7 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
-      'react-router-dom',
-      'echarts',
-      'echarts-for-react'
+      'react-router-dom'
     ],
     // 排除大型可选依赖
     exclude: ['three']

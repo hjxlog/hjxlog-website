@@ -9,8 +9,208 @@ import { useBackToTop } from '@/hooks/useBackToTop';
 // 移除对lib/api的依赖，直接调用服务器API
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+// 动态导入 Markdown 相关模块
+const ReactMarkdown = React.lazy(() => import('react-markdown'));
+
+// Markdown 包装组件
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  const [remarkGfm, setRemarkGfm] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
+  const isMountedRef = React.useRef(true);
+  
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
+  React.useEffect(() => {
+    if (!loading) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (isMountedRef.current) {
+        setError(true);
+        setLoading(false);
+      }
+    }, 5000);
+    
+    import('remark-gfm')
+      .then(module => {
+        if (isMountedRef.current) {
+          setRemarkGfm(module.default);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMountedRef.current) {
+          setError(true);
+          setLoading(false);
+        }
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+      });
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [loading]);
+  
+  if (loading) {
+    return <div className="animate-pulse bg-gray-200 h-64 rounded"></div>;
+  }
+  
+  if (error || !remarkGfm) {
+    // 降级到基础 ReactMarkdown
+    return (
+      <React.Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded"></div>}>
+        <ReactMarkdown 
+          components={{
+            code({ className, children, ...props }: any) {
+              const match = /language-(\w+)/.exec(className || '');
+              const isInline = !match;
+              return !isInline ? (
+                <CodeBlock
+                   language={match[1]}
+                   children={String(children).replace(/\n$/, '')}
+                 />
+              ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+            img({ src, alt, ...props }: any) {
+              return (
+                <div className="my-6 text-center">
+                  <img 
+                    src={src} 
+                    alt={alt} 
+                    className="max-w-full h-auto mx-auto rounded-lg shadow-md" 
+                    {...props} 
+                  />
+                  {alt && <p className="text-sm text-gray-600 mt-2">{alt}</p>}
+                </div>
+              );
+            }
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </React.Suspense>
+    );
+  }
+  
+  return (
+    <React.Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded"></div>}>
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code({ className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const isInline = !match;
+            return !isInline ? (
+              <CodeBlock
+                 language={match[1]}
+                 children={String(children).replace(/\n$/, '')}
+               />
+            ) : (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          img({ src, alt, ...props }: any) {
+            return (
+              <div className="my-6 text-center">
+                <img 
+                  src={src} 
+                  alt={alt} 
+                  className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
+                  {...props}
+                />
+                {alt && (
+                  <p className="text-sm text-gray-500 mt-2 italic">{alt}</p>
+                )}
+              </div>
+            );
+          },
+          a({ href, children, ...props }: any) {
+            return (
+              <a 
+                href={href} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#165DFF] hover:text-[#0E42D2] underline"
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          },
+          h1: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h1 id={id} {...props}>{children}</h1>;
+          },
+          h2: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h2 id={id} {...props}>{children}</h2>;
+          },
+          h3: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h3 id={id} {...props}>{children}</h3>;
+          },
+          h4: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h4 id={id} {...props}>{children}</h4>;
+          },
+          h5: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h5 id={id} {...props}>{children}</h5>;
+          },
+          h6: ({ children, ...props }: any) => {
+            const text = String(children);
+            const id = text.toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return <h6 id={id} {...props}>{children}</h6>;
+          }
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </React.Suspense>
+  );
+};
+
 // 代码高亮组件
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
   const codeRef = React.useRef<HTMLElement>(null);
@@ -417,109 +617,7 @@ const BlogDetail: React.FC = () => {
         {/* 主要内容 */}
         <div className="lg:col-span-3">
           <div className="prose prose-lg max-w-none">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                code({ className, children, ...props }: any) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  const isInline = !match;
-                  return !isInline ? (
-                    <CodeBlock
-                       language={match[1]}
-                       children={String(children).replace(/\n$/, '')}
-                     />
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  );
-                },
-                img({ src, alt, ...props }: any) {
-                  return (
-                    <div className="my-6 text-center">
-                      <img 
-                        src={src} 
-                        alt={alt} 
-                        className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
-                        {...props}
-                      />
-                      {alt && (
-                        <p className="text-sm text-gray-500 mt-2 italic">{alt}</p>
-                      )}
-                    </div>
-                  );
-                },
-                a({ href, children, ...props }: any) {
-                  return (
-                    <a 
-                      href={href} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-[#165DFF] hover:text-[#0E42D2] underline"
-                      {...props}
-                    >
-                      {children}
-                    </a>
-                  );
-                },
-                h1: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h1 id={id} {...props}>{children}</h1>;
-                },
-                h2: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h2 id={id} {...props}>{children}</h2>;
-                },
-                h3: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h3 id={id} {...props}>{children}</h3>;
-                },
-                h4: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h4 id={id} {...props}>{children}</h4>;
-                },
-                h5: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h5 id={id} {...props}>{children}</h5>;
-                },
-                h6: ({ children, ...props }: any) => {
-                  const text = String(children);
-                  const id = text.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                  return <h6 id={id} {...props}>{children}</h6>;
-                }
-              }}
-            >
-              {post.content}
-            </ReactMarkdown>
+            <MarkdownRenderer content={post.content} />
           </div>
         </div>
         

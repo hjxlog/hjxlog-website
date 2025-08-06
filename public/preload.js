@@ -74,19 +74,8 @@
     { href: '/apple-touch-icon.png', as: 'image', priority: 'low', delay: 300, options: { fetchPriority: 'low' } }
   ];
 
-  // 大型模块延迟预加载
-  const heavyModules = [
-    { href: '/assets/echarts-*.js', as: 'script', priority: 'medium', delay: 1000, options: { fetchPriority: 'low' } },
-    { href: '/assets/markdown-*.js', as: 'script', priority: 'medium', delay: 1500, options: { fetchPriority: 'low' } }
-  ];
-
   // 执行智能预加载
   smartPreload(optimizedResources);
-
-  // 页面加载后预加载大型模块
-  window.addEventListener('load', () => {
-    setTimeout(() => smartPreload(heavyModules), 2000);
-  });
   
   // 预取下一页面可能需要的资源
   function prefetchResource(href) {
