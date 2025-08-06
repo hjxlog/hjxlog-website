@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { apiRequest } from '../config/api';
 
 interface WorkDetail {
   id: number;
@@ -51,8 +52,7 @@ export default function WorkDetail() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:3006/api/works/${id}`);
-      const result = await response.json();
+      const result = await apiRequest(`/api/works/${id}`);
       
       if (result.success) {
         setWork(result.data);
@@ -72,8 +72,7 @@ export default function WorkDetail() {
   // 获取相关作品
   const fetchRelatedWorks = async (category: string, currentId: number) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/works?category=${encodeURIComponent(category)}&limit=6`);
-      const result = await response.json();
+      const result = await apiRequest(`/api/works?category=${encodeURIComponent(category)}&limit=6`);
       
       if (result.success) {
         // 过滤掉当前作品，只取前3个

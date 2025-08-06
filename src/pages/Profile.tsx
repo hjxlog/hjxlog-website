@@ -4,6 +4,7 @@ import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 import AdminNav from '@/components/AdminNav';
 import { toast } from 'sonner';
+import { apiRequest } from '../config/api';
 
 export default function Profile() {
   const { user, updateUser, logout } = useContext(AuthContext);
@@ -82,18 +83,13 @@ export default function Profile() {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`http://localhost:3006/api/users/${user?.id}/password`, {
+      const result = await apiRequest(`/api/users/${user?.id}/password`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           currentPassword,
           newPassword
         })
       });
-      
-      const result = await response.json();
       
       if (result.success) {
         toast.success('密码更新成功，请重新登录');

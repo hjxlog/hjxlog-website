@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import { apiRequest } from '../config/api';
 import { 
   ArrowLeftIcon,
   EyeIcon,
@@ -71,11 +72,7 @@ const BlogEditor: React.FC = () => {
   const loadBlog = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const blog = await response.json();
+      const blog = await apiRequest(`/api/blogs/${id}`);
       setFormData({
         title: blog.title || '',
         content: blog.content || '',
@@ -117,28 +114,16 @@ const BlogEditor: React.FC = () => {
       };
 
       if (isEditing) {
-        const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+        await apiRequest(`/api/blogs/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
           body: JSON.stringify(blogData)
         });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         toast.success('博客更新成功');
       } else {
-        const response = await fetch('http://localhost:3006/api/blogs', {
+        await apiRequest('/api/blogs', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
           body: JSON.stringify(blogData)
         });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         toast.success('博客创建成功');
         navigate('/admin/blogs');
       }

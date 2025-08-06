@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { apiRequest } from '../config/api';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -34,51 +35,38 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-
       // 使用真实API登录
-      const response = await fetch('http://localhost:3006/api/auth/login', {
+      const data = await apiRequest('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ username, password })
       });
-
-
       
-      if (response.ok) {
-        const data = await response.json();
+      if (data.success) {
+        // 保存用户信息
+        localStorage.setItem('user', JSON.stringify(data.user));
         
-        if (data.success) {
-          // 保存用户信息
-          localStorage.setItem('user', JSON.stringify(data.user));
-          
-          // 处理记住我功能
-          if (rememberMe) {
-            localStorage.setItem('savedUsername', username);
-            localStorage.setItem('rememberMe', 'true');
-            // 设置7天后过期的时间戳
-            const expiryTime = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
-            localStorage.setItem('loginExpiry', expiryTime.toString());
-          } else {
-            localStorage.removeItem('savedUsername');
-            localStorage.removeItem('rememberMe');
-            localStorage.removeItem('loginExpiry');
-          }
-          
-          // 调用AuthContext中的login方法
-          login(rememberMe);
-          toast.success('登录成功！');
-          // 确保在状态更新后再导航
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 100);
+        // 处理记住我功能
+        if (rememberMe) {
+          localStorage.setItem('savedUsername', username);
+          localStorage.setItem('rememberMe', 'true');
+          // 设置7天后过期的时间戳
+          const expiryTime = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
+          localStorage.setItem('loginExpiry', expiryTime.toString());
         } else {
-          toast.error(data.message || '登录失败');
+          localStorage.removeItem('savedUsername');
+          localStorage.removeItem('rememberMe');
+          localStorage.removeItem('loginExpiry');
         }
+        
+        // 调用AuthContext中的login方法
+        login(rememberMe);
+        toast.success('登录成功！');
+        // 确保在状态更新后再导航
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || '用户名或密码不正确');
+        toast.error(data.message || '登录失败');
       }
     } catch (error: any) {
       console.error('登录失败:', error);

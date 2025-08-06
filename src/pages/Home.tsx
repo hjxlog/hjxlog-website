@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/contexts/authContext';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
+import { apiRequest } from '@/config/api';
 
 // 懒加载ECharts组件
 const ReactECharts = lazy(() => import('echarts-for-react'));
@@ -41,23 +42,13 @@ export default function Home() {
   // 获取推荐内容
   const fetchFeaturedContent = async () => {
     try {
-
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:3006/api/featured');
-
-      
-      if (!response.ok) {
-        throw new Error(`HTTP错误: ${response.status}`);
-      }
-      
-      const result = await response.json();
-
+      const result = await apiRequest('/api/featured');
       
       if (result.success) {
         setFeaturedData(result.data);
-  
       } else {
         throw new Error(result.message || '获取推荐内容失败');
       }
@@ -94,11 +85,8 @@ export default function Home() {
     setSubmitMessage('');
     
     try {
-      const response = await fetch('http://localhost:3006/api/messages', {
+      const result = await apiRequest('/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           name: contactForm.name,
           email: contactForm.email,
@@ -106,8 +94,6 @@ export default function Home() {
           message: contactForm.message
         }),
       });
-      
-      const result = await response.json();
       
       if (result.success) {
         setSubmitMessage('消息发送成功！我会尽快回复您。');

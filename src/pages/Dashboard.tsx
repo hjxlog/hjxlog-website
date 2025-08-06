@@ -5,7 +5,7 @@ import { AuthContext } from '@/contexts/authContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminNav from '@/components/AdminNav';
 import { toast } from 'sonner';
-import { API_BASE_URL } from '@/config/api';
+import { API_BASE_URL, apiRequest } from '@/config/api';
 
 interface Work {
   id: number;
@@ -195,14 +195,10 @@ export default function Dashboard() {
 
   const updateMessageStatus = async (messageId: number, status: string) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/messages/${messageId}/status`, {
+      const result = await apiRequest(`/api/messages/${messageId}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ status }),
       });
-      const result = await response.json();
       if (result.success) {
         await fetchMessages();
         toast.success('消息状态更新成功');
@@ -222,10 +218,9 @@ export default function Dashboard() {
 
   const deleteMessage = async (messageId: number) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/messages/${messageId}`, {
+      const result = await apiRequest(`/api/messages/${messageId}`, {
         method: 'DELETE',
       });
-      const result = await response.json();
       if (result.success) {
         await fetchMessages();
         toast.success('消息删除成功');
@@ -314,14 +309,10 @@ export default function Dashboard() {
 
   const createWork = async (workData: Partial<Work>) => {
     try {
-      const response = await fetch('http://localhost:3006/api/works', {
+      const result = await apiRequest('/api/works', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(workData),
       });
-      const result = await response.json();
       if (result.success) {
         await fetchWorks();
         toast.success('作品创建成功');
@@ -339,14 +330,10 @@ export default function Dashboard() {
 
   const updateWork = async (id: number, workData: Partial<Work>) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/works/${id}`, {
+      const result = await apiRequest(`/api/works/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(workData),
       });
-      const result = await response.json();
       if (result.success) {
         await fetchWorks();
         toast.success('作品更新成功');
@@ -364,10 +351,9 @@ export default function Dashboard() {
 
   const deleteWork = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/works/${id}`, {
+      const result = await apiRequest(`/api/works/${id}`, {
         method: 'DELETE',
       });
-      const result = await response.json();
       if (result.success) {
         await fetchWorks();
         toast.success('作品删除成功');
@@ -385,14 +371,10 @@ export default function Dashboard() {
 
   const createBlog = async (blogData: Partial<Blog>) => {
     try {
-      const response = await fetch('http://localhost:3006/api/blogs', {
+      const result = await apiRequest('/api/blogs', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(blogData),
       });
-      const result = await response.json();
       if (result.success) {
         await fetchBlogs();
         toast.success('博客创建成功');
@@ -410,14 +392,10 @@ export default function Dashboard() {
 
   const updateBlog = async (id: number, blogData: Partial<Blog>) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+      const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(blogData),
       });
-      const result = await response.json();
       if (result.success) {
         await fetchBlogs();
         toast.success('博客更新成功');
@@ -435,10 +413,9 @@ export default function Dashboard() {
 
   const deleteBlog = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+      const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'DELETE',
       });
-      const result = await response.json();
       if (result.success) {
         await fetchBlogs();
         toast.success('博客删除成功');
@@ -503,16 +480,15 @@ export default function Dashboard() {
 
   const handleToggleWorkFeatured = async (id: number, currentFeatured: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/works/${id}/featured`, {
+      const result = await apiRequest(`/api/works/${id}/featured`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ featured: !currentFeatured })
       });
 
-      if (response.ok) {
+      if (result.success) {
         toast.success(currentFeatured ? '已取消精选' : '已设为精选');
         fetchWorks(); // 重新获取作品列表
       } else {

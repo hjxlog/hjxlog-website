@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
+import { apiRequest } from '../config/api';
 
 interface Work {
   id: number;
@@ -27,8 +28,7 @@ export default function Works() {
   // 获取作品分类列表
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3006/api/works/categories');
-      const result = await response.json();
+      const result = await apiRequest('/api/works/categories');
       
       if (result.success) {
         setCategories(result.data);
@@ -47,13 +47,12 @@ export default function Works() {
       setLoading(true);
       setError(null);
       
-      let url = 'http://localhost:3006/api/works?limit=50';
+      let endpoint = '/api/works?limit=50';
       if (category && category !== '全部') {
-        url += `&category=${encodeURIComponent(category)}`;
+        endpoint += `&category=${encodeURIComponent(category)}`;
       }
       
-      const response = await fetch(url);
-      const result = await response.json();
+      const result = await apiRequest(endpoint);
       
       if (result.success) {
         setWorks(result.data.works);

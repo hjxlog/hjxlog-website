@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import { apiRequest } from '../config/api';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -53,11 +54,7 @@ const BlogManagement: React.FC = () => {
         ...(showPublishedOnly && { published: 'true' })
       });
       
-      const response = await fetch(`http://localhost:3006/api/blogs?${params}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiRequest(`/api/blogs?${params}`);
       setBlogs(data.blogs || []);
       setTotalBlogs(data.total || 0);
     } catch (error) {
@@ -78,12 +75,9 @@ const BlogManagement: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+      await apiRequest(`/api/blogs/${id}`, {
         method: 'DELETE'
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
       toast.success('博客删除成功');
       fetchBlogs(); // 重新获取列表
     } catch (error) {
@@ -95,18 +89,16 @@ const BlogManagement: React.FC = () => {
   // 切换发布状态
   const togglePublishStatus = async (id: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+      const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ published: !currentStatus })
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (result.success) {
+        toast.success(`博客已${!currentStatus ? '发布' : '取消发布'}`);
+        fetchBlogs(); // 重新获取列表
+      } else {
+        throw new Error(result.message || '更新失败');
       }
-      toast.success(`博客已${!currentStatus ? '发布' : '取消发布'}`);
-      fetchBlogs(); // 重新获取列表
     } catch (error) {
       console.error('更新发布状态失败:', error);
       toast.error('更新发布状态失败');
@@ -116,18 +108,16 @@ const BlogManagement: React.FC = () => {
   // 处理发布状态切换
   const handleTogglePublish = async (id: number, newStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3006/api/blogs/${id}`, {
+      const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ published: newStatus })
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (result.success) {
+        toast.success(`博客已${newStatus ? '发布' : '取消发布'}`);
+        fetchBlogs(); // 重新获取列表
+      } else {
+        throw new Error(result.message || '更新失败');
       }
-      toast.success(`博客已${newStatus ? '发布' : '取消发布'}`);
-      fetchBlogs(); // 重新获取列表
     } catch (error) {
       console.error('更新发布状态失败:', error);
       toast.error('更新发布状态失败');
