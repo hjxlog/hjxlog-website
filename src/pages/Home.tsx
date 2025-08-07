@@ -5,17 +5,25 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
 
-// 动态导入 ECharts 组件，支持 CDN 回退
-const ReactECharts = lazy(() => {
-  // 检查 CDN 是否加载成功
-  if (typeof window !== 'undefined' && window.echarts) {
-    return import('echarts-for-react');
+// 动态导入 ECharts 组件和库
+const ReactECharts = lazy(async () => {
+  // 动态加载 ECharts 库
+  if (typeof window !== 'undefined' && !window.echarts) {
+    try {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    } catch (error) {
+      console.warn('ECharts CDN 加载失败:', error);
+    }
   }
-  // CDN 失败时的回退
-  return import('echarts-for-react').catch(() => {
-    console.warn('ECharts CDN 加载失败，使用本地版本');
-    return import('echarts-for-react');
-  });
+  
+  // 导入 React ECharts 组件
+  return import('echarts-for-react');
 });
 
 // 主页面组件
@@ -48,6 +56,9 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // ECharts 懒加载状态
+  const [shouldLoadChart, setShouldLoadChart] = useState(false);
   
   // 获取推荐内容
   const fetchFeaturedContent = async () => {
@@ -137,6 +148,33 @@ export default function Home() {
     
     return () => clearTimeout(timer);
   }, []);
+  
+  // ECharts 懒加载监听
+  useEffect(() => {
+    const chartContainer = document.getElementById('chart-section');
+    if (!chartContainer) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !shouldLoadChart) {
+            setShouldLoadChart(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        rootMargin: '100px 0px', // 提前100px开始加载
+        threshold: 0.1
+      }
+    );
+    
+    observer.observe(chartContainer);
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [shouldLoadChart]);
 
   
   // 技能雷达图配置
@@ -416,24 +454,35 @@ export default function Home() {
                 <p className="text-slate-600">我的核心方向是将传统业务系统与AI技术结合，通过LLM集成、RAG知识库和自动化任务流等，帮助业务实现数据驱动决策与流程智能化升级。</p>
               </div>
               
-              <div className="fade-in" style={{ animationDelay: '0.2s' }}>
+              <div id="chart-section" className="fade-in" style={{ animationDelay: '0.2s' }}>
                 <h3 className="text-2xl font-semibold mb-6 text-slate-800">技能雷达图</h3>
                 <div className="w-full h-80 bg-white rounded-xl shadow-sm border border-slate-200">
-                  <Suspense fallback={
+                  {shouldLoadChart ? (
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center h-80">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 text-slate-600">加载图表中...</span>
+                      </div>
+                    }>
+                      <div className="chart-container">
+                        <ReactECharts 
+                          option={radarOption} 
+                          style={{ height: '320px', width: '100%' }}
+                          opts={{ renderer: 'canvas' }}
+                          lazyUpdate={true}
+                        />
+                      </div>
+                    </Suspense>
+                  ) : (
                     <div className="flex items-center justify-center h-80">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      <span className="ml-2 text-slate-600">加载图表中...</span>
+                      <div className="text-slate-400">
+                        <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-sm">滚动到此处加载图表</p>
+                      </div>
                     </div>
-                  }>
-                    <div className="chart-container">
-                      <ReactECharts 
-                        option={radarOption} 
-                        style={{ height: '320px', width: '100%' }}
-                        opts={{ renderer: 'canvas' }}
-                        lazyUpdate={true}
-                      />
-                    </div>
-                  </Suspense>
+                  )}
                 </div>
               </div>
             </div>
