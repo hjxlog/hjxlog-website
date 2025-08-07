@@ -9,28 +9,29 @@ import { useBackToTop } from '@/hooks/useBackToTop';
 // 移除对lib/api的依赖，直接调用服务器API
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
-// 直接导入 Markdown 相关模块
-import ReactMarkdown from 'react-markdown';
+// 动态导入 Markdown 相关模块
+const ReactMarkdown = React.lazy(() => import('react-markdown'));
 
 // Markdown 包装组件
 const MarkdownRenderer = ({ content }: { content: string }) => {
   return (
-    <ReactMarkdown 
-      components={{
-        code({ className, children, ...props }: any) {
-          const match = /language-(\w+)/.exec(className || '');
-          const isInline = !match;
-          return !isInline ? (
-            <CodeBlock
-               language={match[1]}
-               children={String(children).replace(/\n$/, '')}
-             />
-          ) : (
-            <code className={className} {...props}>
-              {children}
-            </code>
-          );
-        },
+    <React.Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded">加载内容...</div>}>
+      <ReactMarkdown 
+        components={{
+          code({ className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const isInline = !match;
+            return !isInline ? (
+              <CodeBlock
+                 language={match[1]}
+                 children={String(children).replace(/\n$/, '')}
+               />
+            ) : (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
         img({ src, alt, ...props }: any) {
           return (
             <div className="my-6 text-center">
@@ -117,18 +118,62 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
     >
       {content}
     </ReactMarkdown>
+    </React.Suspense>
   );
 };
 
 // 代码高亮组件
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
   const codeRef = React.useRef<HTMLElement>(null);
+  const [prismLoaded, setPrismLoaded] = React.useState(false);
   
+  // 动态加载 Prism.js
   React.useEffect(() => {
-    if (codeRef.current && typeof window !== 'undefined' && (window as any).Prism) {
+    const loadPrism = async () => {
+      if (typeof window !== 'undefined' && !(window as any).Prism) {
+        try {
+          // 加载 Prism CSS
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = 'https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css';
+          document.head.appendChild(cssLink);
+          
+          // 加载 Prism 核心
+          await new Promise((resolve, reject) => {
+            const script1 = document.createElement('script');
+            script1.src = 'https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js';
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
+          });
+          
+          // 加载 Prism 自动加载器
+          await new Promise((resolve, reject) => {
+            const script2 = document.createElement('script');
+            script2.src = 'https://unpkg.com/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js';
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          
+          setPrismLoaded(true);
+        } catch (error) {
+          console.warn('Failed to load Prism.js:', error);
+        }
+      } else if ((window as any).Prism) {
+        setPrismLoaded(true);
+      }
+    };
+    
+    loadPrism();
+  }, []);
+  
+  // 高亮代码
+  React.useEffect(() => {
+    if (prismLoaded && codeRef.current && (window as any).Prism) {
       (window as any).Prism.highlightElement(codeRef.current);
     }
-  }, [children]);
+  }, [prismLoaded, children]);
   
   return (
     <pre className="language-" style={{

@@ -66,12 +66,55 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
 // 代码高亮组件
 const CodeBlock = ({ language, children }: { language: string; children: string }) => {
   const codeRef = React.useRef<HTMLElement>(null);
+  const [prismLoaded, setPrismLoaded] = React.useState(false);
   
+  // 动态加载 Prism.js
   React.useEffect(() => {
-    if (codeRef.current && typeof window !== 'undefined' && (window as any).Prism) {
+    const loadPrism = async () => {
+      if (typeof window !== 'undefined' && !(window as any).Prism) {
+        try {
+          // 加载 Prism CSS
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = 'https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css';
+          document.head.appendChild(cssLink);
+          
+          // 加载 Prism 核心
+          await new Promise((resolve, reject) => {
+            const script1 = document.createElement('script');
+            script1.src = 'https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js';
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
+          });
+          
+          // 加载 Prism 自动加载器
+          await new Promise((resolve, reject) => {
+            const script2 = document.createElement('script');
+            script2.src = 'https://unpkg.com/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js';
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          
+          setPrismLoaded(true);
+        } catch (error) {
+          console.warn('Failed to load Prism.js:', error);
+        }
+      } else if ((window as any).Prism) {
+        setPrismLoaded(true);
+      }
+    };
+    
+    loadPrism();
+  }, []);
+  
+  // 高亮代码
+  React.useEffect(() => {
+    if (prismLoaded && codeRef.current && (window as any).Prism) {
       (window as any).Prism.highlightElement(codeRef.current);
     }
-  }, [children]);
+  }, [prismLoaded, children]);
   
   return (
     <pre className="language-" style={{
