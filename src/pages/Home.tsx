@@ -151,30 +151,13 @@ export default function Home() {
   
   // ECharts 懒加载监听
   useEffect(() => {
-    const chartContainer = document.getElementById('chart-section');
-    if (!chartContainer) return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !shouldLoadChart) {
-            setShouldLoadChart(true);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        rootMargin: '100px 0px', // 提前100px开始加载
-        threshold: 0.1
-      }
-    );
-    
-    observer.observe(chartContainer);
-    
-    return () => {
-      observer.disconnect();
-    };
-  }, [shouldLoadChart]);
+    // 页面加载完成后延迟加载图表，让用户体验更丝滑
+    const timer = setTimeout(() => {
+      setShouldLoadChart(true);
+    }, 1000); // 延迟1秒加载图表
+
+    return () => clearTimeout(timer);
+  }, []);
 
   
   // 技能雷达图配置
