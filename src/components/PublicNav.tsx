@@ -71,7 +71,7 @@ export default function PublicNav() {
   };
 
   return (
-    <nav id="mainNav" className="fixed top-0 left-0 right-0 z-50 py-4 px-6 transition-all duration-300">
+    <nav id="mainNav" className="fixed top-0 left-0 right-0 py-4 px-6 transition-all duration-300">
       <div className="container mx-auto flex items-center justify-between">
         {/* 左侧：Logo */}
         <div className="text-2xl font-bold text-[#165DFF] cursor-pointer" onClick={() => {
@@ -115,6 +115,12 @@ export default function PublicNav() {
             onClick={handleBlogClick}
           >
             博客
+          </button>
+          <button 
+            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+            onClick={() => navigate('/moments')}
+          >
+            动态
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
@@ -175,6 +181,15 @@ export default function PublicNav() {
               }}
             >
               博客
+            </button>
+            <button 
+              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/moments');
+              }}
+            >
+              动态
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"

@@ -3,6 +3,14 @@ import cors from 'cors';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// ES模块中获取__dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -13,6 +21,9 @@ const PORT = process.env.PORT || 3006;
 // 中间件
 app.use(cors());
 app.use(express.json());
+
+// 静态文件服务 - 提供上传的图片访问
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // 数据库配置
 const dbConfig = {
@@ -43,6 +54,152 @@ async function connectDatabase() {
 connectDatabase();
 
 // API路由
+
+// ================================================
+// 图片上传功能
+// ================================================
+
+// 确保上传目录存在
+const uploadDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// 配置multer存储
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB限制
+  },
+  fileFilter: (req, file, cb) => {
+    // 检查文件类型
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传图片文件'), false);
+    }
+  }
+});
+
+// 单个图片上传接口
+app.post('/api/upload/image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '没有上传文件'
+      });
+    }
+
+    console.log('📸 [API] 单个图片上传请求:', req.file.originalname);
+
+    // 生成唯一文件名
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 15);
+    const ext = path.extname(req.file.originalname);
+    const filename = `${timestamp}_${randomStr}${ext}`;
+    const filepath = path.join(uploadDir, filename);
+
+    // 保存文件
+    fs.writeFileSync(filepath, req.file.buffer);
+
+    // 生成访问URL
+    const imageUrl = `/uploads/${filename}`;
+    const thumbnailUrl = imageUrl;
+
+    const uploadedImage = {
+      original_name: req.file.originalname,
+      filename: filename,
+      image_url: imageUrl,
+      thumbnail_url: thumbnailUrl,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    };
+
+    console.log('✅ [API] 单个图片上传成功:', filename);
+    res.json({
+      success: true,
+      data: uploadedImage,
+      message: '图片上传成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 单个图片上传失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message || '图片上传失败'
+    });
+  }
+});
+
+// 批量图片上传接口
+app.post('/api/upload/images', upload.array('images', 9), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '没有上传文件'
+      });
+    }
+
+    console.log('📸 [API] 图片上传请求，文件数量:', req.files.length);
+
+    const uploadedImages = [];
+
+    for (const file of req.files) {
+      try {
+        // 生成唯一文件名
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(2, 15);
+        const ext = path.extname(file.originalname);
+        const filename = `${timestamp}_${randomStr}${ext}`;
+        const filepath = path.join(uploadDir, filename);
+
+        // 保存文件
+        fs.writeFileSync(filepath, file.buffer);
+
+        // 生成访问URL
+        const imageUrl = `/uploads/${filename}`;
+        const thumbnailUrl = imageUrl; // 在实际应用中，这里应该生成缩略图
+
+        uploadedImages.push({
+          original_name: file.originalname,
+          filename: filename,
+          image_url: imageUrl,
+          thumbnail_url: thumbnailUrl,
+          size: file.size,
+          mimetype: file.mimetype
+        });
+
+        console.log('✅ [API] 图片上传成功:', filename);
+      } catch (error) {
+        console.error('❌ [API] 单个图片上传失败:', error.message);
+      }
+    }
+
+    if (uploadedImages.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: '所有图片上传失败'
+      });
+    }
+
+    console.log('✅ [API] 图片批量上传完成，成功数量:', uploadedImages.length);
+    res.json({
+      success: true,
+      data: uploadedImages,
+      message: `成功上传 ${uploadedImages.length} 张图片`
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 图片上传失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message || '图片上传失败'
+    });
+  }
+});
 
 // 测试数据库连接
 app.post('/api/database/test', async (req, res) => {
@@ -1485,6 +1642,560 @@ app.delete('/api/comments/:id', async (req, res) => {
 
   } catch (error) {
     console.error('❌ [API] 删除评论失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// ================================================
+// 富媒体动态模块 API
+// ================================================
+
+// 获取动态列表
+app.get('/api/moments', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { page = 1, limit = 10, sort = 'created_at' } = req.query;
+    console.log('📱 [API] 获取动态列表请求:', { page, limit, sort });
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // 获取动态列表（包含图片）
+    const result = await dbClient.query(
+      `SELECT 
+        id,
+        content,
+        author_id,
+        visibility,
+        likes_count,
+        comments_count,
+        created_at,
+        updated_at,
+        CASE 
+          WHEN images IS NOT NULL AND images != '' 
+          THEN string_to_array(images, ',')
+          ELSE ARRAY[]::text[]
+        END as images
+      FROM moments
+      WHERE visibility = 'public'
+      ORDER BY ${sort} DESC
+      LIMIT $1 OFFSET $2`,
+      [parseInt(limit), offset]
+    );
+
+    // 获取总数
+    const countResult = await dbClient.query(
+      'SELECT COUNT(*) as total FROM moments WHERE visibility = \'public\''
+    );
+    const total = parseInt(countResult.rows[0].total);
+
+    console.log('✅ [API] 动态列表获取成功，共', result.rows.length, '条');
+    res.json({
+      success: true,
+      data: {
+        moments: result.rows,
+        total: total,
+        page: parseInt(page),
+        limit: parseInt(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取动态列表失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 根据ID获取动态详情
+app.get('/api/moments/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    console.log('📱 [API] 获取动态详情请求:', id);
+
+    // 获取动态详情（包含图片）
+    const result = await dbClient.query(
+      `SELECT 
+        id,
+        content,
+        author_id,
+        visibility,
+        likes_count,
+        comments_count,
+        created_at,
+        updated_at,
+        CASE 
+          WHEN images IS NOT NULL AND images != '' 
+          THEN string_to_array(images, ',')
+          ELSE ARRAY[]::text[]
+        END as images
+      FROM moments
+      WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '动态不存在'
+      });
+    }
+
+    console.log('✅ [API] 动态详情获取成功');
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取动态详情失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 创建新动态
+app.post('/api/moments', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { content, images = [], visibility = 'public' } = req.body;
+    console.log('📱 [API] 创建动态请求:', { content: content?.substring(0, 50) + '...', images_count: images.length });
+
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: '动态内容不能为空'
+      });
+    }
+
+    // 处理图片数组，转换为逗号分隔的字符串
+    let imageUrls = '';
+    if (images.length > 0) {
+      // 提取图片URL
+      const urls = images.map(img => {
+        if (typeof img === 'string') {
+          return img;
+        } else if (img.image_url) {
+          return img.image_url;
+        } else if (img.url) {
+          return img.url;
+        }
+        return null;
+      }).filter(url => url !== null);
+      
+      imageUrls = urls.join(',');
+    }
+
+    // 创建动态
+    const momentResult = await dbClient.query(
+      'INSERT INTO moments (content, images, visibility) VALUES ($1, $2, $3) RETURNING *',
+      [content, imageUrls, visibility]
+    );
+
+    console.log('✅ [API] 动态创建成功，ID:', momentResult.rows[0].id);
+    res.status(201).json({
+      success: true,
+      data: {
+        ...momentResult.rows[0],
+        images: imageUrls ? imageUrls.split(',') : []
+      },
+      message: '动态创建成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 创建动态失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 更新动态
+app.put('/api/moments/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    const { content, images = [], visibility } = req.body;
+    console.log('📱 [API] 更新动态请求:', { id, content: content?.substring(0, 50) + '...' });
+
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: '动态内容不能为空'
+      });
+    }
+
+    // 处理图片数组，转换为逗号分隔的字符串
+    let imageUrls = '';
+    if (images.length > 0) {
+      // 提取图片URL
+      const urls = images.map(img => {
+        if (typeof img === 'string') {
+          return img;
+        } else if (img.image_url) {
+          return img.image_url;
+        } else if (img.url) {
+          return img.url;
+        }
+        return null;
+      }).filter(url => url !== null);
+      
+      imageUrls = urls.join(',');
+    }
+
+    // 更新动态
+    const updateFields = ['content = $1', 'images = $2'];
+    const updateValues = [content, imageUrls];
+    let paramIndex = 3;
+
+    if (visibility !== undefined) {
+      updateFields.push(`visibility = $${paramIndex++}`);
+      updateValues.push(visibility);
+    }
+
+    updateValues.push(id);
+    const updateQuery = `UPDATE moments SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`;
+
+    const result = await dbClient.query(updateQuery, updateValues);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '动态不存在'
+      });
+    }
+
+    console.log('✅ [API] 动态更新成功');
+    res.json({
+      success: true,
+      data: {
+        ...result.rows[0],
+        images: imageUrls ? imageUrls.split(',') : []
+      },
+      message: '动态更新成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 更新动态失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 删除动态
+app.delete('/api/moments/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    console.log('📱 [API] 删除动态请求:', id);
+
+    const result = await dbClient.query('DELETE FROM moments WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '动态不存在'
+      });
+    }
+
+    console.log('✅ [API] 动态删除成功');
+    res.json({
+      success: true,
+      message: '动态删除成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 删除动态失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 动态点赞（带IP限制）
+app.post('/api/moments/:id/like', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
+    const userAgent = req.get('User-Agent') || '';
+
+    console.log('❤️ [API] 动态点赞请求:', { moment_id: id, ip: clientIP });
+
+    // 检查该IP是否已经点赞过
+    const existingLike = await dbClient.query(
+      'SELECT id FROM moment_likes WHERE moment_id = $1 AND ip_address = $2',
+      [id, clientIP]
+    );
+
+    if (existingLike.rows.length > 0) {
+      // 取消点赞
+      await dbClient.query(
+        'DELETE FROM moment_likes WHERE moment_id = $1 AND ip_address = $2',
+        [id, clientIP]
+      );
+
+      await dbClient.query(
+        'UPDATE moments SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = $1',
+        [id]
+      );
+
+      const result = await dbClient.query('SELECT likes_count FROM moments WHERE id = $1', [id]);
+
+      console.log('💔 [API] 取消点赞成功');
+      res.json({
+        success: true,
+        liked: false,
+        likes_count: result.rows[0]?.likes_count || 0,
+        message: '取消点赞成功'
+      });
+    } else {
+      // 添加点赞
+      await dbClient.query(
+        'INSERT INTO moment_likes (moment_id, ip_address, user_agent) VALUES ($1, $2, $3)',
+        [id, clientIP, userAgent]
+      );
+
+      const result = await dbClient.query(
+        'UPDATE moments SET likes_count = likes_count + 1 WHERE id = $1 RETURNING likes_count',
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: '动态不存在'
+        });
+      }
+
+      console.log('❤️ [API] 点赞成功，当前点赞数:', result.rows[0].likes_count);
+      res.json({
+        success: true,
+        liked: true,
+        likes_count: result.rows[0].likes_count,
+        message: '点赞成功'
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ [API] 动态点赞失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 获取动态评论
+app.get('/api/moments/:id/comments', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    console.log('💬 [API] 获取动态评论:', id);
+
+    const result = await dbClient.query(
+      'SELECT * FROM moment_comments WHERE moment_id = $1 AND status = \'approved\' ORDER BY created_at DESC',
+      [id]
+    );
+
+    console.log('✅ [API] 动态评论获取成功，数量:', result.rows.length);
+    res.json({
+      success: true,
+      data: result.rows
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取动态评论失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 添加动态评论（支持匿名评论）
+app.post('/api/moments/:id/comments', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    const { author_name, author_email, content, parent_id } = req.body;
+    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
+    const userAgent = req.get('User-Agent') || '';
+
+    console.log('💬 [API] 添加动态评论请求:', { moment_id: id, author_name, ip: clientIP });
+
+    // 验证必填字段
+    if (!author_name || !content) {
+      return res.status(400).json({
+        success: false,
+        message: '姓名和评论内容不能为空'
+      });
+    }
+
+    // 邮箱为可选字段，如果没有提供则设为空字符串
+    const email = author_email || '';
+
+    // 插入评论，状态设为approved（直接通过审核）
+    const result = await dbClient.query(
+      `INSERT INTO moment_comments (moment_id, parent_id, author_name, author_email, content, status, ip_address, user_agent, created_at) 
+       VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7, CURRENT_TIMESTAMP) 
+       RETURNING *`,
+      [id, parent_id || null, author_name, email, content, clientIP, userAgent]
+    );
+
+    // 更新动态评论数
+    await dbClient.query(
+      'UPDATE moments SET comments_count = comments_count + 1 WHERE id = $1',
+      [id]
+    );
+
+    console.log('✅ [API] 动态评论添加成功');
+    res.status(201).json({
+      success: true,
+      data: result.rows[0],
+      message: '评论添加成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 添加动态评论失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 管理员回复动态评论
+app.post('/api/moments/comments/:id/reply', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+    const { admin_reply } = req.body;
+
+    console.log('👨‍💼 [API] 管理员回复动态评论请求:', { comment_id: id });
+
+    if (!admin_reply) {
+      return res.status(400).json({
+        success: false,
+        message: '回复内容不能为空'
+      });
+    }
+
+    const result = await dbClient.query(
+      `UPDATE moment_comments SET 
+          admin_reply = $1, 
+          admin_reply_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2 
+        RETURNING *`,
+      [admin_reply, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '评论不存在'
+      });
+    }
+
+    console.log('✅ [API] 管理员回复成功');
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: '回复成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 管理员回复失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 删除动态评论（管理员功能）
+app.delete('/api/moments/comments/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    const { id } = req.params;
+
+    console.log('🗑️ [API] 删除动态评论请求:', id);
+
+    // 获取评论信息以更新动态评论数
+    const commentResult = await dbClient.query(
+      'SELECT moment_id FROM moment_comments WHERE id = $1',
+      [id]
+    );
+
+    if (commentResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '评论不存在'
+      });
+    }
+
+    const momentId = commentResult.rows[0].moment_id;
+
+    // 删除评论
+    const result = await dbClient.query('DELETE FROM moment_comments WHERE id = $1 RETURNING *', [id]);
+
+    // 更新动态评论数
+    await dbClient.query(
+      'UPDATE moments SET comments_count = GREATEST(comments_count - 1, 0) WHERE id = $1',
+      [momentId]
+    );
+
+    console.log('✅ [API] 动态评论删除成功');
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: '评论删除成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 删除动态评论失败:', error.message);
     res.status(500).json({
       success: false,
       message: error.message

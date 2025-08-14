@@ -91,6 +91,17 @@ export default function Dashboard() {
   const [isCommentReplyOpen, setIsCommentReplyOpen] = useState(false);
   const [replyContent, setReplyContent] = useState('');
 
+  // 动态管理相关状态
+  const [moments, setMoments] = useState<any[]>([]);
+  const [momentFormData, setMomentFormData] = useState({
+    content: '',
+    visibility: 'public' as 'public' | 'private',
+    images: [] as any[]
+  });
+  const [isMomentFormOpen, setIsMomentFormOpen] = useState(false);
+  const [currentMoment, setCurrentMoment] = useState<any>(null);
+  const [dragOver, setDragOver] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -438,11 +449,231 @@ export default function Dashboard() {
     }
   }, [user, navigate]);
 
+  // 动态管理相关函数
+  const fetchMoments = async () => {
+    try {
+      const data = await apiRequest('/api/moments?page=1&limit=50');
+      if (data.success) {
+        setMoments(data.data.moments || []);
+      }
+    } catch (error) {
+      console.error('获取动态列表失败:', error);
+    }
+  };
+
+  const openMomentForm = (moment?: any) => {
+    if (moment) {
+      setCurrentMoment(moment);
+      setMomentFormData({
+        content: moment.content,
+        visibility: moment.visibility,
+        images: moment.images || []
+      });
+    } else {
+      setCurrentMoment(null);
+      setMomentFormData({
+        content: '',
+        visibility: 'public',
+        images: []
+      });
+    }
+    setIsMomentFormOpen(true);
+  };
+
+  const closeMomentForm = () => {
+    setIsMomentFormOpen(false);
+    setCurrentMoment(null);
+    setMomentFormData({
+      content: '',
+      visibility: 'public',
+      images: []
+    });
+  };
+
+  const createMoment = async (momentData: any) => {
+    try {
+      const data = await apiRequest('/api/moments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(momentData),
+      });
+
+      if (data.success) {
+        await fetchMoments();
+        toast.success('动态创建成功');
+        return true;
+      } else {
+        toast.error(data.message || '创建失败');
+        return false;
+      }
+    } catch (error) {
+      console.error('创建动态失败:', error);
+      toast.error('创建失败');
+      return false;
+    }
+  };
+
+  const updateMoment = async (id: number, momentData: any) => {
+    try {
+      const data = await apiRequest(`/api/moments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(momentData),
+      });
+
+      if (data.success) {
+        await fetchMoments();
+        toast.success('动态更新成功');
+        return true;
+      } else {
+        toast.error(data.message || '更新失败');
+        return false;
+      }
+    } catch (error) {
+      console.error('更新动态失败:', error);
+      toast.error('更新失败');
+      return false;
+    }
+  };
+
+  const deleteMoment = async (id: number) => {
+    if (!confirm('确定要删除这条动态吗？')) {
+      return;
+    }
+
+    try {
+      const data = await apiRequest(`/api/moments/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (data.success) {
+        await fetchMoments();
+        toast.success('动态删除成功');
+      } else {
+        toast.error(data.message || '删除失败');
+      }
+    } catch (error) {
+      console.error('删除动态失败:', error);
+      toast.error('删除失败');
+    }
+  };
+
+  // 处理动态表单提交
+  const handleMomentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // 先上传图片
+      const uploadedImages = [];
+      for (const image of momentFormData.images) {
+        if (image.file) {
+          const formData = new FormData();
+          formData.append('image', image.file);
+          
+          const uploadResponse = await fetch(`${API_BASE_URL}/api/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json();
+            uploadedImages.push({
+              image_url: uploadResult.url,
+              alt_text: image.alt_text || ''
+            });
+          }
+        } else if (image.image_url) {
+          uploadedImages.push({
+            image_url: image.image_url,
+            alt_text: image.alt_text || ''
+          });
+        }
+      }
+      
+      const momentData = {
+        content: momentFormData.content,
+        visibility: momentFormData.visibility,
+        images: uploadedImages
+      };
+      
+      if (currentMoment) {
+        await updateMoment(currentMoment.id, momentData);
+      } else {
+        await createMoment(momentData);
+      }
+      
+      closeMomentForm();
+    } catch (error) {
+      console.error('保存动态失败:', error);
+      toast.error('保存动态失败');
+    }
+  };
+
+  // 处理图片选择
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      alt_text: ''
+    }));
+    
+    setMomentFormData({
+      ...momentFormData,
+      images: [...momentFormData.images, ...newImages]
+    });
+  };
+
+  // 处理图片拖拽
+  const handleImageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    );
+    
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      alt_text: ''
+    }));
+    
+    setMomentFormData({
+      ...momentFormData,
+      images: [...momentFormData.images, ...newImages]
+    });
+  };
+
+  // 删除图片
+  const removeImage = (index: number) => {
+    const newImages = momentFormData.images.filter((_, i) => i !== index);
+    setMomentFormData({
+      ...momentFormData,
+      images: newImages
+    });
+  };
+
+  // 更新图片alt文本
+  const updateImageAlt = (index: number, altText: string) => {
+    const newImages = momentFormData.images.map((image, i) => 
+      i === index ? { ...image, alt_text: altText } : image
+    );
+    setMomentFormData({
+      ...momentFormData,
+      images: newImages
+    });
+  };
+
   // 初始化数据
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchMessages(), fetchComments()]);
+      await Promise.all([fetchWorks(), fetchBlogs(), fetchMessages(), fetchComments(), fetchMoments()]);
       setLoading(false);
     };
     
@@ -798,7 +1029,7 @@ export default function Dashboard() {
             </div>
 
             {/* 统计卡片 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
@@ -819,6 +1050,18 @@ export default function Dashboard() {
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i className="fas fa-blog text-green-600"></i>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm">总动态数</p>
+                    <p className="text-2xl font-bold text-slate-800">{moments.length}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-camera text-indigo-600"></i>
                   </div>
                 </div>
               </div>
@@ -869,7 +1112,7 @@ export default function Dashboard() {
             {/* 快速操作 */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">快速操作</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <button
                   onClick={() => openWorkForm()}
                   className="p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-[#165DFF] hover:bg-[#165DFF]/5 transition-colors text-center"
@@ -884,6 +1127,14 @@ export default function Dashboard() {
                 >
                   <i className="fas fa-plus text-2xl text-slate-400 mb-2"></i>
                   <p className="text-slate-600">添加新博客</p>
+                </button>
+                
+                <button
+                  onClick={() => openMomentForm()}
+                  className="p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-[#165DFF] hover:bg-[#165DFF]/5 transition-colors text-center"
+                >
+                  <i className="fas fa-plus text-2xl text-slate-400 mb-2"></i>
+                  <p className="text-slate-600">发布动态</p>
                 </button>
                 
                 <button
@@ -979,6 +1230,102 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+        {/* 动态管理页面 */}
+        {activeTab === 'moments' && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800">动态管理</h2>
+              <button
+                onClick={() => openMomentForm()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                ➕ 发布动态
+              </button>
+            </div>
+
+            {/* 动态列表 */}
+            <div className="space-y-4">
+              {moments.length > 0 ? (
+                moments.map(moment => (
+                  <div key={moment.id} className="bg-white rounded-xl p-6 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            moment.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {moment.visibility === 'public' ? '公开' : '私密'}
+                          </span>
+                        </div>
+                        
+                        <div className="prose prose-gray max-w-none mb-3">
+                          <div dangerouslySetInnerHTML={{ 
+                            __html: moment.content
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                              .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+                              .replace(/\n/g, '<br>')
+                          }} />
+                        </div>
+                        
+                        {/* 图片展示 */}
+                        {moment.images && moment.images.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                            {moment.images.map((image: any, index: number) => (
+                              <img
+                                key={index}
+                                src={image.image_url}
+                                alt={image.alt_text || '动态图片'}
+                                className="w-full h-24 object-cover rounded-lg"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center space-x-4 text-sm text-slate-500">
+                          <span>❤️ {moment.likes_count || 0}</span>
+                          <span>💬 {moment.comments_count || 0}</span>
+                          <span>👁 {moment.views_count || 0}</span>
+                          {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => openMomentForm(moment)}
+                          className="text-gray-400 hover:text-blue-500 transition-colors p-2"
+                          title="编辑"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteMoment(moment.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                          title="删除"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+                  <div className="text-6xl mb-4">📷</div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">还没有动态</h3>
+                  <p className="text-gray-600 mb-6">开始发布你的第一条动态吧！</p>
+                  <button
+                    onClick={() => openMomentForm()}
+                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    ➕ 发布动态
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 评论管理页面 */}
         {activeTab === 'comments' && (
@@ -2149,6 +2496,133 @@ export default function Dashboard() {
                     className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors"
                   >
                     {currentBlog ? '更新博客' : '发布博客'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 动态发布表单模态框 */}
+      {isMomentFormOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-slate-800">
+                  {currentMoment ? '编辑动态' : '发布动态'}
+                </h3>
+                <button
+                  onClick={closeMomentForm}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <i className="fas fa-times text-xl"></i>
+                </button>
+              </div>
+
+              <form onSubmit={handleMomentSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    内容 *
+                  </label>
+                  <textarea
+                    value={momentFormData.content}
+                    onChange={(e) => setMomentFormData({...momentFormData, content: e.target.value})}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] resize-none"
+                    placeholder="分享你的想法..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    可见性
+                  </label>
+                  <select
+                    value={momentFormData.visibility}
+                    onChange={(e) => setMomentFormData({...momentFormData, visibility: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF]"
+                  >
+                    <option value="public">公开</option>
+                    <option value="private">私密</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    图片
+                  </label>
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragOver(true);
+                    }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleImageDrop}
+                  >
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="moment-images"
+                    />
+                    <label htmlFor="moment-images" className="cursor-pointer">
+                      <div className="text-slate-400 mb-2 text-4xl">📷</div>
+                      <p className="text-slate-600">点击选择图片或拖拽到此处</p>
+                      <p className="text-sm text-slate-400 mt-1">支持多张图片上传</p>
+                    </label>
+                  </div>
+
+                  {/* 图片预览 */}
+                  {momentFormData.images.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                      {momentFormData.images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image.preview || image.image_url}
+                            alt={`预览 ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ✕
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="图片描述"
+                            value={image.alt_text || ''}
+                            onChange={(e) => updateImageAlt(index, e.target.value)}
+                            className="absolute bottom-1 left-1 right-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeMomentForm}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors"
+                  >
+                    {currentMoment ? '更新动态' : '发布动态'}
                   </button>
                 </div>
               </form>

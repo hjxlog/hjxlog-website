@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import Home from "@/pages/Home";
 import { useState, useEffect } from "react";
 import { AuthContext, User } from '@/contexts/authContext';
@@ -14,6 +14,8 @@ import Profile from "@/pages/Profile";
 
 import BlogManagement from "@/pages/BlogManagement";
 import BlogEditor from "@/pages/BlogEditor";
+import Moments from "@/pages/Moments";
+import MomentDetail from "@/pages/MomentDetail";
 
 // 计算7天后的过期时间
 const getExpirationDate = () => {
@@ -158,6 +160,8 @@ export default function App() {
         <Route path="/admin/blogs" element={isAuthenticated ? <BlogManagement /> : <Login />} />
         <Route path="/admin/blog/create" element={isAuthenticated ? <BlogEditor /> : <Login />} />
         <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogEditor /> : <Login />} />
+        <Route path="/moments" element={<Moments />} />
+        <Route path="/moments/:id" element={<MomentDetail />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

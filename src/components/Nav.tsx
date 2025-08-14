@@ -103,6 +103,12 @@ export default function Nav() {
           {isAuthenticated ? (
             <>
               <button 
+                onClick={() => navigate('/moments/management')} 
+                className="px-4 py-2 text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+              >
+                动态管理
+              </button>
+              <button 
                 onClick={() => navigate('/dashboard')} 
                 className="px-4 py-2 gradient-btn rounded-full font-medium shadow-lg hover:shadow-xl transition-all"
               >
@@ -209,6 +215,15 @@ export default function Nav() {
             </a>
             {isAuthenticated ? (
               <>
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/moments/management');
+                  }} 
+                  className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+                >
+                  动态管理
+                </button>
                 <button 
                   onClick={() => {
                     setIsMenuOpen(false);

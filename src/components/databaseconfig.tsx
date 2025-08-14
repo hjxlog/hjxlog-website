@@ -99,7 +99,7 @@ export default function DatabaseConfig() {
   const testConnection = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3006/api/health');
+      const response = await fetch(`${API_BASE_URL}/api/health`);
       const data = await response.json();
       
       if (response.ok && data.status === 'ok') {

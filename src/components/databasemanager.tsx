@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../config/api';
+import { apiRequest, API_BASE_URL } from '../config/api';
 
 interface DatabaseConfig {
   host: string;
@@ -72,7 +72,7 @@ export default function DatabaseManager() {
   const handleTestConnection = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3006/api/health');
+      const response = await fetch(`${API_BASE_URL}/api/health`);
       const data = await response.json();
       
       if (response.ok && data.status === 'ok') {
