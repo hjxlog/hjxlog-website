@@ -123,33 +123,7 @@ export default function CreateMoment() {
     }));
   };
 
-  // 真实图片上传
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('image', file);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/upload/image`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('图片上传失败');
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || '图片上传失败');
-      }
-
-      return `${API_BASE_URL}${result.data.image_url}`;
-    } catch (error) {
-      console.error('图片上传失败:', error);
-      throw error;
-    }
-  };
 
   // 提交动态
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,21 +137,10 @@ export default function CreateMoment() {
     try {
       setSubmitting(true);
       
-      // 上传图片
+      // 处理图片数据（移除文件上传功能）
       const uploadedImages = [];
-      for (const image of form.images) {
-        try {
-          const imageUrl = await uploadImage(image.file);
-          uploadedImages.push({
-            image_url: imageUrl,
-            thumbnail_url: imageUrl, // 在实际应用中，这里应该是缩略图URL
-            alt_text: image.alt_text || '',
-          });
-        } catch (error) {
-          console.error('图片上传失败:', error);
-          toast.error('图片上传失败');
-        }
-      }
+      // 注意：由于移除了文件上传功能，这里不再处理本地文件
+      // 如果需要图片功能，请使用外部图片URL
 
       // 创建动态
       const data = await apiRequest('/api/moments', {

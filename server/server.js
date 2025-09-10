@@ -3,7 +3,6 @@ import cors from 'cors';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
-import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -21,9 +20,6 @@ const PORT = process.env.PORT || 3006;
 // 中间件
 app.use(cors());
 app.use(express.json());
-
-// 静态文件服务 - 提供上传的图片访问
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // 数据库配置
 const dbConfig = {
@@ -55,151 +51,9 @@ connectDatabase();
 
 // API路由
 
-// ================================================
-// 图片上传功能
-// ================================================
 
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, '../public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
-// 配置multer存储
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB限制
-  },
-  fileFilter: (req, file, cb) => {
-    // 检查文件类型
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('只允许上传图片文件'), false);
-    }
-  }
-});
 
-// 单个图片上传接口
-app.post('/api/upload/image', upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: '没有上传文件'
-      });
-    }
-
-    console.log('📸 [API] 单个图片上传请求:', req.file.originalname);
-
-    // 生成唯一文件名
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 15);
-    const ext = path.extname(req.file.originalname);
-    const filename = `${timestamp}_${randomStr}${ext}`;
-    const filepath = path.join(uploadDir, filename);
-
-    // 保存文件
-    fs.writeFileSync(filepath, req.file.buffer);
-
-    // 生成访问URL
-    const imageUrl = `/uploads/${filename}`;
-    const thumbnailUrl = imageUrl;
-
-    const uploadedImage = {
-      original_name: req.file.originalname,
-      filename: filename,
-      image_url: imageUrl,
-      thumbnail_url: thumbnailUrl,
-      size: req.file.size,
-      mimetype: req.file.mimetype
-    };
-
-    console.log('✅ [API] 单个图片上传成功:', filename);
-    res.json({
-      success: true,
-      data: uploadedImage,
-      message: '图片上传成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 单个图片上传失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message || '图片上传失败'
-    });
-  }
-});
-
-// 批量图片上传接口
-app.post('/api/upload/images', upload.array('images', 9), async (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: '没有上传文件'
-      });
-    }
-
-    console.log('📸 [API] 图片上传请求，文件数量:', req.files.length);
-
-    const uploadedImages = [];
-
-    for (const file of req.files) {
-      try {
-        // 生成唯一文件名
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(2, 15);
-        const ext = path.extname(file.originalname);
-        const filename = `${timestamp}_${randomStr}${ext}`;
-        const filepath = path.join(uploadDir, filename);
-
-        // 保存文件
-        fs.writeFileSync(filepath, file.buffer);
-
-        // 生成访问URL
-        const imageUrl = `/uploads/${filename}`;
-        const thumbnailUrl = imageUrl; // 在实际应用中，这里应该生成缩略图
-
-        uploadedImages.push({
-          original_name: file.originalname,
-          filename: filename,
-          image_url: imageUrl,
-          thumbnail_url: thumbnailUrl,
-          size: file.size,
-          mimetype: file.mimetype
-        });
-
-        console.log('✅ [API] 图片上传成功:', filename);
-      } catch (error) {
-        console.error('❌ [API] 单个图片上传失败:', error.message);
-      }
-    }
-
-    if (uploadedImages.length === 0) {
-      return res.status(500).json({
-        success: false,
-        message: '所有图片上传失败'
-      });
-    }
-
-    console.log('✅ [API] 图片批量上传完成，成功数量:', uploadedImages.length);
-    res.json({
-      success: true,
-      data: uploadedImages,
-      message: `成功上传 ${uploadedImages.length} 张图片`
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 图片上传失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message || '图片上传失败'
-    });
-  }
-});
 
 // 测试数据库连接
 app.post('/api/database/test', async (req, res) => {

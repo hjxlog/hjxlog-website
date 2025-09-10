@@ -567,26 +567,10 @@ export default function Dashboard() {
     e.preventDefault();
     
     try {
-      // 先上传图片
+      // 处理图片数据（移除文件上传功能）
       const uploadedImages = [];
       for (const image of momentFormData.images) {
-        if (image.file) {
-          const formData = new FormData();
-          formData.append('image', image.file);
-          
-          const uploadResponse = await fetch(`${API_BASE_URL}/api/upload`, {
-            method: 'POST',
-            body: formData
-          });
-          
-          if (uploadResponse.ok) {
-            const uploadResult = await uploadResponse.json();
-            uploadedImages.push({
-              image_url: uploadResult.url,
-              alt_text: image.alt_text || ''
-            });
-          }
-        } else if (image.image_url) {
+        if (image.image_url) {
           uploadedImages.push({
             image_url: image.image_url,
             alt_text: image.alt_text || ''

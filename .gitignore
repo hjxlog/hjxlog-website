@@ -166,8 +166,7 @@ logs
 *.sqlite3
 *.db
 
-# Uploads
-uploads/
+
 
 # Build outputs
 build/
