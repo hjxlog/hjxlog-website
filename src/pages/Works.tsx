@@ -185,12 +185,6 @@ export default function Works() {
                       >
                         <i className="fas fa-eye text-sm"></i>
                       </button>
-                      <button 
-                        className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-slate-600 hover:bg-white transition-colors"
-                        onClick={() => navigate(`/works/${work.id}/edit`)}
-                      >
-                        <i className="fas fa-edit text-sm"></i>
-                      </button>
                     </div>
                   </div>
                 </div>

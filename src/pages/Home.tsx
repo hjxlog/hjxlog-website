@@ -187,7 +187,7 @@ export default function Home() {
 
                       {/* 核心理念 */}
                       <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3">💭 我的理念</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3">💡 我的理念</h3>
                         <div className="space-y-2">
                           <div className="flex items-center text-sm text-slate-600">
                             <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
@@ -231,20 +231,20 @@ export default function Home() {
                         <h3 className="text-lg font-bold text-slate-800 mb-3">🎯 兴趣爱好</h3>
                         <div className="flex flex-wrap gap-2">
                           <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
-                            <span className="text-lg mr-2">💻</span>
-                            <span className="text-sm font-medium text-slate-700">编程开发</span>
-                          </div>
-                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
                             <span className="text-lg mr-2">🤖</span>
                             <span className="text-sm font-medium text-slate-700">AI研究</span>
                           </div>
                           <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
-                            <span className="text-lg mr-2">📚</span>
-                            <span className="text-sm font-medium text-slate-700">技术阅读</span>
+                            <span className="text-lg mr-2">💻</span>
+                            <span className="text-sm font-medium text-slate-700">编程开发</span>
                           </div>
                           <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
-                            <span className="text-lg mr-2">🎮</span>
-                            <span className="text-sm font-medium text-slate-700">游戏设计</span>
+                            <span className="text-lg mr-2">🏔️</span>
+                            <span className="text-sm font-medium text-slate-700">户外旅行</span>
+                          </div>
+                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
+                            <span className="text-lg mr-2">📸</span>
+                            <span className="text-sm font-medium text-slate-700">摄影</span>
                           </div>
                         </div>
                       </div>
@@ -503,10 +503,6 @@ export default function Home() {
                       <p className="text-slate-600 mb-4">{blog.excerpt}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-[#165DFF] font-medium hover:underline">阅读更多</span>
-                        <div className="flex items-center text-sm text-slate-500">
-                          <i className="fas fa-eye mr-1"></i>
-                          <span>{blog.views || 0}</span>
-                        </div>
                       </div>
                     </div>
                   </div>
