@@ -5,10 +5,6 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
 
-
-
-
-
 // 主页面组件
 export default function Home() {
   const navigate = useNavigate();
@@ -24,9 +20,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [screenSize, setScreenSize] = useState({ width: 1024, height: 768 });
   const [error, setError] = useState<string | null>(null);
-  
-
-
   
   // 获取推荐内容
   const fetchFeaturedContent = async () => {
@@ -51,8 +44,6 @@ export default function Home() {
     }
   };
   
-
-  
   // 监听屏幕尺寸变化
   useEffect(() => {
     const updateScreenSize = () => {
@@ -68,7 +59,6 @@ export default function Home() {
 
   // 组件挂载时获取数据
   useEffect(() => {
-
     // 添加小延迟确保组件完全挂载
     const timer = setTimeout(() => {
       fetchFeaturedContent();
@@ -76,10 +66,6 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, []);
-  
-
-
-
   
   // 滚动动画效果
   useEffect(() => {
@@ -161,132 +147,118 @@ export default function Home() {
       <PublicNav />
       
       {/* 主要内容 */}
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         {/* 英雄区域 */}
-        <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50" style={{paddingTop: '0.5rem'}}>
+        <section className="min-h-screen lg:h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50">
           <div className="container mx-auto px-6 relative z-10 h-full flex items-center">
             <div className="max-w-7xl mx-auto w-full">
               {/* 英雄区域 - 分屏式设计 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch min-h-[85vh]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)]">
                 {/* 左侧：个人简介与核心理念 */}
-                <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-12 sm:py-16 lg:py-20 bg-transparent lg:border-r lg:border-gray-100 relative overflow-hidden">
+                <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12 bg-transparent lg:border-r lg:border-gray-100 relative overflow-hidden min-h-screen lg:min-h-0">
                   <div className="max-w-xl mx-auto lg:mx-0 relative z-10">
-                  <div className="text-left fade-in">
-                    {/* 问候语 */}
-                    <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#165DFF]/10 to-[#36CFC9]/10 rounded-full mb-6">
-                      <span className="text-2xl mr-2">👋</span>
-                      <span className="text-[#165DFF] font-medium">嗨，我是Jianxian！</span>
-                    </div>
-                    
-                    {/* 主标题 */}
-                    <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-800 leading-tight">
-                      <span className="bg-gradient-to-r from-[#165DFF] to-[#36CFC9] bg-clip-text text-transparent">
-                        全栈开发者
-                      </span>
-                      <br />
-                      <span className="text-slate-700">& AI探索者</span>
-                    </h1>
-                    
-                    {/* 个人简介 */}
-                    <div className="text-lg text-slate-600 mb-6 leading-relaxed">
-                      <p className="mb-3">
-                        我是一名充满热情的全栈开发者，专注于用技术解决实际问题。
-                        从Java后端开发到AI智能体技术，始终保持对新技术的好奇心。
-                      </p>
-                      <p className="mb-3">
-                        6年开发经验，涉及金融科技到智能制造多个领域，
-                        深刻理解技术如何赋能业务，让复杂系统变得简单易用。
-                      </p>
-                    </div>
+                    <div className="text-left fade-in">
+                      {/* 问候语 */}
+                      <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#165DFF]/10 to-[#36CFC9]/10 rounded-full mb-6">
+                        <span className="text-2xl mr-2">👋</span>
+                        <span className="text-[#165DFF] font-medium">嗨，我是Jianxian！</span>
+                      </div>
+                      
+                      {/* 主标题 */}
+                      <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-800 leading-tight">
+                        <span className="bg-gradient-to-r from-[#165DFF] to-[#36CFC9] bg-clip-text text-transparent">
+                          全栈开发者
+                        </span>
+                        <br />
+                        <span className="text-slate-700">& AI探索者</span>
+                      </h1>
+                      
+                      {/* 个人简介 */}
+                      <div className="text-lg text-slate-600 mb-4 leading-relaxed">
+                        <p className="mb-3">
+                          我是一名充满热情的全栈开发者，专注于用技术解决实际问题。
+                          从Java后端开发到AI智能体技术，始终保持对新技术的好奇心。
+                        </p>
+                        <p className="mb-3">
+                            6年开发经验，涉及智能制造、金融科技、HR等多个领域，
+                            深刻理解技术如何赋能业务，让复杂系统变得简单易用。
+                        </p>
+                      </div>
 
-                    {/* 核心理念 */}
-                    <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-3">💭 我的理念</h3>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-slate-600">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                          <span>技术应该服务于人，而不是让人适应技术</span>
-                        </div>
-                        <div className="flex items-center text-sm text-slate-600">
-                          <span className="w-2 h-2 bg-cyan-500 rounded-full mr-3"></span>
-                          <span>简单的解决方案往往是最优雅的</span>
-                        </div>
-                        <div className="flex items-center text-sm text-slate-600">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                          <span>持续学习是保持竞争力的唯一方式</span>
+                      {/* 核心理念 */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3">💭 我的理念</h3>
+                        <div className="space-y-2">
+                          <div className="flex items-center text-sm text-slate-600">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            <span>技术应该服务于人的，而不是让人适应技术</span>
+                          </div>
+                          <div className="flex items-center text-sm text-slate-600">
+                            <span className="w-2 h-2 bg-cyan-500 rounded-full mr-3"></span>
+                            <span>简单的解决方案往往是最优雅的</span>
+                          </div>
+                          <div className="flex items-center text-sm text-slate-600">
+                            <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                            <span>持续学习是保持竞争力的唯一方式</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* 行动按钮组 */}
-                    <div className="flex flex-row gap-4">
-                      <button 
-                        className="group px-8 py-4 bg-gradient-to-r from-[#165DFF] to-[#36CFC9] text-white font-semibold rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center"
-                        onClick={() => navigate('/works')}
-                      >
-                        查看我的作品
-                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                      </button>
-                      <button 
-                        className="group px-8 py-4 border-2 border-[#165DFF] text-[#165DFF] font-semibold rounded-xl hover:bg-[#165DFF] hover:text-white transition-all duration-300 flex items-center"
-                        onClick={() => navigate('/blog')}
-                      >
-                        查看文章
-                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                      </button>
-                    </div>
+                      {/* 行动按钮组 */}
+                      <div className="flex flex-row gap-4 mb-6">
+                        <button 
+                          className="group px-8 py-4 bg-gradient-to-r from-[#165DFF] to-[#36CFC9] text-white font-semibold rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center"
+                          onClick={() => navigate('/works')}
+                        >
+                          查看我的作品
+                          <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </button>
+                        <button 
+                          className="group px-8 py-4 border-2 border-[#165DFF] text-[#165DFF] font-semibold rounded-xl hover:bg-[#165DFF] hover:text-white transition-all duration-300 flex items-center"
+                          onClick={() => navigate('/blogs')}
+                        >
+                          查看文章
+                          <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </button>
+                      </div>
 
-                    {/* 个人兴趣爱好 */}
-                    <div className="mb-8 mt-12">
-                      <h3 className="text-xl font-bold text-slate-800 mb-4">🎯 兴趣爱好</h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
-                          <span className="text-2xl mr-3">💻</span>
-                          <div>
-                            <div className="text-base font-semibold text-slate-700">编程开发</div>
-                            <div className="text-sm text-slate-600">技术探索</div>
+                      {/* 个人兴趣爱好 */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-slate-800 mb-3">🎯 兴趣爱好</h3>
+                        <div className="flex flex-wrap gap-2">
+                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
+                            <span className="text-lg mr-2">💻</span>
+                            <span className="text-sm font-medium text-slate-700">编程开发</span>
                           </div>
-                        </div>
-                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
-                          <span className="text-2xl mr-3">🤖</span>
-                          <div>
-                            <div className="text-base font-semibold text-slate-700">AI研究</div>
-                            <div className="text-sm text-slate-600">智能应用</div>
+                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
+                            <span className="text-lg mr-2">🤖</span>
+                            <span className="text-sm font-medium text-slate-700">AI研究</span>
                           </div>
-                        </div>
-                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
-                          <span className="text-2xl mr-3">📚</span>
-                          <div>
-                            <div className="text-base font-semibold text-slate-700">技术阅读</div>
-                            <div className="text-sm text-slate-600">持续学习</div>
+                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
+                            <span className="text-lg mr-2">📚</span>
+                            <span className="text-sm font-medium text-slate-700">技术阅读</span>
                           </div>
-                        </div>
-                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
-                          <span className="text-2xl mr-3">🎮</span>
-                          <div>
-                            <div className="text-base font-semibold text-slate-700">游戏设计</div>
-                            <div className="text-sm text-slate-600">创意思维</div>
+                          <div className="inline-flex items-center px-3 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-slate-200/50">
+                            <span className="text-lg mr-2">🎮</span>
+                            <span className="text-sm font-medium text-slate-700">游戏设计</span>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
 
-
-                   </div>
-                   </div>
-                 </div>
-
-                 {/* 右侧：专业技能与项目展示 */}
-                 <div className="relative min-h-[60vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-start justify-center fade-in overflow-y-auto py-8 lg:py-12" 
-                      style={{
-                        animationDelay: '0.3s',
-                        background: 'transparent',
-                        zIndex: 1
-                      }}>
+                {/* 右侧：专业技能与项目展示 */}
+                <div className="relative min-h-screen lg:h-full flex items-center justify-center fade-in overflow-y-auto py-6 lg:py-8" 
+                     style={{
+                       animationDelay: '0.3s',
+                       background: 'transparent',
+                       zIndex: 1
+                     }}>
                   
                   {/* 背景装饰图案 */}
                   <div className="absolute inset-0 opacity-20">
@@ -308,137 +280,130 @@ export default function Home() {
                   </div>
 
                   {/* 个人信息展示容器 */}
-                   <div className="group relative z-10 w-full max-w-md mx-auto px-6 py-4">
-                     
-                     {/* 头像区域 - 缩小并居中 */}
-                     <div className="flex justify-center mb-6">
-                       <div className="relative">
-                         {/* 简化的装饰效果 */}
-                         <div className="absolute inset-0 w-24 h-24 sm:w-28 sm:h-28 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                           {/* 简化的装饰环 */}
-                           <div className="absolute inset-0 w-full h-full rounded-full border border-blue-200/20 animate-pulse" style={{animationDuration: '3s'}}></div>
-                           <div className="absolute inset-2 w-auto h-auto rounded-full border border-cyan-200/15 animate-pulse" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
-                         </div>
+                  <div className="group relative z-10 w-full max-w-md mx-auto px-6 py-2">
                     
-                         {/* 主头像 - 中国人形象，缩小尺寸 */}
-                         <div className="relative w-24 h-24 sm:w-28 sm:h-28 z-20">
-                           <div className="relative w-full h-full">
-                             {/* 简化的头像光晕效果 */}
-                             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/15 to-cyan-400/15 blur-lg group-hover:blur-xl transition-all duration-500"></div>
-                             
-                             <img 
-                               src="https://file.hjxlog.com/blog/images/avatar.jpg"
-                               alt="开发者头像"
-                               className="relative w-full h-full rounded-full object-cover transition-all duration-500 group-hover:scale-105 shadow-lg"
-                             />
-                           </div>
-                           
-                           {/* 在线状态指示器 */}
-                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md animate-pulse"></div>
-                         </div>
-                       </div>
-                     </div>
-                      
-                     {/* 个人简介区域 */}
-                     <div className="text-center mb-6">
-                       <h3 className="text-2xl font-bold text-slate-800 mb-2">Huang JX</h3>
-                       <p className="text-base text-slate-600 mb-3">全栈开发者 & AI技术探索者</p>
-                       <div className="w-16 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mx-auto mb-4"></div>
-                       <p className="text-sm text-slate-500 leading-relaxed px-2">
-                         "用代码连接想象与现实，让AI赋能每一个创意"
-                       </p>
-                     </div>
+                    {/* 头像区域 - 缩小并居中 */}
+                    <div className="flex justify-center mb-4">
+                      <div className="relative">
+                        {/* 简化的装饰效果 */}
+                        <div className="absolute inset-0 w-24 h-24 sm:w-28 sm:h-28 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+                          {/* 简化的装饰环 */}
+                          <div className="absolute inset-0 w-full h-full rounded-full border border-blue-200/20 animate-pulse" style={{animationDuration: '3s'}}></div>
+                          <div className="absolute inset-2 w-auto h-auto rounded-full border border-cyan-200/15 animate-pulse" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+                        </div>
+                   
+                        {/* 主头像 - 中国人形象，缩小尺寸 */}
+                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 z-20">
+                          <div className="relative w-full h-full">
+                            {/* 简化的头像光晕效果 */}
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/15 to-cyan-400/15 blur-lg group-hover:blur-xl transition-all duration-500"></div>
+                            
+                            <img 
+                              src="https://file.hjxlog.com/blog/images/avatar.jpg"
+                              alt="开发者头像"
+                              className="relative w-full h-full rounded-full object-cover transition-all duration-500 group-hover:scale-105 shadow-lg"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                     {/* 核心技术栈 */}
-                     <div className="mb-6">
-                       <h4 className="text-base font-semibold text-slate-700 mb-4 text-center">核心技术栈</h4>
-                       <div className="space-y-3">
-                         {/* 后端开发 */}
-                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center">
-                               <span className="text-lg mr-2">☕</span>
-                               <span className="text-base font-semibold text-slate-700">后端开发</span>
-                             </div>
-                             <div className="flex items-center">
-                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
-                                 <div className="w-5/6 h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full"></div>
-                               </div>
-                               <span className="text-xs text-slate-500">6年+</span>
-                             </div>
-                           </div>
-                           <p className="text-sm text-slate-500 ml-7">Java · Spring Boot · MySQL · Redis · Docker</p>
-                         </div>
-                         
-                         {/* AI技术 */}
-                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center">
-                               <span className="text-lg mr-2">🤖</span>
-                               <span className="text-base font-semibold text-slate-700">AI技术</span>
-                             </div>
-                             <div className="flex items-center">
-                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
-                                 <div className="w-4/6 h-full bg-gradient-to-r from-cyan-400 to-cyan-500 rounded-full"></div>
-                               </div>
-                               <span className="text-xs text-slate-500">2年+</span>
-                             </div>
-                           </div>
-                           <p className="text-sm text-slate-500 ml-7">LangChain · OpenAI API · RAG · Vector DB</p>
-                         </div>
-                         
-                         {/* 前端开发 */}
-                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center">
-                               <span className="text-lg mr-2">⚛️</span>
-                               <span className="text-base font-semibold text-slate-700">前端开发</span>
-                             </div>
-                             <div className="flex items-center">
-                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
-                                 <div className="w-3/6 h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-full"></div>
-                               </div>
-                               <span className="text-xs text-slate-500">3年+</span>
-                             </div>
-                           </div>
-                           <p className="text-sm text-slate-500 ml-7">React · TypeScript · Tailwind CSS · Next.js</p>
-                         </div>
-                       </div>
-                     </div>
+                    {/* 个人简介 */}
+                    <div className="text-center mb-4">
+                      <h2 className="text-xl font-bold text-slate-800 mb-2">Huang JX</h2>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        全栈开发工程师，专注于现代Web技术栈和AI应用开发。
+                        热爱探索新技术，致力于用代码创造价值。
+                      </p>
+                    </div>
 
-                     {/* 项目统计 */}
-                     <div className="mb-6">
-                       <h4 className="text-base font-semibold text-slate-700 mb-4 text-center">项目成就</h4>
-                       <div className="grid grid-cols-2 gap-3">
-                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-xl font-bold text-blue-600">20+</div>
-                           <div className="text-sm text-slate-600">完成项目</div>
-                         </div>
-                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-xl font-bold text-cyan-600">50K+</div>
-                           <div className="text-sm text-slate-600">代码行数</div>
-                         </div>
-                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-xl font-bold text-purple-600">15+</div>
-                           <div className="text-sm text-slate-600">技术栈</div>
-                         </div>
-                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-xl font-bold text-green-600">99%</div>
-                           <div className="text-sm text-slate-600">项目成功率</div>
-                         </div>
-                       </div>
-                     </div>
+                    {/* 核心技术栈 */}
+                    <div className="mb-4">
+                      <h4 className="text-base font-semibold text-slate-700 mb-3 text-center">核心技术栈</h4>
+                      <div className="space-y-3">
+                        {/* Java后端 */}
+                        <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              <span className="text-lg mr-2">☕</span>
+                              <span className="text-base font-semibold text-slate-700">Java后端</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                <div className="w-5/6 h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full"></div>
+                              </div>
+                              <span className="text-xs text-slate-500">6年+</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-500 ml-7">Spring Boot · MyBatis · Redis · MySQL</p>
+                        </div>
+                        
+                        {/* AI智能体 */}
+                        <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              <span className="text-lg mr-2">🤖</span>
+                              <span className="text-base font-semibold text-slate-700">AI智能体</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                <div className="w-2/6 h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full"></div>
+                              </div>
+                              <span className="text-xs text-slate-500">2年+</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-500 ml-7">LangChain · OpenAI API · RAG · Vector DB</p>
+                        </div>
+                        
+                        {/* 前端开发 */}
+                        <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              <span className="text-lg mr-2">⚛️</span>
+                              <span className="text-base font-semibold text-slate-700">前端开发</span>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                <div className="w-3/6 h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-full"></div>
+                              </div>
+                              <span className="text-xs text-slate-500">3年+</span>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-500 ml-7">React · TypeScript · Tailwind CSS · Next.js</p>
+                        </div>
+                      </div>
+                    </div>
 
-                   </div>
+                    {/* 项目统计 */}
+                    <div className="mb-4">
+                      <h4 className="text-base font-semibold text-slate-700 mb-3 text-center">项目成就</h4>
+                      <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-slate-200/50">
+                        <div className="grid grid-cols-4 gap-2 text-center">
+                          <div>
+                            <div className="text-lg font-bold text-blue-600">20+</div>
+                            <div className="text-xs text-slate-600">项目</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold text-cyan-600">50K+</div>
+                            <div className="text-xs text-slate-600">代码</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold text-purple-600">15+</div>
+                            <div className="text-xs text-slate-600">技术</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold text-green-600">99%</div>
+                            <div className="text-xs text-slate-600">成功率</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-
         </section>
-        
-
         
         {/* 精选作品 */}
         <section id="work" className="py-16 px-6 bg-slate-50">
@@ -494,8 +459,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-        
-
         
         {/* 博客页 */}
         <section id="blog" className="py-16 px-6 bg-slate-50">
@@ -566,8 +529,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-        
-
       </main>
       
       <Footer />
