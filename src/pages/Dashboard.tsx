@@ -44,19 +44,7 @@ interface Blog {
   updated_at: string;
 }
 
-interface Message {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: 'unread' | 'read' | 'replied';
-  replied: boolean;
-  ip_address?: string;
-  user_agent?: string;
-  created_at: string;
-  updated_at: string;
-}
+
 
 interface Comment {
   id: number;
@@ -79,14 +67,13 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+
   const [comments, setComments] = useState<Comment[]>([]);
   const [isWorkFormOpen, setIsWorkFormOpen] = useState(false);
   const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
   const [currentWork, setCurrentWork] = useState<Work | null>(null);
   const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
-  const [currentMessage, setCurrentMessage] = useState<Message | null>(null);
-  const [isMessageDetailOpen, setIsMessageDetailOpen] = useState(false);
+
   const [currentComment, setCurrentComment] = useState<Comment | null>(null);
   const [isCommentReplyOpen, setIsCommentReplyOpen] = useState(false);
   const [replyContent, setReplyContent] = useState('');
@@ -119,11 +106,7 @@ export default function Dashboard() {
   const [workSelectedStatus, setWorkSelectedStatus] = useState('');
   const worksPerPage = 6;
 
-  // 消息分页和筛选状态
-  const [messageCurrentPage, setMessageCurrentPage] = useState(1);
-  const [messageSearchQuery, setMessageSearchQuery] = useState('');
-  const [messageSelectedStatus, setMessageSelectedStatus] = useState('');
-  const messagesPerPage = 10;
+
 
 
   // 表单数据状态
@@ -189,63 +172,9 @@ export default function Dashboard() {
     }
   };
 
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/messages?limit=100`);
-      const result = await response.json();
-      if (result.success) {
-        setMessages(result.data.messages || []);
-      } else {
-        setError('获取消息数据失败');
-      }
-    } catch (error) {
-      console.error('获取消息数据失败:', error);
-      setError('获取消息数据失败');
-    }
-  };
-
-  const updateMessageStatus = async (messageId: number, status: string) => {
-    try {
-      const result = await apiRequest(`/api/messages/${messageId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      });
-      if (result.success) {
-        await fetchMessages();
-        toast.success('消息状态更新成功');
-        return true;
-      } else {
-        toast.error(result.message || '更新消息状态失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('更新消息状态失败:', error);
-      toast.error('更新消息状态失败');
-      return false;
-    }
-  };
 
 
 
-  const deleteMessage = async (messageId: number) => {
-    try {
-      const result = await apiRequest(`/api/messages/${messageId}`, {
-        method: 'DELETE',
-      });
-      if (result.success) {
-        await fetchMessages();
-        toast.success('消息删除成功');
-        return true;
-      } else {
-        toast.error(result.message || '删除消息失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('删除消息失败:', error);
-      toast.error('删除消息失败');
-      return false;
-    }
-  };
 
   // 获取所有评论
   const fetchComments = async () => {
@@ -657,7 +586,7 @@ export default function Dashboard() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchMessages(), fetchComments(), fetchMoments()]);
+      await Promise.all([fetchWorks(), fetchBlogs(), fetchComments(), fetchMoments()]);
       setLoading(false);
     };
     
@@ -1078,19 +1007,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-500 text-sm">未读消息</p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      {messages.filter(msg => msg.status === 'unread').length}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i className="fas fa-envelope text-red-600"></i>
-                  </div>
-                </div>
-              </div>
+
             </div>
 
             {/* 快速操作 */}
@@ -1810,334 +1727,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 消息管理页面 */}
-        {activeTab === 'messages' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-slate-800">消息管理</h2>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-slate-600">
-                  未读消息: <span className="font-semibold text-red-600">{messages.filter(msg => msg.status === 'unread').length}</span>
-                </span>
-              </div>
-            </div>
 
-            {/* 搜索和筛选区域 */}
-            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 搜索框 */}
-                <div className="md:col-span-2">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="搜索发件人、邮箱、主题或内容..."
-                      value={messageSearchQuery}
-                      onChange={(e) => setMessageSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      🔍
-                    </span>
-                  </div>
-                </div>
-
-                {/* 状态筛选 */}
-                <div>
-                  <select
-                    value={messageSelectedStatus}
-                    onChange={(e) => setMessageSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    <option value="">所有状态</option>
-                    <option value="unread">未读</option>
-                    <option value="read">已读</option>
-                    <option value="replied">已回复</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 统计信息 */}
-              <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                <span>
-                  显示 {Math.min(messagesPerPage, messages.filter(msg => {
-                    const matchesSearch = msg.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.email.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.subject.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.message.toLowerCase().includes(messageSearchQuery.toLowerCase());
-                    const matchesStatus = !messageSelectedStatus || msg.status === messageSelectedStatus;
-                    return matchesSearch && matchesStatus;
-                  }).length)} 条，共 {messages.filter(msg => {
-                    const matchesSearch = msg.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.email.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.subject.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                         msg.message.toLowerCase().includes(messageSearchQuery.toLowerCase());
-                    const matchesStatus = !messageSelectedStatus || msg.status === messageSelectedStatus;
-                    return matchesSearch && matchesStatus;
-                  }).length} 条消息
-                  {messageSearchQuery && ` (搜索: "${messageSearchQuery}")`}
-                  {messageSelectedStatus && ` (状态: ${messageSelectedStatus === 'unread' ? '未读' : messageSelectedStatus === 'read' ? '已读' : '已回复'})`}
-                </span>
-                {(messageSearchQuery || messageSelectedStatus) && (
-                  <button
-                    onClick={() => {
-                      setMessageSearchQuery('');
-                      setMessageSelectedStatus('');
-                      setMessageCurrentPage(1);
-                    }}
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    清除筛选
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 消息列表 */}
-            <div className="space-y-4">
-              {(() => {
-                const filteredMessages = messages.filter(msg => {
-                  const matchesSearch = msg.name.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                       msg.email.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                       msg.subject.toLowerCase().includes(messageSearchQuery.toLowerCase()) ||
-                                       msg.message.toLowerCase().includes(messageSearchQuery.toLowerCase());
-                  const matchesStatus = !messageSelectedStatus || msg.status === messageSelectedStatus;
-                  return matchesSearch && matchesStatus;
-                });
-                
-                const totalMessagePages = Math.ceil(filteredMessages.length / messagesPerPage);
-                const currentMessages = filteredMessages.slice(
-                  (messageCurrentPage - 1) * messagesPerPage,
-                  messageCurrentPage * messagesPerPage
-                );
-
-                return currentMessages.length > 0 ? (
-                  <>
-                    {currentMessages.map(message => (
-                      <div key={message.id} className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${
-                        message.status === 'unread' ? 'border-red-500 bg-red-50/30' :
-                        message.status === 'replied' ? 'border-green-500' : 'border-blue-500'
-                      }`}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold text-slate-800">{message.subject}</h3>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                message.status === 'unread' ? 'bg-red-100 text-red-800' :
-                                message.status === 'replied' ? 'bg-green-100 text-green-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
-                                {message.status === 'unread' ? '未读' :
-                                 message.status === 'replied' ? '已回复' : '已读'}
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-4 text-sm text-slate-600 mb-3">
-                              <span><strong>发件人:</strong> {message.name}</span>
-                              <span><strong>邮箱:</strong> {message.email}</span>
-                              <span><strong>时间:</strong> {new Date(message.created_at).toLocaleString('zh-CN')}</span>
-                            </div>
-                            
-                            <p className="text-slate-700 text-sm mb-3 line-clamp-3">{message.message}</p>
-                            
-                            {message.replied && (
-                              <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-sm text-green-800">✓ 已回复</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 ml-4">
-                            <button
-                              onClick={() => {
-                                setCurrentMessage(message);
-                                setIsMessageDetailOpen(true);
-                                if (message.status === 'unread') {
-                                  updateMessageStatus(message.id, 'read');
-                                }
-                              }}
-                              className="text-gray-400 hover:text-blue-500 transition-colors p-2"
-                              title="查看详情"
-                            >
-                              👁️
-                            </button>
-                            {!message.replied && (
-                              <button
-                                onClick={() => updateMessageStatus(message.id, 'replied')}
-                                className="text-gray-400 hover:text-green-500 transition-colors p-2"
-                                title="标记已回复"
-                              >
-                                ✅
-                              </button>
-                            )}
-                            <button
-                              onClick={() => deleteMessage(message.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors p-2"
-                              title="删除"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* 分页控制 */}
-                    {totalMessagePages > 1 && (
-                      <div className="mt-8 flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => setMessageCurrentPage(Math.max(1, messageCurrentPage - 1))}
-                          disabled={messageCurrentPage === 1}
-                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          ← 上一页
-                        </button>
-                        
-                        <div className="flex space-x-1">
-                          {Array.from({ length: totalMessagePages }, (_, i) => i + 1).map(page => (
-                            <button
-                              key={page}
-                              onClick={() => setMessageCurrentPage(page)}
-                              className={`px-3 py-2 rounded-lg transition-colors ${
-                                page === messageCurrentPage
-                                  ? 'bg-blue-500 text-white'
-                                  : 'border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          ))}
-                        </div>
-                        
-                        <button
-                          onClick={() => setMessageCurrentPage(Math.min(totalMessagePages, messageCurrentPage + 1))}
-                          disabled={messageCurrentPage === totalMessagePages}
-                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          下一页 →
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-                    <div className="text-6xl mb-4">📧</div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">
-                      {messageSearchQuery || messageSelectedStatus 
-                        ? '没有找到匹配的消息' 
-                        : '还没有收到消息'}
-                    </h3>
-                    <p className="text-gray-600">
-                      {messageSearchQuery || messageSelectedStatus 
-                        ? '尝试调整搜索条件或筛选器' 
-                        : '当有用户通过联系表单发送消息时，它们会显示在这里'}
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
       </main>
 
-      {/* 消息详情模态框 */}
-      {isMessageDetailOpen && currentMessage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-slate-800">消息详情</h3>
-                <button
-                  onClick={() => setIsMessageDetailOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <i className="fas fa-times text-xl"></i>
-                </button>
-              </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">发件人</label>
-                    <p className="text-slate-900">{currentMessage.name}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">邮箱</label>
-                    <p className="text-slate-900">{currentMessage.email}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">主题</label>
-                  <p className="text-slate-900">{currentMessage.subject}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">消息内容</label>
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-slate-800 whitespace-pre-wrap">{currentMessage.message}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-                  <div>
-                    <label className="block font-medium mb-1">发送时间</label>
-                    <p>{new Date(currentMessage.created_at).toLocaleString('zh-CN')}</p>
-                  </div>
-                  <div>
-                    <label className="block font-medium mb-1">状态</label>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      currentMessage.status === 'unread' ? 'bg-red-100 text-red-800' :
-                      currentMessage.status === 'replied' ? 'bg-green-100 text-green-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {currentMessage.status === 'unread' ? '未读' :
-                       currentMessage.status === 'replied' ? '已回复' : '已读'}
-                    </span>
-                  </div>
-                </div>
-
-                {currentMessage.ip_address && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">IP地址</label>
-                    <p className="text-slate-600 text-sm">{currentMessage.ip_address}</p>
-                  </div>
-                )}
-
-                {currentMessage.replied && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">回复状态</label>
-                    <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                      <p className="text-green-800">✓ 已回复此消息</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  {!currentMessage.replied && (
-                    <button
-                      onClick={async () => {
-                        const success = await updateMessageStatus(currentMessage.id, 'replied');
-                        if (success) {
-                          setCurrentMessage({ ...currentMessage, status: 'replied', replied: true });
-                        }
-                      }}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      标记已回复
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setIsMessageDetailOpen(false)}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-                  >
-                    关闭
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
 
 

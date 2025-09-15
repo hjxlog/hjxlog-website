@@ -83,20 +83,7 @@ export default function Nav() {
           >
             博客
           </a>
-          <a 
-            href="#contact" 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={(e) => {
-              e.preventDefault();
-              const element = document.getElementById('contact');
-              if (element) {
-                const offsetTop = element.offsetTop - 80;
-                window.scrollTo({ top: offsetTop, behavior: 'smooth' });
-              }
-            }}
-          >
-            联系
-          </a>
+
         </div>
         
         <div className="hidden md:flex items-center space-x-4">
@@ -198,21 +185,7 @@ export default function Nav() {
             >
               博客
             </a>
-            <a 
-              href="#contact" 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsMenuOpen(false);
-                const element = document.getElementById('contact');
-                if (element) {
-                  const offsetTop = element.offsetTop - 80;
-                  window.scrollTo({ top: offsetTop, behavior: 'smooth' });
-                }
-              }}
-            >
-              联系
-            </a>
+
             {isAuthenticated ? (
               <>
                 <button 

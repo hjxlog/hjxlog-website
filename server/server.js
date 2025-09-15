@@ -1113,235 +1113,17 @@ app.put('/api/users/:id/password', async (req, res) => {
   }
 });
 
-// ==================== 消息管理 API ====================
-
-// 获取消息列表
-app.get('/api/messages', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { page = 1, limit = 10, status, search } = req.query;
-    const offset = (page - 1) * limit;
-
-    console.log('📧 [API] 获取消息列表请求:', { page, limit, status, search });
-
-    let whereClause = '';
-    let queryParams = [];
-    let paramIndex = 1;
-
-    const conditions = [];
-
-    if (status && status !== 'all') {
-      conditions.push(`status = $${paramIndex}`);
-      queryParams.push(status);
-      paramIndex++;
-    }
-
-    if (search) {
-      conditions.push(`(name ILIKE $${paramIndex} OR email ILIKE $${paramIndex + 1} OR subject ILIKE $${paramIndex + 2} OR message ILIKE $${paramIndex + 3})`);
-      const searchPattern = `%${search}%`;
-      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
-      paramIndex += 4;
-    }
-
-    if (conditions.length > 0) {
-      whereClause = 'WHERE ' + conditions.join(' AND ');
-    }
-
-    // 获取总数
-    const countQuery = `SELECT COUNT(*) FROM messages ${whereClause}`;
-    const countResult = await dbClient.query(countQuery, queryParams);
-    const total = parseInt(countResult.rows[0].count);
-
-    // 获取消息列表
-    const messagesQuery = `
-      SELECT id, name, email, subject, message, status, replied, reply_content, 
-             ip_address, user_agent, created_at, updated_at
-      FROM messages 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
-
-    queryParams.push(limit, offset);
-    const result = await dbClient.query(messagesQuery, queryParams);
-
-    console.log(`✅ [API] 消息列表获取成功，共 ${result.rows.length} 条记录`);
-    res.json({
-      success: true,
-      data: {
-        messages: result.rows,
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit)
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 获取消息列表失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 根据ID获取消息详情
-app.get('/api/messages/:id', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    console.log('📧 [API] 获取消息详情请求:', id);
-
-    const result = await dbClient.query('SELECT * FROM messages WHERE id = $1', [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '消息不存在'
-      });
-    }
-
-    console.log('✅ [API] 消息详情获取成功');
-    res.json({
-      success: true,
-      data: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 获取消息详情失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 创建新消息（联系表单提交）
-app.post('/api/messages', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { name, email, subject, message } = req.body;
-    const ip_address = req.ip || req.connection.remoteAddress;
-    const user_agent = req.get('User-Agent');
-
-    console.log('📧 [API] 创建新消息请求:', { name, email, subject });
-
-    const query = `
-      INSERT INTO messages (name, email, subject, message, ip_address, user_agent)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `;
-
-    const result = await dbClient.query(query, [name, email, subject, message, ip_address, user_agent]);
-
-    console.log('✅ [API] 消息创建成功');
-    res.status(201).json({
-      success: true,
-      data: result.rows[0],
-      message: '消息发送成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 创建消息失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 更新消息状态
-app.put('/api/messages/:id/status', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    const { status } = req.body;
-
-    console.log('📧 [API] 更新消息状态请求:', { id, status });
-
-    // 如果状态是replied，同时设置replied字段为true
-    let query, params;
-    if (status === 'replied') {
-      query = 'UPDATE messages SET status = $1, replied = true, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
-      params = [status, id];
-    } else {
-      query = 'UPDATE messages SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
-      params = [status, id];
-    }
-
-    const result = await dbClient.query(query, params);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '消息不存在'
-      });
-    }
-
-    console.log('✅ [API] 消息状态更新成功');
-    res.json({
-      success: true,
-      data: result.rows[0],
-      message: '状态更新成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 更新消息状态失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 
 
-// 删除消息
-app.delete('/api/messages/:id', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    const { id } = req.params;
-    console.log('📧 [API] 删除消息请求:', id);
 
-    const result = await dbClient.query('DELETE FROM messages WHERE id = $1 RETURNING *', [id]);
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '消息不存在'
-      });
-    }
 
-    console.log('✅ [API] 消息删除成功');
-    res.json({
-      success: true,
-      message: '消息删除成功'
-    });
 
-  } catch (error) {
-    console.error('❌ [API] 删除消息失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
+
+
+
 
 // 获取博客评论
 app.get('/api/blogs/:id/comments', async (req, res) => {
@@ -2083,12 +1865,7 @@ app.listen(PORT, () => {
   console.log(`   - GET  /api/works/categories  - 获取作品分类列表`);
   console.log(`   - GET  /api/works/:id         - 获取作品详情`);
   console.log(`   - GET  /api/featured          - 获取推荐内容（主页用）`);
-  console.log(`   - GET  /api/messages          - 获取消息列表`);
-  console.log(`   - GET  /api/messages/:id      - 获取消息详情`);
-  console.log(`   - POST /api/messages          - 创建新消息`);
-  console.log(`   - PUT  /api/messages/:id/status - 更新消息状态`);
-  console.log(`   - PUT  /api/messages/:id/reply  - 回复消息`);
-  console.log(`   - DELETE /api/messages/:id    - 删除消息`);
+
   console.log(`   - GET  /api/blogs/:id/comments - 获取博客评论`);
   console.log(`   - POST /api/blogs/:id/comments - 添加评论`);
   console.log(`   - POST /api/comments/:id/reply - 管理员回复评论`);

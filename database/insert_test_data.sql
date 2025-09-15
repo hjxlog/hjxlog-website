@@ -6,7 +6,7 @@
 -- ================================================
 
 -- 清空现有数据
-TRUNCATE TABLE blogs, works, users, messages, comments, blog_likes RESTART IDENTITY CASCADE;
+TRUNCATE TABLE blogs, works, users, comments, blog_likes RESTART IDENTITY CASCADE;
 
 -- 插入用户数据
 INSERT INTO users (username, email, password_hash, avatar, bio) VALUES
@@ -504,16 +504,7 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  'https://github.com/hjx/data-visualization', 
  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop');
 
--- 插入消息数据
-INSERT INTO messages (name, email, subject, message, status, replied, reply_content, ip_address, user_agent) VALUES
-('张三', 'zhangsan@example.com', '关于React项目合作', '您好，我看了您的React项目，非常感兴趣，希望能够参与合作开发。我有3年的前端开发经验，熟悉React、Vue等框架。', 'read', true, '感谢您的关注！我们目前确实在寻找合作伙伴，请发送您的简历和作品集到我的邮箱，我们可以进一步沟通。', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-('李四', 'lisi@example.com', '技术咨询', '请问您的博客系统是用什么技术栈开发的？我正在学习全栈开发，想了解一下最佳实践。', 'read', false, NULL, '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'),
-('王五', 'wangwu@example.com', '求职申请', '您好，我是一名应届毕业生，专业是计算机科学，对前端开发很感兴趣。看了您的作品后深受启发，希望能够加入您的团队学习。', 'unread', false, NULL, '192.168.1.102', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-('赵六', 'zhaoliu@example.com', '项目建议', '您的数据可视化项目很棒！我建议可以增加一些机器学习的数据分析功能，这样会更有竞争力。', 'read', true, '非常好的建议！机器学习确实是我们下一步要考虑的方向，感谢您的意见。', '192.168.1.103', 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15'),
-('孙七', 'sunqi@example.com', '技术交流', '看了您关于React 18的文章，写得很详细。我在使用Suspense时遇到了一些问题，能否请教一下？', 'unread', false, NULL, '192.168.1.104', 'Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0'),
-('周八', 'zhouba@example.com', '商务合作', '我们公司正在寻找技术合作伙伴，开发一个企业级的管理系统。看了您的作品后，觉得很符合我们的需求。', 'read', false, NULL, '192.168.1.105', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-('吴九', 'wujiu@example.com', '学习请教', '我是一名前端新手，想学习您的开发经验。能否推荐一些学习资源和学习路径？', 'unread', false, NULL, '192.168.1.106', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'),
-('郑十', 'zhengshi@example.com', 'Bug反馈', '您的博客网站在移动端显示有些问题，文章列表的样式在小屏幕上会错乱。', 'read', true, '感谢您的反馈！我们已经修复了这个问题，请清除缓存后重新访问。', '192.168.1.107', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15');
+
 
 -- 插入评论数据
 INSERT INTO comments (blog_id, author_name, author_email, content, ip_address, user_agent, status) VALUES
@@ -551,6 +542,6 @@ SELECT
     (SELECT COUNT(*) FROM users) as users_count,
     (SELECT COUNT(*) FROM blogs) as blogs_count,
     (SELECT COUNT(*) FROM works) as works_count,
-    (SELECT COUNT(*) FROM messages) as messages_count,
+
     (SELECT COUNT(*) FROM comments) as comments_count,
     (SELECT COUNT(*) FROM blog_likes) as blog_likes_count;

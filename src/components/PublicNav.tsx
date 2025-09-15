@@ -100,12 +100,6 @@ export default function PublicNav() {
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('about')}
-          >
-            关于
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
             onClick={handleWorksClick}
           >
             作品
@@ -121,12 +115,6 @@ export default function PublicNav() {
             onClick={() => navigate('/moments')}
           >
             动态
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('contact')}
-          >
-            联系
           </button>
 
         </div>
@@ -159,15 +147,6 @@ export default function PublicNav() {
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
               onClick={() => {
                 setIsMenuOpen(false);
-                handleNavClick('about');
-              }}
-            >
-              关于
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
                 handleWorksClick();
               }}
             >
@@ -190,15 +169,6 @@ export default function PublicNav() {
               }}
             >
               动态
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                handleNavClick('contact');
-              }}
-            >
-              联系
             </button>
           </div>
         </div>

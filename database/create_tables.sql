@@ -6,7 +6,7 @@
 -- ================================================
 
 -- 删除已存在的表（如果存在）
-DROP TABLE IF EXISTS messages CASCADE;
+
 DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS works CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -62,21 +62,7 @@ CREATE TABLE works (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建消息表
-CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    subject VARCHAR(255),
-    message TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'unread',
-    replied BOOLEAN DEFAULT false,
-    reply_content TEXT,
-    ip_address INET,
-    user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+
 
 -- 创建索引以提高查询性能
 CREATE INDEX idx_blogs_category ON blogs(category);
@@ -89,9 +75,6 @@ CREATE INDEX idx_works_status ON works(status);
 CREATE INDEX idx_works_featured ON works(featured);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_messages_status ON messages(status);
-CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
-CREATE INDEX idx_messages_email ON messages(email);
 
 -- 创建更新时间触发器函数
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -118,16 +101,10 @@ CREATE TRIGGER update_users_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_messages_updated_at 
-    BEFORE UPDATE ON messages 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- 添加表注释
 COMMENT ON TABLE blogs IS '博客文章表';
 COMMENT ON TABLE works IS '作品项目表';
 COMMENT ON TABLE users IS '用户表';
-COMMENT ON TABLE messages IS '用户消息表';
 
 -- 添加字段注释
 COMMENT ON COLUMN blogs.title IS '博客标题';
@@ -162,15 +139,7 @@ COMMENT ON COLUMN users.password_hash IS '密码哈希';
 COMMENT ON COLUMN users.avatar IS '头像URL';
 COMMENT ON COLUMN users.bio IS '个人简介';
 
-COMMENT ON COLUMN messages.name IS '发送者姓名';
-COMMENT ON COLUMN messages.email IS '发送者邮箱';
-COMMENT ON COLUMN messages.subject IS '消息主题';
-COMMENT ON COLUMN messages.message IS '消息内容';
-COMMENT ON COLUMN messages.status IS '消息状态(unread/read/replied)';
-COMMENT ON COLUMN messages.replied IS '是否已回复';
-COMMENT ON COLUMN messages.reply_content IS '回复内容';
-COMMENT ON COLUMN messages.ip_address IS '发送者IP地址';
-COMMENT ON COLUMN messages.user_agent IS '用户代理信息';
+
 
 -- 创建评论表
 CREATE TABLE comments (

@@ -1,30 +1,13 @@
-import { useEffect, useState, useContext, lazy, Suspense } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/contexts/authContext';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
 
-// 动态导入 ECharts 组件和库
-const ReactECharts = lazy(async () => {
-  // 动态加载 ECharts 库
-  if (typeof window !== 'undefined' && !window.echarts) {
-    try {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    } catch (error) {
-      console.warn('ECharts CDN 加载失败:', error);
-    }
-  }
-  
-  // 导入 React ECharts 组件
-  return import('echarts-for-react');
-});
+
+
+
 
 // 主页面组件
 export default function Home() {
@@ -39,26 +22,11 @@ export default function Home() {
     blogs: []
   });
   const [loading, setLoading] = useState(true);
+  const [screenSize, setScreenSize] = useState({ width: 1024, height: 768 });
   const [error, setError] = useState<string | null>(null);
   
-  // 联系表单状态
-  const [contactForm, setContactForm] = useState<{
-    name: string;
-    email: string;
-    subject: string;
-    message: string;
-  }>({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  
-  // ECharts 懒加载状态
-  const [shouldLoadChart, setShouldLoadChart] = useState(false);
+
+
   
   // 获取推荐内容
   const fetchFeaturedContent = async () => {
@@ -83,61 +51,21 @@ export default function Home() {
     }
   };
   
-  // 处理联系表单输入变化
-  const handleContactFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setContactForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+
   
-  // 提交联系表单
-  const handleContactFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 监听屏幕尺寸变化
+  useEffect(() => {
+    const updateScreenSize = () => {
+      setScreenSize({ width: window.innerWidth, height: window.innerHeight });
+    };
     
-    if (!contactForm.name || !contactForm.email || !contactForm.message) {
-      setSubmitMessage('请填写所有必填字段');
-      setSubmitSuccess(false);
-      return;
-    }
+    // 初始化屏幕尺寸
+    updateScreenSize();
     
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    
-    try {
-      const result = await apiRequest('/api/messages', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: contactForm.name,
-          email: contactForm.email,
-          subject: contactForm.subject || '来自网站的消息',
-          message: contactForm.message
-        }),
-      });
-      
-      if (result.success) {
-        setSubmitMessage('消息发送成功！我会尽快回复您。');
-        setSubmitSuccess(true);
-        setContactForm({
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
-        });
-      } else {
-        setSubmitMessage(result.message || '发送失败，请稍后重试');
-        setSubmitSuccess(false);
-      }
-    } catch (error) {
-      console.error('发送消息失败:', error);
-      setSubmitMessage('发送失败，请检查网络连接后重试');
-      setSubmitSuccess(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
+
   // 组件挂载时获取数据
   useEffect(() => {
 
@@ -145,77 +73,13 @@ export default function Home() {
     const timer = setTimeout(() => {
       fetchFeaturedContent();
     }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // ECharts 懒加载监听
-  useEffect(() => {
-    // 页面加载完成后延迟加载图表，让用户体验更丝滑
-    const timer = setTimeout(() => {
-      setShouldLoadChart(true);
-    }, 1000); // 延迟1秒加载图表
 
     return () => clearTimeout(timer);
   }, []);
-
   
-  // 技能雷达图配置
-  const radarOption = {
-    title: {
-      left: 'center',
-      textStyle: {
-        color: '#334155',
-        fontSize: 16,
-        fontWeight: 'bold'
-      }
-    },
-    radar: {
-      indicator: [
-        { name: 'Java', max: 100 },
-        { name: '数据库', max: 100 },
-        { name: '前端开发', max: 100 },
-        { name: '运维部署', max: 100 },
-        { name: '架构设计', max: 100 },
-        { name: 'AI技术', max: 100 },
-      ],
-      shape: 'polygon',
-      radius: '70%',
-      axisName: {
-        color: '#64748b',
-        fontSize: 12
-      },
-      splitLine: {
-        lineStyle: {
-          color: '#e2e8f0'
-        }
-      },
-      splitArea: {
-        areaStyle: {
-          color: ['rgba(22, 93, 255, 0.05)', 'rgba(22, 93, 255, 0.1)']
-        }
-      }
-    },
-    series: [{
-      name: '技能水平',
-      type: 'radar',
-      data: [{
-        value: [90, 80, 70, 65, 60, 75],
-        name: '当前技能',
-        areaStyle: {
-          color: 'rgba(22, 93, 255, 0.2)'
-        },
-        lineStyle: {
-          color: '#165DFF',
-          width: 2
-        },
-        itemStyle: {
-          color: '#165DFF'
-        }
-      }]
-    }],
-    color: ['#165DFF']
-  };
+
+
+
   
   // 滚动动画效果
   useEffect(() => {
@@ -298,77 +162,283 @@ export default function Home() {
       
       {/* 主要内容 */}
       <main className="pt-20 pb-16">
-        {/* 首页英雄区 */}
-        <section id="home" className="min-h-screen flex items-center pt-20 pb-16 px-6">
-          <div className="container mx-auto">
-            <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-slate-800">探索 · 创造 · 突破</h1>
-              <p className="text-xl md:text-2xl text-slate-600 mb-10">有趣的灵魂 · 专业的技术 · 前沿的视野</p>
-              <a 
-                href="#work" 
-                className="inline-block px-8 py-3 gradient-btn rounded-full font-medium shadow-lg hover:shadow-xl transition-all"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const element = document.getElementById('work');
-                  if (element) {
-                    const offsetTop = element.offsetTop - 80; // 增加偏移量避免遮挡
-                    window.scrollTo({ top: offsetTop, behavior: 'smooth' });
-                  }
-                }}
-              >
-                查看作品
-              </a>
+        {/* 英雄区域 */}
+        <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50" style={{paddingTop: '0.5rem'}}>
+          <div className="container mx-auto px-6 relative z-10 h-full flex items-center">
+            <div className="max-w-7xl mx-auto w-full">
+              {/* 英雄区域 - 分屏式设计 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch min-h-[85vh]">
+                {/* 左侧：个人简介与核心理念 */}
+                <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-12 sm:py-16 lg:py-20 bg-transparent lg:border-r lg:border-gray-100 relative overflow-hidden">
+                  <div className="max-w-xl mx-auto lg:mx-0 relative z-10">
+                  <div className="text-left fade-in">
+                    {/* 问候语 */}
+                    <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#165DFF]/10 to-[#36CFC9]/10 rounded-full mb-6">
+                      <span className="text-2xl mr-2">👋</span>
+                      <span className="text-[#165DFF] font-medium">嗨，我是Jianxian！</span>
+                    </div>
+                    
+                    {/* 主标题 */}
+                    <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-slate-800 leading-tight">
+                      <span className="bg-gradient-to-r from-[#165DFF] to-[#36CFC9] bg-clip-text text-transparent">
+                        全栈开发者
+                      </span>
+                      <br />
+                      <span className="text-slate-700">& AI探索者</span>
+                    </h1>
+                    
+                    {/* 个人简介 */}
+                    <div className="text-lg text-slate-600 mb-6 leading-relaxed">
+                      <p className="mb-3">
+                        我是一名充满热情的全栈开发者，专注于用技术解决实际问题。
+                        从Java后端开发到AI智能体技术，始终保持对新技术的好奇心。
+                      </p>
+                      <p className="mb-3">
+                        6年开发经验，涉及金融科技到智能制造多个领域，
+                        深刻理解技术如何赋能业务，让复杂系统变得简单易用。
+                      </p>
+                    </div>
+
+                    {/* 核心理念 */}
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-3">💭 我的理念</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-slate-600">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                          <span>技术应该服务于人，而不是让人适应技术</span>
+                        </div>
+                        <div className="flex items-center text-sm text-slate-600">
+                          <span className="w-2 h-2 bg-cyan-500 rounded-full mr-3"></span>
+                          <span>简单的解决方案往往是最优雅的</span>
+                        </div>
+                        <div className="flex items-center text-sm text-slate-600">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                          <span>持续学习是保持竞争力的唯一方式</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 行动按钮组 */}
+                    <div className="flex flex-row gap-4">
+                      <button 
+                        className="group px-8 py-4 bg-gradient-to-r from-[#165DFF] to-[#36CFC9] text-white font-semibold rounded-xl hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center"
+                        onClick={() => navigate('/works')}
+                      >
+                        查看我的作品
+                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </button>
+                      <button 
+                        className="group px-8 py-4 border-2 border-[#165DFF] text-[#165DFF] font-semibold rounded-xl hover:bg-[#165DFF] hover:text-white transition-all duration-300 flex items-center"
+                        onClick={() => navigate('/blog')}
+                      >
+                        查看文章
+                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* 个人兴趣爱好 */}
+                    <div className="mb-8 mt-12">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-4">🎯 兴趣爱好</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
+                          <span className="text-2xl mr-3">💻</span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-700">编程开发</div>
+                            <div className="text-xs text-slate-500">技术探索</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
+                          <span className="text-2xl mr-3">🤖</span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-700">AI研究</div>
+                            <div className="text-xs text-slate-500">智能应用</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
+                          <span className="text-2xl mr-3">📚</span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-700">技术阅读</div>
+                            <div className="text-xs text-slate-500">持续学习</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
+                          <span className="text-2xl mr-3">🎮</span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-700">游戏设计</div>
+                            <div className="text-xs text-slate-500">创意思维</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+
+                   </div>
+                   </div>
+                 </div>
+
+                 {/* 右侧：专业技能与项目展示 */}
+                 <div className="relative min-h-[60vh] sm:min-h-[70vh] lg:min-h-[85vh] flex items-start justify-center fade-in overflow-y-auto py-8 lg:py-12" 
+                      style={{
+                        animationDelay: '0.3s',
+                        background: 'transparent',
+                        zIndex: 1
+                      }}>
+                  
+                  {/* 背景装饰图案 */}
+                  <div className="absolute inset-0 opacity-20">
+                    {/* 几何网格背景 */}
+                    <div className="absolute inset-0" 
+                         style={{
+                           backgroundImage: `
+                             radial-gradient(circle at 25% 25%, rgba(22, 93, 255, 0.03) 0%, transparent 50%),
+                             radial-gradient(circle at 75% 75%, rgba(54, 207, 201, 0.03) 0%, transparent 50%),
+                             linear-gradient(45deg, transparent 48%, rgba(148, 163, 184, 0.02) 49%, rgba(148, 163, 184, 0.02) 51%, transparent 52%)
+                           `,
+                           backgroundSize: '200px 200px, 300px 300px, 40px 40px'
+                         }}></div>
+                    
+                    {/* 浮动几何形状 */}
+                    <div className="absolute top-1/4 left-1/4 w-8 h-8 border border-blue-200/20 rounded-lg transform rotate-12 animate-pulse"></div>
+                    <div className="absolute top-3/4 right-1/4 w-6 h-6 bg-gradient-to-br from-cyan-100/30 to-blue-100/30 rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
+                    <div className="absolute top-1/2 right-1/3 w-4 h-4 border border-cyan-200/30 rounded-full animate-spin" style={{animationDuration: '8s'}}></div>
+                  </div>
+
+                  {/* 个人信息展示容器 */}
+                   <div className="group relative z-10 w-full max-w-md mx-auto px-6 py-4">
+                     
+                     {/* 头像区域 - 缩小并居中 */}
+                     <div className="flex justify-center mb-6">
+                       <div className="relative">
+                         {/* 简化的装饰效果 */}
+                         <div className="absolute inset-0 w-24 h-24 sm:w-28 sm:h-28 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+                           {/* 简化的装饰环 */}
+                           <div className="absolute inset-0 w-full h-full rounded-full border border-blue-200/20 animate-pulse" style={{animationDuration: '3s'}}></div>
+                           <div className="absolute inset-2 w-auto h-auto rounded-full border border-cyan-200/15 animate-pulse" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+                         </div>
+                    
+                         {/* 主头像 - 中国人形象，缩小尺寸 */}
+                         <div className="relative w-24 h-24 sm:w-28 sm:h-28 z-20">
+                           <div className="relative w-full h-full">
+                             {/* 简化的头像光晕效果 */}
+                             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/15 to-cyan-400/15 blur-lg group-hover:blur-xl transition-all duration-500"></div>
+                             
+                             <img 
+                               src="https://file.hjxlog.com/blog/images/avatar.jpg"
+                               alt="开发者头像"
+                               className="relative w-full h-full rounded-full object-cover transition-all duration-500 group-hover:scale-105 shadow-lg"
+                             />
+                           </div>
+                           
+                           {/* 在线状态指示器 */}
+                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md animate-pulse"></div>
+                         </div>
+                       </div>
+                     </div>
+                      
+                     {/* 个人简介区域 */}
+                     <div className="text-center mb-6">
+                       <h3 className="text-xl font-semibold text-slate-800 mb-2">Huang JX</h3>
+                       <p className="text-sm text-slate-600 mb-3">全栈开发者 & AI技术探索者</p>
+                       <div className="w-16 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mx-auto mb-4"></div>
+                       <p className="text-xs text-slate-500 leading-relaxed px-2">
+                         "用代码连接想象与现实，让AI赋能每一个创意"
+                       </p>
+                     </div>
+
+                     {/* 核心技术栈 */}
+                     <div className="mb-6">
+                       <h4 className="text-sm font-medium text-slate-700 mb-4 text-center">核心技术栈</h4>
+                       <div className="space-y-3">
+                         {/* 后端开发 */}
+                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center">
+                               <span className="text-lg mr-2">☕</span>
+                               <span className="text-sm font-medium text-slate-700">后端开发</span>
+                             </div>
+                             <div className="flex items-center">
+                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                 <div className="w-5/6 h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full"></div>
+                               </div>
+                               <span className="text-xs text-slate-500">6年+</span>
+                             </div>
+                           </div>
+                           <p className="text-xs text-slate-400 ml-7">Java · Spring Boot · MySQL · Redis · Docker</p>
+                         </div>
+                         
+                         {/* AI技术 */}
+                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center">
+                               <span className="text-lg mr-2">🤖</span>
+                               <span className="text-sm font-medium text-slate-700">AI技术</span>
+                             </div>
+                             <div className="flex items-center">
+                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                 <div className="w-4/6 h-full bg-gradient-to-r from-cyan-400 to-cyan-500 rounded-full"></div>
+                               </div>
+                               <span className="text-xs text-slate-500">2年+</span>
+                             </div>
+                           </div>
+                           <p className="text-xs text-slate-400 ml-7">LangChain · OpenAI API · RAG · Vector DB</p>
+                         </div>
+                         
+                         {/* 前端开发 */}
+                         <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center">
+                               <span className="text-lg mr-2">⚛️</span>
+                               <span className="text-sm font-medium text-slate-700">前端开发</span>
+                             </div>
+                             <div className="flex items-center">
+                               <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
+                                 <div className="w-3/6 h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-full"></div>
+                               </div>
+                               <span className="text-xs text-slate-500">3年+</span>
+                             </div>
+                           </div>
+                           <p className="text-xs text-slate-400 ml-7">React · TypeScript · Tailwind CSS · Next.js</p>
+                         </div>
+                       </div>
+                     </div>
+
+                     {/* 项目统计 */}
+                     <div className="mb-6">
+                       <h4 className="text-sm font-medium text-slate-700 mb-4 text-center">项目成就</h4>
+                       <div className="grid grid-cols-2 gap-3">
+                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
+                           <div className="text-lg font-bold text-blue-600">20+</div>
+                           <div className="text-xs text-slate-500">完成项目</div>
+                         </div>
+                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
+                           <div className="text-lg font-bold text-cyan-600">50K+</div>
+                           <div className="text-xs text-slate-500">代码行数</div>
+                         </div>
+                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
+                           <div className="text-lg font-bold text-purple-600">15+</div>
+                           <div className="text-xs text-slate-500">技术栈</div>
+                         </div>
+                         <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
+                           <div className="text-lg font-bold text-green-600">99%</div>
+                           <div className="text-xs text-slate-500">项目成功率</div>
+                         </div>
+                       </div>
+                     </div>
+
+                   </div>
+                </div>
+              </div>
             </div>
           </div>
+
+
         </section>
         
-        {/* 技能展示区 */}
-        <section className="py-16 px-6 bg-white">
-          <div className="container mx-auto">
-            <h2 className="text-3xl font-bold mb-12 text-center text-slate-800">专业技能</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="glass-card p-6 fade-in">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] mr-4">
-                    <i className="fas fa-server text-xl"></i>
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-800">服务端开发</h3>
-                </div>
-                <div className="progress-bar mb-2">
-                  <div className="progress-fill" style={{ width: '90%' }}></div>
-                </div>
-                <p className="text-sm text-slate-500">Java、Spring Boot、PostgreSQL</p>
-              </div>
-              
-              <div className="glass-card p-6 fade-in" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#36CFC9]/10 flex items-center justify-center text-[#36CFC9] mr-4">
-                    <i className="fas fa-robot text-xl"></i>
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-800">AI Agent</h3>
-                </div>
-                <div className="progress-bar mb-2">
-                  <div className="progress-fill" style={{ width: '60%' }}></div>
-                </div>
-                <p className="text-sm text-slate-500">Prompt、RAG、MCP、任务流</p>
-              </div>
-              
-              <div className="glass-card p-6 fade-in" style={{ animationDelay: '0.4s' }}>
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] mr-4">
-                    <i className="fas fa-code text-xl"></i>
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-800">前端开发</h3>
-                </div>
-                <div className="progress-bar mb-2">
-                  <div className="progress-fill" style={{ width: '40%' }}></div>
-                </div>
-                <p className="text-sm text-slate-500">Vue、React</p>
-              </div>
-            </div>
-          </div>
-        </section>
+
         
         {/* 精选作品 */}
         <section id="work" className="py-16 px-6 bg-slate-50">
@@ -425,81 +495,7 @@ export default function Home() {
           </div>
         </section>
         
-        {/* 关于页 */}
-        <section id="about" className="py-16 px-6 bg-white">
-          <div className="container mx-auto">
-            <h2 className="text-3xl font-bold mb-12 text-center text-slate-800">关于我</h2>
-            
-            <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="fade-in">
-                <h3 className="text-2xl font-semibold mb-6 text-slate-800">个人简介</h3>
-                <p className="text-slate-600 mb-6">我是一名全栈Java开发工程师，拥有6年后端系统架构经验，目前专注于AI开发与智能体（Agent）技术，致力于构建高性能、智能化的企业级解决方案。</p>
-                <p className="text-slate-600">我的核心方向是将传统业务系统与AI技术结合，通过LLM集成、RAG知识库和自动化任务流等，帮助业务实现数据驱动决策与流程智能化升级。</p>
-              </div>
-              
-              <div id="chart-section" className="fade-in" style={{ animationDelay: '0.2s' }}>
-                <h3 className="text-2xl font-semibold mb-6 text-slate-800">技能雷达图</h3>
-                <div className="w-full h-80 bg-white rounded-xl shadow-sm border border-slate-200">
-                  {shouldLoadChart ? (
-                    <Suspense fallback={
-                      <div className="flex items-center justify-center h-80">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="ml-2 text-slate-600">加载图表中...</span>
-                      </div>
-                    }>
-                      <div className="chart-container">
-                        <ReactECharts 
-                          option={radarOption} 
-                          style={{ height: '320px', width: '100%' }}
-                          opts={{ renderer: 'canvas' }}
-                          lazyUpdate={true}
-                        />
-                      </div>
-                    </Suspense>
-                  ) : (
-                    <div className="flex items-center justify-center h-80">
-                      <div className="text-slate-400">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-sm">滚动到此处加载图表</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="max-w-3xl mx-auto mt-16 fade-in">
-              <h3 className="text-2xl font-semibold mb-8 text-slate-800">职业经历</h3>
-              
-              <div className="relative pl-8">
-                <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center">
-                  <div className="timeline-dot"></div>
-                  <div className="timeline-line flex-grow w-px"></div>
-                </div>
-                
-                <div className="mb-10">
-                  <h4 className="text-xl font-semibold text-slate-800">AI Agent开发</h4>
-                  <p className="text-[#36CFC9] mb-2">金蝶 · 2022-至今</p>
-                  <p className="text-slate-600">主导HR业务系统开发与AI Agent研发，实现人力资源全流程自动化与智能决策赋能。</p>
-                </div>
-                
-                <div className="mb-10">
-                  <h4 className="text-xl font-semibold text-slate-800">Java开发工程师</h4>
-                  <p className="text-[#36CFC9] mb-2">金证优智 · 2021-2022</p>
-                  <p className="text-slate-600">负责金融舆情系统与智能标注平台研发，赋能投研决策与风控管理。</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-xl font-semibold text-slate-800">MES系统开发</h4>
-                  <p className="text-[#36CFC9] mb-2">深科技  · 2019-2021</p>
-                  <p className="text-slate-600">负责开发公司核心MES系统，多系统异构集成，推动智能制造数字化升级。</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+
         
         {/* 博客页 */}
         <section id="blog" className="py-16 px-6 bg-slate-50">
@@ -571,162 +567,7 @@ export default function Home() {
           </div>
         </section>
         
-        {/* 联系页 */}
-        <section id="contact" className="py-16 px-6 bg-white">
-          <div className="container mx-auto">
-            <h2 className="text-3xl font-bold mb-12 text-center text-slate-800">联系我</h2>
-            
-            <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="fade-in">
-                <h3 className="text-2xl font-semibold mb-6 text-slate-800">发送消息</h3>
-                
-                <form className="space-y-6" onSubmit={handleContactFormSubmit}>
-                  <div>
-                    <label htmlFor="name" className="form-label">姓名 *</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      name="name"
-                      value={contactForm.name}
-                      onChange={handleContactFormChange}
-                      className="form-input" 
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="form-label">邮箱 *</label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      name="email"
-                      value={contactForm.email}
-                      onChange={handleContactFormChange}
-                      className="form-input" 
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="subject" className="form-label">主题</label>
-                    <input 
-                      type="text" 
-                      id="subject" 
-                      name="subject"
-                      value={contactForm.subject}
-                      onChange={handleContactFormChange}
-                      className="form-input" 
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="message" className="form-label">消息 *</label>
-                    <textarea 
-                      id="message" 
-                      name="message"
-                      value={contactForm.message}
-                      onChange={handleContactFormChange}
-                      rows={4} 
-                      className="form-input"
-                      required
-                    ></textarea>
-                  </div>
-                  
-                  {submitMessage && (
-                    <div className={`p-3 rounded-lg text-sm ${
-                      submitSuccess 
-                        ? 'bg-green-100 text-green-800 border border-green-200' 
-                        : 'bg-red-100 text-red-800 border border-red-200'
-                    }`}>
-                      {submitMessage}
-                    </div>
-                  )}
-                  
-                  <button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full py-3 gradient-btn rounded-full font-medium shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? '发送中...' : '发送消息'}
-                  </button>
-                </form>
-              </div>
-              
-              <div className="fade-in" style={{ animationDelay: '0.2s' }}>
-                <h3 className="text-2xl font-semibold mb-6 text-slate-800">联系方式</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] mr-4 mt-1">
-                      <i className="fas fa-envelope"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">邮箱</h4>
-                      <p className="text-slate-600">hjxlog@gmail.com</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-[#36CFC9]/10 flex items-center justify-center text-[#36CFC9] mr-4 mt-1">
-                      <i className="fab fa-weixin"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">微信</h4>
-                      <p className="text-slate-600">hjxlog（添加请备注来意）</p>
-                    </div>
-                  </div>
-                  
-                  {/* <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-[#52C41A]/10 flex items-center justify-center text-[#52C41A] mr-4 mt-1">
-                      <i className="fab fa-qq"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">QQ</h4>
-                      <p className="text-slate-600">123456789</p>
-                    </div>
-                  </div> */}
-                  
-                  <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] mr-4 mt-1">
-                      <i className="fas fa-map-marker-alt"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">地址</h4>
-                      <p className="text-slate-600">中国深圳市南山区高新南七道</p>
-                    </div>
-                  </div>
-                  
-                  {/* <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-[#FF6B6B]/10 flex items-center justify-center text-[#FF6B6B] mr-4 mt-1">
-                      <i className="fas fa-video"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">哔哩哔哩</h4>
-                      <p className="text-slate-600">@hjxlog</p>
-                    </div>
-                  </div> */}
-                </div>
-                
-                <h3 className="text-2xl font-semibold mt-10 mb-6 text-slate-800">社交媒体</h3>
-                
-                <div className="flex space-x-4">
-                  <a href="#" className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] hover:bg-[#165DFF] hover:text-white transition">
-                    <i className="fab fa-twitter"></i>
-                  </a>
-                  <a href="#" className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] hover:bg-[#165DFF] hover:text-white transition">
-                    <i className="fab fa-linkedin-in"></i>
-                  </a>
-                  <a href="#" className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] hover:bg-[#165DFF] hover:text-white transition">
-                    <i className="fab fa-dribbble"></i>
-                  </a>
-                  <a target="_blank" href="https://github.com/hjxlog" className="w-10 h-10 rounded-full bg-[#165DFF]/10 flex items-center justify-center text-[#165DFF] hover:bg-[#165DFF] hover:text-white transition">
-                    <i className="fab fa-github"></i>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+
       </main>
       
       <Footer />
