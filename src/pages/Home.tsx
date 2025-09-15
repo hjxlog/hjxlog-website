@@ -242,34 +242,34 @@ export default function Home() {
 
                     {/* 个人兴趣爱好 */}
                     <div className="mb-8 mt-12">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-4">🎯 兴趣爱好</h3>
+                      <h3 className="text-xl font-bold text-slate-800 mb-4">🎯 兴趣爱好</h3>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
                           <span className="text-2xl mr-3">💻</span>
                           <div>
-                            <div className="text-sm font-medium text-slate-700">编程开发</div>
-                            <div className="text-xs text-slate-500">技术探索</div>
+                            <div className="text-base font-semibold text-slate-700">编程开发</div>
+                            <div className="text-sm text-slate-600">技术探索</div>
                           </div>
                         </div>
                         <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
                           <span className="text-2xl mr-3">🤖</span>
                           <div>
-                            <div className="text-sm font-medium text-slate-700">AI研究</div>
-                            <div className="text-xs text-slate-500">智能应用</div>
+                            <div className="text-base font-semibold text-slate-700">AI研究</div>
+                            <div className="text-sm text-slate-600">智能应用</div>
                           </div>
                         </div>
                         <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
                           <span className="text-2xl mr-3">📚</span>
                           <div>
-                            <div className="text-sm font-medium text-slate-700">技术阅读</div>
-                            <div className="text-xs text-slate-500">持续学习</div>
+                            <div className="text-base font-semibold text-slate-700">技术阅读</div>
+                            <div className="text-sm text-slate-600">持续学习</div>
                           </div>
                         </div>
                         <div className="flex items-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/50">
                           <span className="text-2xl mr-3">🎮</span>
                           <div>
-                            <div className="text-sm font-medium text-slate-700">游戏设计</div>
-                            <div className="text-xs text-slate-500">创意思维</div>
+                            <div className="text-base font-semibold text-slate-700">游戏设计</div>
+                            <div className="text-sm text-slate-600">创意思维</div>
                           </div>
                         </div>
                       </div>
@@ -341,24 +341,24 @@ export default function Home() {
                       
                      {/* 个人简介区域 */}
                      <div className="text-center mb-6">
-                       <h3 className="text-xl font-semibold text-slate-800 mb-2">Huang JX</h3>
-                       <p className="text-sm text-slate-600 mb-3">全栈开发者 & AI技术探索者</p>
+                       <h3 className="text-2xl font-bold text-slate-800 mb-2">Huang JX</h3>
+                       <p className="text-base text-slate-600 mb-3">全栈开发者 & AI技术探索者</p>
                        <div className="w-16 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent mx-auto mb-4"></div>
-                       <p className="text-xs text-slate-500 leading-relaxed px-2">
+                       <p className="text-sm text-slate-500 leading-relaxed px-2">
                          "用代码连接想象与现实，让AI赋能每一个创意"
                        </p>
                      </div>
 
                      {/* 核心技术栈 */}
                      <div className="mb-6">
-                       <h4 className="text-sm font-medium text-slate-700 mb-4 text-center">核心技术栈</h4>
+                       <h4 className="text-base font-semibold text-slate-700 mb-4 text-center">核心技术栈</h4>
                        <div className="space-y-3">
                          {/* 后端开发 */}
                          <div className="bg-white/60 backdrop-blur-sm rounded-lg px-3 py-3 border border-slate-200/50">
                            <div className="flex items-center justify-between mb-2">
                              <div className="flex items-center">
                                <span className="text-lg mr-2">☕</span>
-                               <span className="text-sm font-medium text-slate-700">后端开发</span>
+                               <span className="text-base font-semibold text-slate-700">后端开发</span>
                              </div>
                              <div className="flex items-center">
                                <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
@@ -367,7 +367,7 @@ export default function Home() {
                                <span className="text-xs text-slate-500">6年+</span>
                              </div>
                            </div>
-                           <p className="text-xs text-slate-400 ml-7">Java · Spring Boot · MySQL · Redis · Docker</p>
+                           <p className="text-sm text-slate-500 ml-7">Java · Spring Boot · MySQL · Redis · Docker</p>
                          </div>
                          
                          {/* AI技术 */}
@@ -375,7 +375,7 @@ export default function Home() {
                            <div className="flex items-center justify-between mb-2">
                              <div className="flex items-center">
                                <span className="text-lg mr-2">🤖</span>
-                               <span className="text-sm font-medium text-slate-700">AI技术</span>
+                               <span className="text-base font-semibold text-slate-700">AI技术</span>
                              </div>
                              <div className="flex items-center">
                                <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
@@ -384,7 +384,7 @@ export default function Home() {
                                <span className="text-xs text-slate-500">2年+</span>
                              </div>
                            </div>
-                           <p className="text-xs text-slate-400 ml-7">LangChain · OpenAI API · RAG · Vector DB</p>
+                           <p className="text-sm text-slate-500 ml-7">LangChain · OpenAI API · RAG · Vector DB</p>
                          </div>
                          
                          {/* 前端开发 */}
@@ -392,7 +392,7 @@ export default function Home() {
                            <div className="flex items-center justify-between mb-2">
                              <div className="flex items-center">
                                <span className="text-lg mr-2">⚛️</span>
-                               <span className="text-sm font-medium text-slate-700">前端开发</span>
+                               <span className="text-base font-semibold text-slate-700">前端开发</span>
                              </div>
                              <div className="flex items-center">
                                <div className="w-16 h-1.5 bg-slate-200 rounded-full mr-2">
@@ -401,30 +401,30 @@ export default function Home() {
                                <span className="text-xs text-slate-500">3年+</span>
                              </div>
                            </div>
-                           <p className="text-xs text-slate-400 ml-7">React · TypeScript · Tailwind CSS · Next.js</p>
+                           <p className="text-sm text-slate-500 ml-7">React · TypeScript · Tailwind CSS · Next.js</p>
                          </div>
                        </div>
                      </div>
 
                      {/* 项目统计 */}
                      <div className="mb-6">
-                       <h4 className="text-sm font-medium text-slate-700 mb-4 text-center">项目成就</h4>
+                       <h4 className="text-base font-semibold text-slate-700 mb-4 text-center">项目成就</h4>
                        <div className="grid grid-cols-2 gap-3">
                          <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-lg font-bold text-blue-600">20+</div>
-                           <div className="text-xs text-slate-500">完成项目</div>
+                           <div className="text-xl font-bold text-blue-600">20+</div>
+                           <div className="text-sm text-slate-600">完成项目</div>
                          </div>
                          <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-lg font-bold text-cyan-600">50K+</div>
-                           <div className="text-xs text-slate-500">代码行数</div>
+                           <div className="text-xl font-bold text-cyan-600">50K+</div>
+                           <div className="text-sm text-slate-600">代码行数</div>
                          </div>
                          <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-lg font-bold text-purple-600">15+</div>
-                           <div className="text-xs text-slate-500">技术栈</div>
+                           <div className="text-xl font-bold text-purple-600">15+</div>
+                           <div className="text-sm text-slate-600">技术栈</div>
                          </div>
                          <div className="text-center bg-white/60 backdrop-blur-sm rounded-lg py-3 px-2 border border-slate-200/50">
-                           <div className="text-lg font-bold text-green-600">99%</div>
-                           <div className="text-xs text-slate-500">项目成功率</div>
+                           <div className="text-xl font-bold text-green-600">99%</div>
+                           <div className="text-sm text-slate-600">项目成功率</div>
                          </div>
                        </div>
                      </div>
