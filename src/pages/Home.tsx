@@ -147,15 +147,15 @@ export default function Home() {
       <PublicNav />
       
       {/* 主要内容 */}
-      <main className="pt-16 pb-16">
+      <main className="pt-12 pb-16">
         {/* 英雄区域 */}
-        <section className="min-h-screen lg:h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+        <section className="min-h-[80vh] lg:min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50">
           <div className="container mx-auto px-6 relative z-10 h-full flex items-center">
             <div className="max-w-7xl mx-auto w-full">
               {/* 英雄区域 - 分屏式设计 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch min-h-[calc(80vh-3rem)] lg:min-h-[calc(100vh-3rem)]">
                 {/* 左侧：个人简介与核心理念 */}
-                <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12 bg-transparent lg:border-r lg:border-gray-100 relative overflow-hidden min-h-screen lg:min-h-0">
+                <div className="flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12 bg-transparent relative overflow-hidden min-h-[60vh] lg:min-h-0">
                   <div className="max-w-xl mx-auto lg:mx-0 relative z-10">
                     <div className="text-left fade-in">
                       {/* 问候语 */}
@@ -253,7 +253,7 @@ export default function Home() {
                 </div>
 
                 {/* 右侧：专业技能与项目展示 */}
-                <div className="relative min-h-screen lg:h-full flex items-center justify-center fade-in overflow-y-auto py-6 lg:py-8" 
+                <div className="relative min-h-[60vh] lg:h-full flex items-center justify-center fade-in py-6 lg:py-8" 
                      style={{
                        animationDelay: '0.3s',
                        background: 'transparent',
