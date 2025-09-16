@@ -147,7 +147,7 @@ export default function Home() {
       <PublicNav />
       
       {/* 主要内容 */}
-      <main className="pt-12 pb-16">
+      <main className="pt-16 pb-16">
         {/* 英雄区域 */}
         <section className="min-h-screen lg:h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50">
           <div className="container mx-auto px-6 relative z-10 h-full flex items-center">
