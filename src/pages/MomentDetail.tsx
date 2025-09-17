@@ -279,7 +279,7 @@ export default function MomentDetail() {
                   
                   return (
                     <div className={`grid gap-3 mb-6 ${
-                      imageUrls.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' :
+                      imageUrls.length === 1 ? 'grid-cols-1 max-w-2xl' :
                       imageUrls.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
                       imageUrls.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
                       'grid-cols-2 sm:grid-cols-3'
