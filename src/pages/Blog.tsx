@@ -187,7 +187,7 @@ const Blog: React.FC = () => {
               <div className="flex-1 relative">
                 <input
                   type="text"
-                  placeholder="搜索文章标题、内容或标签..."
+                  placeholder="搜索博客标题、内容或标签..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -292,7 +292,7 @@ const Blog: React.FC = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                 <span className="text-2xl text-gray-400">🔍</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">未找到相关文章</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">未找到相关博客</h3>
               <p className="text-gray-600">尝试调整搜索关键词或选择其他分类</p>
             </div>
           )}

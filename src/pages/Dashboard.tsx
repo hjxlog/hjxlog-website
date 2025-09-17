@@ -1075,7 +1075,7 @@ export default function Dashboard() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">博客文章</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">博客</label>
                   <p className="text-slate-900">{currentComment.blog_title || '未知博客'}</p>
                 </div>
 
@@ -1313,7 +1313,7 @@ export default function Dashboard() {
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                   <div className="text-6xl mb-4">💬</div>
                   <h3 className="text-lg font-medium text-gray-800 mb-2">还没有评论</h3>
-                  <p className="text-gray-600">当有用户在博客文章下发表评论时，它们会显示在这里</p>
+                  <p className="text-gray-600">当有用户在博客下发表评论时，它们会显示在这里</p>
                 </div>
               )}
             </div>

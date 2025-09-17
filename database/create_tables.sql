@@ -102,7 +102,7 @@ CREATE TRIGGER update_users_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- 添加表注释
-COMMENT ON TABLE blogs IS '博客文章表';
+COMMENT ON TABLE blogs IS '博客表';
 COMMENT ON TABLE works IS '作品项目表';
 COMMENT ON TABLE users IS '用户表';
 

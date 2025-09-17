@@ -147,7 +147,7 @@ const BlogManagement: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">博客管理</h1>
               <p className="mt-1 text-sm text-gray-500">
-                管理您的博客文章，创建、编辑和发布内容
+                管理您的博客，创建、编辑和发布内容
               </p>
             </div>
             <button
@@ -222,7 +222,7 @@ const BlogManagement: React.FC = () => {
             <LoadingSpinner size="lg" text="正在加载博客列表..." />
           ) : blogs.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">没有找到博客文章</p>
+              <p className="text-gray-500">没有找到博客</p>
             </div>
           ) : (
             <ul className="divide-y divide-gray-200">

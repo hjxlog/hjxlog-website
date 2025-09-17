@@ -270,7 +270,7 @@ const BlogDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    // 获取博客文章详情
+    // 获取博客详情
     const fetchPost = async () => {
       if (!id) return;
       
@@ -320,10 +320,10 @@ const BlogDetail: React.FC = () => {
       }
     };
 
-    // 获取相关文章
+    // 获取相关博客
     const fetchRelatedPosts = async () => {
       try {
-        // 获取更多文章以便过滤后仍有足够的相关文章
+        // 获取更多博客以便过滤后仍有足够的相关博客
         const response = await fetch(`${API_BASE_URL}/api/blogs?limit=6&published=true`);
         
         if (!response.ok) {
@@ -334,16 +334,16 @@ const BlogDetail: React.FC = () => {
 
         
         if (result.success && result.data && result.data.blogs) {
-          // 过滤掉当前文章，然后取前3篇
+          // 过滤掉当前博客，然后取前3篇
           const filteredBlogs = result.data.blogs.filter((blog: any) => blog.id !== parseInt(id!));
           const relatedBlogs = filteredBlogs.slice(0, 3);
           setRelatedPosts(relatedBlogs);
 
         } else {
-          throw new Error(result.message || '获取相关文章失败');
+          throw new Error(result.message || '获取相关博客失败');
         }
       } catch (error) {
-        console.error('❌ [BlogDetail] 相关文章获取失败:', error);
+        console.error('❌ [BlogDetail] 相关博客获取失败:', error);
 
       }
     };
@@ -694,9 +694,9 @@ const BlogDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 相关文章 */}
+      {/* 相关博客 */}
       <div>
-        <h2 className="text-2xl font-bold mb-6">相关文章</h2>
+        <h2 className="text-2xl font-bold mb-6">相关博客</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {relatedPosts.map((relatedPost) => (
             <div key={relatedPost.id} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition duration-300">

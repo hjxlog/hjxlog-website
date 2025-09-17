@@ -219,7 +219,7 @@ export default function Home() {
                           className="group px-8 py-4 border-2 border-[#165DFF] text-[#165DFF] font-semibold rounded-xl hover:bg-[#165DFF] hover:text-white transition-all duration-300 flex items-center"
                           onClick={() => navigate('/blogs')}
                         >
-                          查看文章
+                          查看博客
                           <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                           </svg>
@@ -463,7 +463,7 @@ export default function Home() {
         {/* 博客页 */}
         <section id="blog" className="py-16 px-6 bg-slate-50">
           <div className="container mx-auto">
-            <h2 className="text-3xl font-bold mb-12 text-center text-slate-800">推荐文章</h2>
+            <h2 className="text-3xl font-bold mb-12 text-center text-slate-800">推荐博客</h2>
             
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
               {loading ? (
@@ -510,7 +510,7 @@ export default function Home() {
               ) : (
                 // 无数据状态
                 <div className="col-span-2 text-center py-12">
-                  <p className="text-slate-500">暂无推荐文章</p>
+                  <p className="text-slate-500">暂无推荐博客</p>
                 </div>
               )}
             </div>
@@ -520,7 +520,7 @@ export default function Home() {
                 className="inline-block px-6 py-2 outline-btn rounded-full font-medium"
                 onClick={() => navigate('/blogs')}
               >
-                查看全部文章
+                查看全部博客
               </button>
             </div>
           </div>
