@@ -496,8 +496,6 @@ export default function Home() {
                     <div className="p-6">
                       <div className="flex items-center text-sm text-slate-500 mb-3">
                         <span>{new Date(blog.created_at).toLocaleDateString('zh-CN')}</span>
-                        <span className="mx-2">·</span>
-                        <span>{blog.author}</span>
                       </div>
                       <h3 className="text-xl font-semibold mb-3 text-slate-800">{blog.title}</h3>
                       <p className="text-slate-600 mb-4">{blog.excerpt}</p>

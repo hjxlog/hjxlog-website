@@ -230,9 +230,9 @@ app.get('/api/blogs/categories', async (req, res) => {
 
     console.log('🏷️ [API] 获取博客分类请求');
 
-    // 获取所有不重复的分类
+    // 获取所有不重复的分类（只包含已发布的博客）
     const result = await dbClient.query(
-      'SELECT DISTINCT category FROM blogs WHERE category IS NOT NULL AND category != \'\' ORDER BY category'
+      'SELECT DISTINCT category FROM blogs WHERE category IS NOT NULL AND  published = true AND category != \'\' ORDER BY category'
     );
     console.log('✅ [API] 博客分类获取成功:result', result);
     const categories = result.rows.map(row => row.category);
@@ -548,8 +548,9 @@ app.get('/api/works/categories', async (req, res) => {
 
     console.log('📂 [API] 获取作品分类列表请求');
 
+    // 只返回active和completed状态作品的分类
     const result = await dbClient.query(
-      'SELECT DISTINCT category FROM works WHERE category IS NOT NULL ORDER BY category'
+      'SELECT DISTINCT category FROM works WHERE category IS NOT NULL AND (status = \'active\' OR status = \'completed\') ORDER BY category'
     );
 
     // 添加"全部"选项
