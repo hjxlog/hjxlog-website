@@ -7,6 +7,13 @@
 
 -- 删除已存在的表（如果存在）
 
+DROP TABLE IF EXISTS moment_likes CASCADE;
+DROP TABLE IF EXISTS moment_comments CASCADE;
+DROP TABLE IF EXISTS moment_images CASCADE;
+DROP TABLE IF EXISTS moments CASCADE;
+DROP TABLE IF EXISTS blog_views CASCADE;
+DROP TABLE IF EXISTS blog_likes CASCADE;
+DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS works CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -235,6 +242,7 @@ CREATE TABLE moments (
     content TEXT NOT NULL,
     author_id VARCHAR(50) DEFAULT 'admin',
     visibility VARCHAR(20) DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'draft')),
+    images TEXT,
     likes_count INTEGER DEFAULT 0,
     comments_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -320,6 +328,7 @@ COMMENT ON TABLE moment_likes IS '动态点赞记录表';
 COMMENT ON COLUMN moments.content IS '动态文字内容';
 COMMENT ON COLUMN moments.author_id IS '作者ID';
 COMMENT ON COLUMN moments.visibility IS '可见性(public/private/draft)';
+COMMENT ON COLUMN moments.images IS '图片URL列表（逗号分隔）';
 COMMENT ON COLUMN moments.likes_count IS '点赞数量';
 COMMENT ON COLUMN moments.comments_count IS '评论数量';
 
