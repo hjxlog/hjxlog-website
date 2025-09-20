@@ -1405,8 +1405,7 @@ export default function Dashboard() {
                             {moment.images.map((image: any, index: number) => (
                               <img
                                 key={index}
-                                src={image.image_url}
-                                alt={image.alt_text || '动态图片'}
+                                src={image}
                                 className="w-full h-24 object-cover rounded-lg"
                               />
                             ))}

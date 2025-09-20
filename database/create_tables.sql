@@ -9,7 +9,6 @@
 
 DROP TABLE IF EXISTS moment_likes CASCADE;
 DROP TABLE IF EXISTS moment_comments CASCADE;
-DROP TABLE IF EXISTS moment_images CASCADE;
 DROP TABLE IF EXISTS moments CASCADE;
 DROP TABLE IF EXISTS blog_views CASCADE;
 DROP TABLE IF EXISTS blog_likes CASCADE;
@@ -249,19 +248,7 @@ CREATE TABLE moments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建动态图片表
-CREATE TABLE moment_images (
-    id SERIAL PRIMARY KEY,
-    moment_id INTEGER NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
-    image_url TEXT NOT NULL,
-    thumbnail_url TEXT,
-    alt_text VARCHAR(255),
-    sort_order INTEGER DEFAULT 0,
-    file_size INTEGER,
-    width INTEGER,
-    height INTEGER,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+
 
 -- 创建动态评论表
 CREATE TABLE moment_comments (
@@ -295,8 +282,7 @@ CREATE INDEX idx_moments_created_at ON moments(created_at DESC);
 CREATE INDEX idx_moments_visibility ON moments(visibility);
 CREATE INDEX idx_moments_author_id ON moments(author_id);
 
-CREATE INDEX idx_moment_images_moment_id ON moment_images(moment_id);
-CREATE INDEX idx_moment_images_sort_order ON moment_images(moment_id, sort_order);
+
 
 CREATE INDEX idx_moment_comments_moment_id ON moment_comments(moment_id);
 CREATE INDEX idx_moment_comments_parent_id ON moment_comments(parent_id);
@@ -320,7 +306,7 @@ CREATE TRIGGER update_moment_comments_updated_at
 
 -- 添加动态模块表注释
 COMMENT ON TABLE moments IS '动态主表';
-COMMENT ON TABLE moment_images IS '动态图片表';
+
 COMMENT ON TABLE moment_comments IS '动态评论表';
 COMMENT ON TABLE moment_likes IS '动态点赞记录表';
 
@@ -332,15 +318,7 @@ COMMENT ON COLUMN moments.images IS '图片URL列表（逗号分隔）';
 COMMENT ON COLUMN moments.likes_count IS '点赞数量';
 COMMENT ON COLUMN moments.comments_count IS '评论数量';
 
--- 添加动态图片表字段注释
-COMMENT ON COLUMN moment_images.moment_id IS '关联的动态ID';
-COMMENT ON COLUMN moment_images.image_url IS '图片URL';
-COMMENT ON COLUMN moment_images.thumbnail_url IS '缩略图URL';
-COMMENT ON COLUMN moment_images.alt_text IS '图片描述文字';
-COMMENT ON COLUMN moment_images.sort_order IS '图片排序';
-COMMENT ON COLUMN moment_images.file_size IS '文件大小(字节)';
-COMMENT ON COLUMN moment_images.width IS '图片宽度';
-COMMENT ON COLUMN moment_images.height IS '图片高度';
+
 
 -- 添加动态评论表字段注释
 COMMENT ON COLUMN moment_comments.moment_id IS '关联的动态ID';
@@ -365,10 +343,7 @@ INSERT INTO moments (content, author_id, visibility) VALUES
 ('今天学习了新的技术栈，感觉收获满满！', 'admin', 'public'),
 ('分享一些最近拍摄的照片，希望大家喜欢。', 'admin', 'public');
 
--- 插入示例图片数据
-INSERT INTO moment_images (moment_id, image_url, thumbnail_url, sort_order) VALUES 
-(3, '/uploads/moments/photo1.jpg', '/uploads/moments/thumbs/photo1.jpg', 1),
-(3, '/uploads/moments/photo2.jpg', '/uploads/moments/thumbs/photo2.jpg', 2);
+
 
 -- 显示创建结果
 SELECT 'Tables created successfully!' as result;
