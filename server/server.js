@@ -6,6 +6,15 @@ import bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
+import { 
+  uploadToOSS, 
+  uploadMultipleToOSS, 
+  generatePresignedUrl, 
+  validateFileType, 
+  validateFileSize,
+  deleteFromOSS 
+} from './utils/ossConfig.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +29,49 @@ const PORT = process.env.PORT || 3006;
 // 中间件
 app.use(cors());
 app.use(express.json());
+
+// 配置multer用于文件上传（使用内存存储）
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 10 // 最多10个文件
+  },
+  fileFilter: (req, file, cb) => {
+    console.log('🔍 [Multer] 文件过滤器检查:', {
+      fieldname: file.fieldname,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+    
+    if (validateFileType(file)) {
+      console.log('✅ [Multer] 文件类型验证通过');
+      cb(null, true);
+    } else {
+      console.log('❌ [Multer] 文件类型验证失败');
+      cb(new Error('不支持的文件类型，仅支持 JPEG、PNG、GIF、WebP 格式'), false);
+    }
+  }
+});
+
+// 添加multer错误处理中间件
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    console.error('❌ [Multer] 文件上传错误:', error.message);
+    return res.status(400).json({
+      success: false,
+      message: `文件上传错误: ${error.message}`
+    });
+  } else if (error) {
+    console.error('❌ [Server] 服务器错误:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+  next();
+});
 
 // 数据库配置
 const dbConfig = {
@@ -51,9 +103,160 @@ connectDatabase();
 
 // API路由
 
+// ==================== 图片上传相关API ====================
 
+// 单个图片上传到OSS
+app.post('/api/upload/image', (req, res, next) => {
+  console.log('🔍 [API] 收到图片上传请求:', {
+    contentType: req.get('Content-Type'),
+    contentLength: req.get('Content-Length'),
+    hasFile: !!req.file,
+    body: Object.keys(req.body),
+    files: req.files ? req.files.length : 0
+  });
+  next();
+}, upload.single('image'), async (req, res) => {
+  try {
+    console.log('🔍 [API] Multer处理后:', {
+      hasFile: !!req.file,
+      fileInfo: req.file ? {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
+    });
+    
+    if (!req.file) {
+      console.log('❌ [API] 没有接收到文件');
+      return res.status(400).json({
+        success: false,
+        message: '请选择要上传的图片文件'
+      });
+    }
 
+    console.log('📸 [API] 单个图片上传请求:', req.file.originalname);
 
+    const result = await uploadToOSS(req.file);
+
+    console.log('✅ [API] 图片上传成功:', result.url);
+    res.json({
+      success: true,
+      data: result,
+      message: '图片上传成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 图片上传失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 批量图片上传到OSS
+app.post('/api/upload/images', upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '请选择要上传的图片文件'
+      });
+    }
+
+    console.log('📸 [API] 批量图片上传请求:', req.files.length, '个文件');
+
+    const result = await uploadMultipleToOSS(req.files);
+
+    console.log('✅ [API] 批量上传完成:', {
+      successful: result.successful.length,
+      failed: result.failed.length,
+      total: result.total
+    });
+
+    res.json({
+      success: true,
+      data: result,
+      message: `批量上传完成：成功 ${result.successful.length} 个，失败 ${result.failed.length} 个`
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 批量图片上传失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 生成预签名URL用于前端直传
+app.post('/api/upload/presigned-url', async (req, res) => {
+  try {
+    const { fileName, contentType } = req.body;
+
+    if (!fileName || !contentType) {
+      return res.status(400).json({
+        success: false,
+        message: '文件名和内容类型不能为空'
+      });
+    }
+
+    console.log('🔗 [API] 生成预签名URL请求:', { fileName, contentType });
+
+    const presignedUrl = await generatePresignedUrl(fileName, contentType);
+
+    console.log('✅ [API] 预签名URL生成成功');
+    res.json({
+      success: true,
+      data: {
+        uploadUrl: presignedUrl,
+        fileName: fileName
+      },
+      message: '预签名URL生成成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 生成预签名URL失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 删除OSS文件
+app.delete('/api/upload/file/:fileName', async (req, res) => {
+  try {
+    const { fileName } = req.params;
+
+    if (!fileName) {
+      return res.status(400).json({
+        success: false,
+        message: '文件名不能为空'
+      });
+    }
+
+    console.log('🗑️ [API] 删除OSS文件请求:', fileName);
+
+    await deleteFromOSS(fileName);
+
+    console.log('✅ [API] 文件删除成功');
+    res.json({
+      success: true,
+      message: '文件删除成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 删除文件失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// ==================== 其他API ====================
 
 // 测试数据库连接
 app.post('/api/database/test', async (req, res) => {
@@ -1297,10 +1500,15 @@ app.get('/api/moments', async (req, res) => {
       throw new Error('数据库未连接');
     }
 
-    const { page = 1, limit = 10, sort = 'created_at' } = req.query;
-    console.log('📱 [API] 获取动态列表请求:', { page, limit, sort });
+    const { page = 1, limit = 10, sort = 'created_at', include_private = 'false' } = req.query;
+    console.log('📱 [API] 获取动态列表请求:', { page, limit, sort, include_private });
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // 根据include_private参数决定查询条件
+    const includePrivate = include_private === 'true';
+    const whereClause = includePrivate ? '' : "WHERE visibility = 'public'";
+    const countWhereClause = includePrivate ? '' : "WHERE visibility = 'public'";
 
     // 获取动态列表（包含图片）
     const result = await dbClient.query(
@@ -1319,7 +1527,7 @@ app.get('/api/moments', async (req, res) => {
           ELSE ARRAY[]::text[]
         END as images
       FROM moments
-      WHERE visibility = 'public'
+      ${whereClause}
       ORDER BY ${sort} DESC
       LIMIT $1 OFFSET $2`,
       [parseInt(limit), offset]
@@ -1327,7 +1535,7 @@ app.get('/api/moments', async (req, res) => {
 
     // 获取总数
     const countResult = await dbClient.query(
-      'SELECT COUNT(*) as total FROM moments WHERE visibility = \'public\''
+      `SELECT COUNT(*) as total FROM moments ${countWhereClause}`
     );
     const total = parseInt(countResult.rows[0].total);
 

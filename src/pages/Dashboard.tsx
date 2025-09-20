@@ -6,6 +6,15 @@ import RichTextEditor from '@/components/RichTextEditor';
 import AdminNav from '@/components/AdminNav';
 import { toast } from 'sonner';
 import { API_BASE_URL, apiRequest } from '@/config/api';
+import { 
+  uploadImageToOSS, 
+  uploadMultipleImagesToOSS, 
+  validateImageType, 
+  validateImageSize, 
+  formatFileSize,
+  deleteImageFromOSS,
+  extractFileNameFromUrl 
+} from '@/utils/ossUpload';
 
 interface Work {
   id: number;
@@ -88,6 +97,11 @@ export default function Dashboard() {
   const [isMomentFormOpen, setIsMomentFormOpen] = useState(false);
   const [currentMoment, setCurrentMoment] = useState<any>(null);
   const [dragOver, setDragOver] = useState(false);
+  
+  // 图片上传相关状态
+  const [uploadProgress, setUploadProgress] = useState<{[key: number]: number}>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -527,22 +541,126 @@ export default function Dashboard() {
   };
 
   // 处理图片选择
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newImages = files.map(file => ({
+    
+    if (files.length === 0) return;
+    
+    // 验证文件
+    const validFiles = [];
+    const errors = [];
+    
+    for (const file of files) {
+      if (!validateImageType(file)) {
+        errors.push(`${file.name}: 不支持的文件类型`);
+        continue;
+      }
+      if (!validateImageSize(file)) {
+        errors.push(`${file.name}: 文件大小超过5MB限制`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    if (errors.length > 0) {
+      setUploadErrors(errors);
+      toast.error(`部分文件验证失败：${errors.join(', ')}`);
+    }
+    
+    if (validFiles.length === 0) return;
+    
+    // 先添加预览图片到状态中
+    const newImages = validFiles.map((file, index) => ({
       file,
       preview: URL.createObjectURL(file),
-      alt_text: ''
+      alt_text: '',
+      uploading: true,
+      progress: 0
     }));
     
-    setMomentFormData({
-      ...momentFormData,
-      images: [...momentFormData.images, ...newImages]
-    });
+    const currentImageCount = momentFormData.images.length;
+    setMomentFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newImages]
+    }));
+    
+    setIsUploading(true);
+    
+    // 逐个上传图片
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      const imageIndex = currentImageCount + i;
+      
+      try {
+        console.log('🔍 [前端] 开始上传图片:', {
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          imageIndex
+        });
+        
+        const result = await uploadImageToOSS(file, (progress) => {
+          console.log('📊 [前端] 上传进度:', {
+            fileName: file.name,
+            progress: progress.percentage
+          });
+          
+          setUploadProgress(prev => ({
+            ...prev,
+            [imageIndex]: progress.percentage
+          }));
+          
+          // 更新对应图片的进度
+          setMomentFormData(prev => ({
+            ...prev,
+            images: prev.images.map((img, idx) => 
+              idx === imageIndex ? { ...img, progress: progress.percentage } : img
+            )
+          }));
+        });
+        
+        console.log('📤 [前端] 上传结果:', result);
+        
+        if (result.success) {
+          // 上传成功，更新图片信息
+          setMomentFormData(prev => ({
+            ...prev,
+            images: prev.images.map((img, idx) => 
+              idx === imageIndex ? {
+                ...img,
+                image_url: result.url,
+                fileName: result.fileName,
+                uploading: false,
+                progress: 100
+              } : img
+            )
+          }));
+          
+          toast.success(`${file.name} 上传成功`);
+        } else {
+          throw new Error(result.error || '上传失败');
+        }
+      } catch (error) {
+        console.error('图片上传失败:', error);
+        toast.error(`${file.name} 上传失败: ${error.message}`);
+        
+        // 移除上传失败的图片
+        setMomentFormData(prev => ({
+          ...prev,
+          images: prev.images.filter((_, idx) => idx !== imageIndex)
+        }));
+      }
+    }
+    
+    setIsUploading(false);
+    setUploadProgress({});
+    
+    // 清空文件输入
+    e.target.value = '';
   };
 
   // 处理图片拖拽
-  const handleImageDrop = (e: React.DragEvent) => {
+  const handleImageDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     
@@ -550,20 +668,131 @@ export default function Dashboard() {
       file.type.startsWith('image/')
     );
     
-    const newImages = files.map(file => ({
+    if (files.length === 0) {
+      toast.error('请拖拽图片文件');
+      return;
+    }
+    
+    // 验证文件
+    const validFiles = [];
+    const errors = [];
+    
+    for (const file of files) {
+      if (!validateImageType(file)) {
+        errors.push(`${file.name}: 不支持的文件类型`);
+        continue;
+      }
+      if (!validateImageSize(file)) {
+        errors.push(`${file.name}: 文件大小超过5MB限制`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    if (errors.length > 0) {
+      setUploadErrors(errors);
+      toast.error(`部分文件验证失败：${errors.join(', ')}`);
+    }
+    
+    if (validFiles.length === 0) return;
+    
+    // 先添加预览图片到状态中
+    const newImages = validFiles.map((file, index) => ({
       file,
       preview: URL.createObjectURL(file),
-      alt_text: ''
+      alt_text: '',
+      uploading: true,
+      progress: 0
     }));
     
-    setMomentFormData({
-      ...momentFormData,
-      images: [...momentFormData.images, ...newImages]
-    });
+    const currentImageCount = momentFormData.images.length;
+    setMomentFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newImages]
+    }));
+    
+    setIsUploading(true);
+    
+    // 逐个上传图片
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      const imageIndex = currentImageCount + i;
+      
+      try {
+        const result = await uploadImageToOSS(file, (progress) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [imageIndex]: progress.percentage
+          }));
+          
+          // 更新对应图片的进度
+          setMomentFormData(prev => ({
+            ...prev,
+            images: prev.images.map((img, idx) => 
+              idx === imageIndex ? { ...img, progress: progress.percentage } : img
+            )
+          }));
+        });
+        
+        if (result.success) {
+          // 上传成功，更新图片信息
+          setMomentFormData(prev => ({
+            ...prev,
+            images: prev.images.map((img, idx) => 
+              idx === imageIndex ? {
+                ...img,
+                image_url: result.url,
+                fileName: result.fileName,
+                uploading: false,
+                progress: 100
+              } : img
+            )
+          }));
+          
+          toast.success(`${file.name} 上传成功`);
+        } else {
+          throw new Error(result.error || '上传失败');
+        }
+      } catch (error) {
+        console.error('图片上传失败:', error);
+        toast.error(`${file.name} 上传失败: ${error.message}`);
+        
+        // 移除上传失败的图片
+        setMomentFormData(prev => ({
+          ...prev,
+          images: prev.images.filter((_, idx) => idx !== imageIndex)
+        }));
+      }
+    }
+    
+    setIsUploading(false);
+    setUploadProgress({});
   };
 
   // 删除图片
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
+    const imageToRemove = momentFormData.images[index];
+    
+    // 如果图片已上传到OSS，则删除OSS文件
+    if (imageToRemove.image_url && imageToRemove.fileName) {
+      try {
+        const success = await deleteImageFromOSS(imageToRemove.fileName);
+        if (success) {
+          toast.success('图片删除成功');
+        } else {
+          toast.error('删除OSS文件失败，但已从列表中移除');
+        }
+      } catch (error) {
+        console.error('删除OSS文件失败:', error);
+        toast.error('删除OSS文件失败，但已从列表中移除');
+      }
+    }
+    
+    // 清理预览URL
+    if (imageToRemove.preview && imageToRemove.preview.startsWith('blob:')) {
+      URL.revokeObjectURL(imageToRemove.preview);
+    }
+    
     const newImages = momentFormData.images.filter((_, i) => i !== index);
     setMomentFormData({
       ...momentFormData,
@@ -2134,7 +2363,7 @@ export default function Dashboard() {
                   <div 
                     className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                       dragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300'
-                    }`}
+                    } ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
                     onDragOver={(e) => {
                       e.preventDefault();
                       setDragOver(true);
@@ -2149,13 +2378,46 @@ export default function Dashboard() {
                       onChange={handleImageSelect}
                       className="hidden"
                       id="moment-images"
+                      disabled={isUploading}
                     />
                     <label htmlFor="moment-images" className="cursor-pointer">
                       <div className="text-slate-400 mb-2 text-4xl">📷</div>
-                      <p className="text-slate-600">点击选择图片或拖拽到此处</p>
+                      <p className="text-slate-600">
+                        {isUploading ? '正在上传...' : '点击选择图片或拖拽到此处'}
+                      </p>
                       <p className="text-sm text-slate-400 mt-1">支持多张图片上传</p>
                     </label>
                   </div>
+
+                  {/* 上传进度显示 */}
+                  {isUploading && uploadProgress > 0 && (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm text-slate-600 mb-1">
+                        <span>上传进度</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-[#165DFF] h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 上传错误显示 */}
+                  {uploadErrors.length > 0 && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-sm text-red-600">
+                        <div className="font-medium mb-1">上传失败：</div>
+                        <ul className="list-disc list-inside space-y-1">
+                          {uploadErrors.map((error, index) => (
+                            <li key={index}>{error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 图片预览 */}
                   {momentFormData.images.length > 0 && (
