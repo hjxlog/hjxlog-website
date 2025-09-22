@@ -22,7 +22,7 @@ coverage
 yarn.lock
 
 # 环境变量文件（保留 .env）
-.env
+.env.example
 .env.local
 .env.development.local
 .env.test.local
