@@ -15,6 +15,7 @@ import {
   validateFileSize,
   deleteFromOSS 
 } from './utils/ossConfig.js';
+import { requestLogMiddleware, errorLogMiddleware, createLogger } from './utils/logMiddleware.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -84,12 +85,21 @@ const dbConfig = {
 
 // 创建数据库连接池
 let dbClient = null;
+let logger = null;
 
 // 连接数据库
 async function connectDatabase() {
   try {
     dbClient = new Client(dbConfig);
     await dbClient.connect();
+    console.log('✅ [数据库] PostgreSQL连接成功');
+    
+    // 初始化日志记录器
+    logger = createLogger(dbClient);
+    
+    // 记录系统启动日志
+    await logger.system('server', 'startup', '服务器启动，数据库连接成功');
+    
     return true;
   } catch (error) {
     console.error('❌ [数据库] PostgreSQL连接失败:', error.message);
@@ -100,6 +110,24 @@ async function connectDatabase() {
 
 // 启动时连接数据库
 connectDatabase();
+
+// 添加日志中间件（需要在路由定义之前）
+app.use((req, res, next) => {
+  if (dbClient) {
+    requestLogMiddleware(dbClient)(req, res, next);
+  } else {
+    next();
+  }
+});
+
+// 添加错误日志中间件
+app.use((error, req, res, next) => {
+  if (dbClient) {
+    errorLogMiddleware(dbClient)(error, req, res, next);
+  } else {
+    next(error);
+  }
+});
 
 // API路由
 
@@ -249,6 +277,321 @@ app.delete('/api/upload/file/:fileName', async (req, res) => {
 
   } catch (error) {
     console.error('❌ [API] 删除文件失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// ==================== 系统日志管理API ====================
+
+// 获取系统日志列表
+app.get('/api/admin/logs', async (req, res) => {
+  try {
+    if (!dbClient) {
+      return res.status(500).json({
+        success: false,
+        message: '数据库连接失败，请检查数据库配置'
+      });
+    }
+
+    const { 
+      page = 1, 
+      limit = 20, 
+      log_type, 
+      level, 
+      module, 
+      start_date, 
+      end_date,
+      search 
+    } = req.query;
+
+    console.log('📋 [API] 获取系统日志列表请求:', { page, limit, log_type, level, module, start_date, end_date, search });
+
+    // 构建查询条件
+    let whereConditions = [];
+    let queryParams = [];
+    let paramIndex = 1;
+
+    if (log_type) {
+      whereConditions.push(`log_type = $${paramIndex++}`);
+      queryParams.push(log_type);
+    }
+
+    if (level) {
+      whereConditions.push(`level = $${paramIndex++}`);
+      queryParams.push(level);
+    }
+
+    if (module) {
+      whereConditions.push(`module = $${paramIndex++}`);
+      queryParams.push(module);
+    }
+
+    if (start_date) {
+      whereConditions.push(`created_at >= $${paramIndex++}`);
+      queryParams.push(start_date);
+    }
+
+    if (end_date) {
+      whereConditions.push(`created_at <= $${paramIndex++}`);
+      queryParams.push(end_date);
+    }
+
+    if (search) {
+      whereConditions.push(`(description ILIKE $${paramIndex} OR action ILIKE $${paramIndex + 1} OR error_message ILIKE $${paramIndex + 2})`);
+      const searchPattern = `%${search}%`;
+      queryParams.push(searchPattern, searchPattern, searchPattern);
+      paramIndex += 3;
+    }
+
+    // 构建主查询
+    let sqlQuery = 'SELECT * FROM system_logs';
+    if (whereConditions.length > 0) {
+      sqlQuery += ' WHERE ' + whereConditions.join(' AND ');
+    }
+    sqlQuery += ' ORDER BY created_at DESC';
+
+    // 添加分页
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    sqlQuery += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    queryParams.push(parseInt(limit), offset);
+
+    // 执行查询
+    const result = await dbClient.query(sqlQuery, queryParams);
+
+    // 获取总数
+    let countQuery = 'SELECT COUNT(*) as total FROM system_logs';
+    let countParams = [];
+    let countParamIndex = 1;
+
+    if (whereConditions.length > 0) {
+      const countConditions = [];
+
+      if (log_type) {
+        countConditions.push(`log_type = $${countParamIndex++}`);
+        countParams.push(log_type);
+      }
+
+      if (level) {
+        countConditions.push(`level = $${countParamIndex++}`);
+        countParams.push(level);
+      }
+
+      if (module) {
+        countConditions.push(`module = $${countParamIndex++}`);
+        countParams.push(module);
+      }
+
+      if (start_date) {
+        countConditions.push(`created_at >= $${countParamIndex++}`);
+        countParams.push(start_date);
+      }
+
+      if (end_date) {
+        countConditions.push(`created_at <= $${countParamIndex++}`);
+        countParams.push(end_date);
+      }
+
+      if (search) {
+        countConditions.push(`(description ILIKE $${countParamIndex} OR action ILIKE $${countParamIndex + 1} OR error_message ILIKE $${countParamIndex + 2})`);
+        const searchPattern = `%${search}%`;
+        countParams.push(searchPattern, searchPattern, searchPattern);
+        countParamIndex += 3;
+      }
+
+      countQuery += ' WHERE ' + countConditions.join(' AND ');
+    }
+
+    const countResult = await dbClient.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    console.log(`✅ [API] 获取系统日志成功，共 ${result.rows.length} 条，总计 ${total} 条`);
+    res.json({
+      success: true,
+      data: {
+        logs: result.rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取系统日志失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 获取系统日志统计数据
+app.get('/api/admin/logs/stats', async (req, res) => {
+  try {
+    if (!dbClient) {
+      return res.status(500).json({
+        success: false,
+        message: '数据库连接失败，请检查数据库配置'
+      });
+    }
+
+    const { days = 7 } = req.query;
+    console.log('📊 [API] 获取系统日志统计数据请求:', { days });
+
+    // 获取总体统计
+    const totalStatsQuery = `
+      SELECT 
+        COUNT(*) as total_logs,
+        COUNT(CASE WHEN log_type = 'operation' THEN 1 END) as operation_logs,
+        COUNT(CASE WHEN log_type = 'error' THEN 1 END) as error_logs,
+        COUNT(CASE WHEN log_type = 'security' THEN 1 END) as security_logs,
+        COUNT(CASE WHEN log_type = 'system' THEN 1 END) as system_logs,
+        COUNT(CASE WHEN level = 'error' OR level = 'fatal' THEN 1 END) as error_count,
+        COUNT(CASE WHEN level = 'warn' THEN 1 END) as warning_count
+      FROM system_logs 
+      WHERE created_at >= NOW() - INTERVAL '${parseInt(days)} days'
+    `;
+
+    // 获取按日期分组的统计
+    const dailyStatsQuery = `
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as total,
+        COUNT(CASE WHEN log_type = 'operation' THEN 1 END) as operation,
+        COUNT(CASE WHEN log_type = 'error' THEN 1 END) as error,
+        COUNT(CASE WHEN log_type = 'security' THEN 1 END) as security,
+        COUNT(CASE WHEN log_type = 'system' THEN 1 END) as system
+      FROM system_logs 
+      WHERE created_at >= NOW() - INTERVAL '${parseInt(days)} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `;
+
+    // 获取模块统计
+    const moduleStatsQuery = `
+      SELECT 
+        module,
+        COUNT(*) as count,
+        COUNT(CASE WHEN level = 'error' OR level = 'fatal' THEN 1 END) as error_count
+      FROM system_logs 
+      WHERE created_at >= NOW() - INTERVAL '${parseInt(days)} days'
+      GROUP BY module
+      ORDER BY count DESC
+      LIMIT 10
+    `;
+
+    // 获取最近错误日志
+    const recentErrorsQuery = `
+      SELECT id, module, action, error_message, created_at
+      FROM system_logs 
+      WHERE (level = 'error' OR level = 'fatal') 
+        AND created_at >= NOW() - INTERVAL '${parseInt(days)} days'
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+
+    const [totalStats, dailyStats, moduleStats, recentErrors] = await Promise.all([
+      dbClient.query(totalStatsQuery),
+      dbClient.query(dailyStatsQuery),
+      dbClient.query(moduleStatsQuery),
+      dbClient.query(recentErrorsQuery)
+    ]);
+
+    console.log('✅ [API] 获取系统日志统计数据成功');
+    res.json({
+      success: true,
+      data: {
+        summary: totalStats.rows[0],
+        dailyStats: dailyStats.rows,
+        moduleStats: moduleStats.rows,
+        recentErrors: recentErrors.rows
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取系统日志统计数据失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+
+
+// 获取系统日志详情
+app.get('/api/admin/logs/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      return res.status(500).json({
+        success: false,
+        message: '数据库连接失败，请检查数据库配置'
+      });
+    }
+
+    const { id } = req.params;
+    console.log('📋 [API] 获取系统日志详情请求:', id);
+
+    const result = await dbClient.query(
+      'SELECT * FROM system_logs WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '日志记录不存在'
+      });
+    }
+
+    console.log('✅ [API] 获取系统日志详情成功');
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取系统日志详情失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+
+
+// 清理过期日志
+app.delete('/api/admin/logs/cleanup', async (req, res) => {
+  try {
+    if (!dbClient) {
+      return res.status(500).json({
+        success: false,
+        message: '数据库连接失败，请检查数据库配置'
+      });
+    }
+
+    const { days = 30 } = req.body;
+    console.log('🧹 [API] 清理过期日志请求:', { days });
+
+    const result = await dbClient.query(
+      'DELETE FROM system_logs WHERE created_at < NOW() - INTERVAL $1 RETURNING id',
+      [`${parseInt(days)} days`]
+    );
+
+    console.log(`✅ [API] 清理过期日志成功，删除了 ${result.rows.length} 条记录`);
+    res.json({
+      success: true,
+      message: `成功清理 ${result.rows.length} 条过期日志记录`
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 清理过期日志失败:', error.message);
     res.status(500).json({
       success: false,
       message: error.message
@@ -2054,6 +2397,31 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     database: dbClient ? 'connected' : 'disconnected',
     timestamp: new Date().toISOString()
+  });
+});
+
+// 错误处理中间件（必须放在所有路由之后）
+app.use((error, req, res, next) => {
+  if (dbClient && logger) {
+    // 异步记录错误日志
+    setImmediate(() => {
+      logger.error('server', `${req.method} ${req.path}`, error, {
+        user_id: req.user?.id || null,
+        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null,
+        request_data: {
+          query: req.query,
+          body: req.body,
+          params: req.params
+        }
+      });
+    });
+  }
+  
+  console.error('❌ [Server] 未处理的错误:', error.message);
+  res.status(500).json({
+    success: false,
+    message: '服务器内部错误'
   });
 });
 

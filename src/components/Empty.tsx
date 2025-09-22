@@ -68,3 +68,6 @@ export function Empty({ message = "暂无内容" }) {
     </div>
   );
 }
+
+// 默认导出
+export default Empty;

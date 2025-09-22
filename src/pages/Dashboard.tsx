@@ -22,6 +22,8 @@ import MomentsTab from '@/components/dashboard/MomentsTab';
 import CommentsTab from '@/components/dashboard/CommentsTab';
 import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
+import LogManagement from '@/pages/LogManagement';
+import LogStats from '@/pages/LogStats';
 
 interface Work {
   id: number;
@@ -112,6 +114,9 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 日志管理相关状态
+  const [logSubTab, setLogSubTab] = useState('list'); // 'list' | 'stats'
 
   // 博客分页和筛选状态
   const [blogCurrentPage, setBlogCurrentPage] = useState(1);
@@ -1253,6 +1258,43 @@ export default function Dashboard() {
             handleDeleteBlog={handleDeleteBlog}
             renderBlogStatusBadge={renderBlogStatusBadge}
           />
+        )}
+
+        {/* 日志管理页面 */}
+        {activeTab === 'logs' && (
+          <div className="space-y-6">
+            {/* 日志管理子标签页导航 */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setLogSubTab('list')}
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    logSubTab === 'list'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <i className="fas fa-list mr-2"></i>
+                  日志列表
+                </button>
+                <button
+                  onClick={() => setLogSubTab('stats')}
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    logSubTab === 'stats'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <i className="fas fa-chart-bar mr-2"></i>
+                  统计分析
+                </button>
+              </div>
+            </div>
+
+            {/* 日志子页面内容 */}
+            {logSubTab === 'list' && <LogManagement />}
+            {logSubTab === 'stats' && <LogStats />}
+          </div>
         )}
 
       {/* 评论回复模态框 */}
