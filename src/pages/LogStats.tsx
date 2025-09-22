@@ -123,8 +123,6 @@ export default function LogStats() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
         <div className="mb-8">
@@ -155,10 +153,10 @@ export default function LogStats() {
               />
             </div>
             
-            <div className="flex items-end">
+            <div className="flex items-center">
               <button
                 onClick={fetchStats}
-                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors mt-7"
               >
                 <i className="fas fa-search mr-2"></i>
                 查询

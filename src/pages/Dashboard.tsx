@@ -1293,7 +1293,7 @@ export default function Dashboard() {
 
             {/* 日志子页面内容 */}
             {logSubTab === 'list' && <LogManagement />}
-            {logSubTab === 'stats' && <LogStats />}
+            {logSubTab === 'stats' && <LogStats showNav={false} />}
           </div>
         )}
 
