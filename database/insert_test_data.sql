@@ -536,12 +536,19 @@ INSERT INTO blog_likes (blog_id, ip_address, user_agent, created_at) VALUES
 (5, '192.168.1.208', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15', CURRENT_TIMESTAMP - INTERVAL '10 hours'),
 (6, '192.168.1.209', 'Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0', CURRENT_TIMESTAMP - INTERVAL '8 hours');
 
+-- 系统日志测试数据
+INSERT INTO system_logs (id, log_type, level, module, action, description, user_id, username, ip_address, user_agent, request_method, request_url, request_params, response_status, execution_time, error_message, error_stack, extra_data, created_at, request_data, response_data) VALUES
+(1, 'request', 'INFO', 'auth', 'login', '用户登录成功', 1, 'admin', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'POST', '/api/auth/login', '{"remember_me": true}', 200, 150, NULL, NULL, NULL, CURRENT_TIMESTAMP, '{"username": "admin", "remember_me": true}', '{"status": "success", "token": "jwt_token_here"}'),
+(2, 'error', 'ERROR', 'blog', 'create', '创建博客失败：标题不能为空', 2, 'user2', '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'POST', '/api/blogs', '{"content": "测试内容"}', 400, 50, '标题不能为空', 'ValidationError: title is required', NULL, CURRENT_TIMESTAMP, '{"title": "", "content": "测试内容"}', NULL),
+(3, 'system', 'WARN', 'database', 'backup', '数据库备份完成，但存在警告', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 30000, '备份过程中发现性能问题', NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}', CURRENT_TIMESTAMP, NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}'),
+(4, 'security', 'ERROR', 'auth', 'login', '登录失败：密码错误', NULL, 'hacker', '192.168.1.102', 'curl/7.68.0', 'POST', '/api/auth/login', '{"password": "wrong_password"}', 401, 100, '密码验证失败', 'AuthenticationError: Invalid credentials', NULL, CURRENT_TIMESTAMP, '{"username": "hacker", "password": "wrong_password"}', NULL);
+
 -- 显示插入结果
 SELECT 
     'Data inserted successfully!' as result,
     (SELECT COUNT(*) FROM users) as users_count,
     (SELECT COUNT(*) FROM blogs) as blogs_count,
     (SELECT COUNT(*) FROM works) as works_count,
-
     (SELECT COUNT(*) FROM comments) as comments_count,
-    (SELECT COUNT(*) FROM blog_likes) as blog_likes_count;
+    (SELECT COUNT(*) FROM blog_likes) as blog_likes_count,
+    (SELECT COUNT(*) FROM system_logs) as system_logs_count;

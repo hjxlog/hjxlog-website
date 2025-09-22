@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS works CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS system_logs CASCADE;
 
 -- 创建用户表
 CREATE TABLE users (
@@ -349,27 +350,29 @@ INSERT INTO moments (content, author_id, visibility) VALUES
 -- 系统日志模块表结构
 -- ================================================
 
--- 创建系统日志表
+-- 系统日志表
 CREATE TABLE system_logs (
-    id SERIAL PRIMARY KEY,
-    log_type VARCHAR(20) NOT NULL CHECK (log_type IN ('operation', 'error', 'security', 'system')),
-    level VARCHAR(10) NOT NULL DEFAULT 'info' CHECK (level IN ('debug', 'info', 'warn', 'error', 'fatal')),
-    module VARCHAR(50) NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    log_type VARCHAR(50) NOT NULL,
+    level VARCHAR(20) NOT NULL CHECK (level IN ('debug', 'info', 'warn', 'error', 'fatal', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL')),
+    module VARCHAR(100) NOT NULL,
     action VARCHAR(100) NOT NULL,
     description TEXT,
-    user_id VARCHAR(50),
-    username VARCHAR(100),
+    user_id BIGINT REFERENCES users(id),
+    username VARCHAR(50),
     ip_address INET,
     user_agent TEXT,
     request_method VARCHAR(10),
     request_url TEXT,
     request_params JSONB,
     response_status INTEGER,
-    response_time INTEGER,
+    execution_time INTEGER,
     error_message TEXT,
     error_stack TEXT,
     extra_data JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    request_data JSONB,
+    response_data JSONB
 );
 
 -- 创建系统日志表索引
@@ -380,7 +383,6 @@ CREATE INDEX idx_system_logs_action ON system_logs(action);
 CREATE INDEX idx_system_logs_user_id ON system_logs(user_id);
 CREATE INDEX idx_system_logs_ip_address ON system_logs(ip_address);
 CREATE INDEX idx_system_logs_created_at ON system_logs(created_at DESC);
-CREATE INDEX idx_system_logs_response_status ON system_logs(response_status);
 CREATE INDEX idx_system_logs_type_level ON system_logs(log_type, level);
 CREATE INDEX idx_system_logs_module_action ON system_logs(module, action);
 
@@ -388,23 +390,18 @@ CREATE INDEX idx_system_logs_module_action ON system_logs(module, action);
 COMMENT ON TABLE system_logs IS '系统日志表';
 
 -- 添加系统日志表字段注释
-COMMENT ON COLUMN system_logs.log_type IS '日志类型(operation/error/security/system)';
-COMMENT ON COLUMN system_logs.level IS '日志级别(debug/info/warn/error/fatal)';
+COMMENT ON COLUMN system_logs.log_type IS '日志类型(request/error/system/security)';
+COMMENT ON COLUMN system_logs.level IS '日志级别(debug/info/warn/error/fatal，支持大小写)';
 COMMENT ON COLUMN system_logs.module IS '模块名称';
 COMMENT ON COLUMN system_logs.action IS '操作动作';
-COMMENT ON COLUMN system_logs.description IS '操作描述';
-COMMENT ON COLUMN system_logs.user_id IS '用户ID';
-COMMENT ON COLUMN system_logs.username IS '用户名';
+COMMENT ON COLUMN system_logs.description IS '日志描述';
+COMMENT ON COLUMN system_logs.user_id IS '关联用户ID';
 COMMENT ON COLUMN system_logs.ip_address IS 'IP地址';
 COMMENT ON COLUMN system_logs.user_agent IS '用户代理信息';
-COMMENT ON COLUMN system_logs.request_method IS '请求方法';
-COMMENT ON COLUMN system_logs.request_url IS '请求URL';
-COMMENT ON COLUMN system_logs.request_params IS '请求参数(JSON格式)';
-COMMENT ON COLUMN system_logs.response_status IS '响应状态码';
-COMMENT ON COLUMN system_logs.response_time IS '响应时间(毫秒)';
+COMMENT ON COLUMN system_logs.request_data IS '请求数据(JSON格式)';
+COMMENT ON COLUMN system_logs.response_data IS '响应数据(JSON格式)';
 COMMENT ON COLUMN system_logs.error_message IS '错误信息';
-COMMENT ON COLUMN system_logs.error_stack IS '错误堆栈';
-COMMENT ON COLUMN system_logs.extra_data IS '额外数据(JSON格式)';
+COMMENT ON COLUMN system_logs.execution_time IS '执行时间(毫秒)';
 COMMENT ON COLUMN system_logs.created_at IS '创建时间';
 
 -- 显示创建结果
