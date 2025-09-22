@@ -27,9 +27,9 @@ const validateFileType = (file) => {
   return allowedTypes.includes(mimeType);
 };
 
-// 验证文件大小 (5MB)
+// 验证文件大小 (20MB)
 const validateFileSize = (file) => {
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 20 * 1024 * 1024; // 20MB
   return file.size <= maxSize;
 };
 
@@ -58,7 +58,7 @@ const uploadToOSS = async (file) => {
     }
     
     if (!validateFileSize(file)) {
-      throw new Error('文件大小超过限制，最大支持 5MB');
+      throw new Error('文件大小超过限制，最大支持 20MB');
     }
 
     const client = createOSSClient();
