@@ -1,4 +1,5 @@
 // 前端OSS图片上传工具函数
+import { API_BASE_URL } from '@/config/api';
 
 // 上传进度回调类型定义
 export interface UploadProgress {
@@ -25,8 +26,8 @@ export interface BatchUploadResult {
   total: number;
 }
 
-// API基础URL
-const API_BASE_URL = 'http://localhost:3006/api';
+// API基础URL - 使用统一配置
+// const API_BASE_URL 已从 @/config/api 导入
 
 /**
  * 验证文件类型
@@ -147,7 +148,7 @@ export const uploadImageToOSS = async (file, onProgress) => {
       });
 
       // 发送请求
-      const uploadUrl = `${API_BASE_URL}/upload/image`;
+      const uploadUrl = `${API_BASE_URL}/api/upload/image`;
       console.log('🚀 [OSS上传] 发送请求到:', uploadUrl);
       
       xhr.open('POST', uploadUrl);
@@ -247,7 +248,7 @@ export const uploadImageWithPresignedUrl = async (file, onProgress) => {
     const fileName = `moments/${timestamp}-${randomStr}.${ext}`;
 
     // 获取预签名URL
-    const presignedResponse = await fetch(`${API_BASE_URL}/upload/presigned-url`, {
+    const presignedResponse = await fetch(`${API_BASE_URL}/api/upload/presigned-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -323,7 +324,7 @@ export const uploadImageWithPresignedUrl = async (file, onProgress) => {
  */
 export const deleteImageFromOSS = async (fileName) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/upload/file/${encodeURIComponent(fileName)}`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload/file/${encodeURIComponent(fileName)}`, {
       method: 'DELETE'
     });
 
