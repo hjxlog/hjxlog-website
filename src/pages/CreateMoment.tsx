@@ -55,9 +55,9 @@ export default function CreateMoment() {
         continue;
       }
 
-      // 检查文件大小（5MB限制）
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`文件 ${file.name} 超过5MB大小限制`);
+      // 检查文件大小（15MB限制）
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error(`文件 ${file.name} 超过15MB大小限制`);
         continue;
       }
 
@@ -295,7 +295,7 @@ export default function CreateMoment() {
                   >
                     <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-2">拖拽图片到此处，或点击选择文件</p>
-                    <p className="text-sm text-gray-500 mb-4">支持 JPG、PNG、GIF 格式，单个文件不超过 5MB</p>
+                    <p className="text-sm text-gray-500 mb-4">支持 JPG、PNG、GIF 格式，单个文件不超过 15MB</p>
                     <input
                       type="file"
                       multiple

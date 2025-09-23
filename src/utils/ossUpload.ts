@@ -42,10 +42,10 @@ export const validateImageType = (file) => {
 /**
  * 验证文件大小
  * @param {File} file - 要验证的文件
- * @param {number} maxSize - 最大文件大小（字节），默认5MB
+ * @param {number} maxSize - 最大文件大小（字节），默认15MB
  * @returns {boolean} 文件大小是否符合要求
  */
-export const validateImageSize = (file, maxSize = 5 * 1024 * 1024) => {
+export const validateImageSize = (file, maxSize = 15 * 1024 * 1024) => {
   return file.size <= maxSize;
 };
 
@@ -77,7 +77,7 @@ export const uploadImageToOSS = async (file, onProgress) => {
 
     // 验证文件大小
     if (!validateImageSize(file)) {
-      throw new Error('文件大小超过限制，最大支持 5MB');
+      throw new Error('文件大小超过限制，最大支持 15MB');
     }
 
     // 创建FormData
@@ -238,7 +238,7 @@ export const uploadImageWithPresignedUrl = async (file, onProgress) => {
     }
 
     if (!validateImageSize(file)) {
-      throw new Error('文件大小超过限制，最大支持 5MB');
+      throw new Error('文件大小超过限制，最大支持 15MB');
     }
 
     // 生成文件名

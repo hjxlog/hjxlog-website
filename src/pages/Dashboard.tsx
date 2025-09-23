@@ -568,7 +568,7 @@ export default function Dashboard() {
         continue;
       }
       if (!validateImageSize(file)) {
-        errors.push(`${file.name}: 文件大小超过5MB限制`);
+        errors.push(`${file.name}: 文件大小超过15MB限制`);
         continue;
       }
       validFiles.push(file);
@@ -695,7 +695,7 @@ export default function Dashboard() {
         continue;
       }
       if (!validateImageSize(file)) {
-        errors.push(`${file.name}: 文件大小超过5MB限制`);
+        errors.push(`${file.name}: 文件大小超过15MB限制`);
         continue;
       }
       validFiles.push(file);
