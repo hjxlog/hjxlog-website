@@ -369,10 +369,10 @@ export default function LogManagement() {
           </div>
           
           {/* 操作按钮 */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
             >
               <i className="fas fa-undo mr-2"></i>
               重置筛选
@@ -382,7 +382,7 @@ export default function LogManagement() {
             
             <button
               onClick={handleCleanupLogs}
-              className="px-4 py-2 text-white bg-orange-600 rounded-md hover:bg-orange-700 transition-colors"
+              className="px-4 py-2 text-white bg-orange-600 rounded-md hover:bg-orange-700 transition-colors text-sm"
             >
               <i className="fas fa-broom mr-2"></i>
               清理过期日志
@@ -417,11 +417,11 @@ export default function LogManagement() {
               <div className="divide-y divide-gray-200">
                 {logs.map((log) => (
                   <div key={log.id} className="px-6 py-4 hover:bg-gray-50">
-                    <div className="flex items-start">
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                       
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between mb-2 gap-2">
+                          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
                             <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getLogTypeStyle(log.log_type)}`}>
                               {log.log_type.toUpperCase()}
                             </span>
@@ -431,23 +431,23 @@ export default function LogManagement() {
                             <span className={`px-2 py-1 text-xs font-medium rounded ${getMethodStyle(log.action)}`}>
                               {log.action.split(' ')[0]}
                             </span>
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-gray-900 hidden sm:inline">
                               {log.module}
                             </span>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 hidden md:inline">
                               {formatTime(log.created_at)}
                             </span>
                             {log.execution_time && (
-                              <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                              <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded hidden lg:inline">
                                 {formatExecutionTime(log.execution_time)}
                               </span>
                             )}
                           </div>
                           
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-shrink-0">
                             <button
                               onClick={() => setSelectedLogForDetail(log)}
-                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              className="text-blue-600 hover:text-blue-800 transition-colors px-2 py-1 text-sm whitespace-nowrap"
                               title="查看详情"
                             >
                               <i className="fas fa-eye"></i>
@@ -457,29 +457,29 @@ export default function LogManagement() {
                         </div>
                         
                         <div className="mb-2">
-                          <p className="text-sm text-gray-900 font-medium">{log.action}</p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-900 font-medium break-words">{log.action}</p>
+                          <p className="text-sm text-gray-600 mt-1 break-words">
                             {log.description}
                           </p>
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                           {log.username && (
-                            <span>
+                            <span className="flex items-center">
                               <i className="fas fa-user mr-1"></i>
-                              {log.username}
+                              <span className="break-all">{log.username}</span>
                             </span>
                           )}
                           {log.ip_address && (
-                            <span>
+                            <span className="flex items-center">
                               <i className="fas fa-globe mr-1"></i>
-                              {log.ip_address}
+                              <span className="break-all">{log.ip_address}</span>
                             </span>
                           )}
                           {log.user_agent && (
-                            <span className="truncate max-w-xs" title={log.user_agent}>
-                              <i className="fas fa-desktop mr-1"></i>
-                              {log.user_agent}
+                            <span className="flex items-center max-w-full" title={log.user_agent}>
+                              <i className="fas fa-desktop mr-1 flex-shrink-0"></i>
+                              <span className="truncate">{log.user_agent}</span>
                             </span>
                           )}
                         </div>
@@ -524,70 +524,73 @@ export default function LogManagement() {
       
       {/* 日志详情弹窗 */}
       {selectedLogForDetail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
             {/* 弹窗头部 */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">日志详情</h3>
               <button
                 onClick={() => setSelectedLogForDetail(null)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
                 <i className="fas fa-times text-xl"></i>
               </button>
             </div>
             
             {/* 弹窗内容 */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              {/* 基本信息 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-120px)] sm:max-h-[calc(90vh-120px)]">
+              <div className="space-y-6">
+                {/* 基本信息 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">日志类型</label>
-                  <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full border ${getLogTypeStyle(selectedLogForDetail.log_type)}`}>
-                    {selectedLogForDetail.log_type.toUpperCase()}
-                  </span>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">模块名称</label>
-                  <p className="text-sm text-gray-900">{selectedLogForDetail.module}</p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">操作</label>
-                  <p className="text-sm text-gray-900">{selectedLogForDetail.action}</p>
-                </div>
-                
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
-                   <p className="text-sm text-gray-900">{selectedLogForDetail.description}</p>
-                 </div>
-                 
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">创建时间</label>
-                   <p className="text-sm text-gray-900">{formatTime(selectedLogForDetail.created_at)}</p>
-                 </div>
-                 
-                 {selectedLogForDetail.execution_time && (
-                   <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">执行时间</label>
-                     <p className="text-sm text-gray-900">{formatExecutionTime(selectedLogForDetail.execution_time)}</p>
-                   </div>
-                 )}
-                
-                {selectedLogForDetail.username && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">用户</label>
-                    <p className="text-sm text-gray-900">{selectedLogForDetail.username}</p>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">基本信息</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center">
+                        <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">日志类型:</span>
+                        <span className={`ml-0 sm:ml-2 px-2 py-1 text-xs font-medium rounded-full border w-fit ${getLogTypeStyle(selectedLogForDetail.log_type)}`}>
+                          {selectedLogForDetail.log_type.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center">
+                        <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">时间:</span>
+                        <span className="ml-0 sm:ml-2 text-sm text-gray-900 break-words">{formatTime(selectedLogForDetail.created_at)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center">
+                        <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">用户:</span>
+                        <span className="ml-0 sm:ml-2 text-sm text-gray-900 break-words">{selectedLogForDetail.username || '未知用户'}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center">
+                        <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">IP地址:</span>
+                        <span className="ml-0 sm:ml-2 text-sm text-gray-900 break-all">{selectedLogForDetail.ip_address || '未知'}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center">
+                        <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">模块:</span>
+                        <span className="ml-0 sm:ml-2 text-sm text-gray-900 break-words">{selectedLogForDetail.module}</span>
+                      </div>
+                      {selectedLogForDetail.execution_time && (
+                        <div className="flex flex-col sm:flex-row sm:items-center">
+                          <span className="text-sm font-medium text-gray-600 mb-1 sm:mb-0">执行时间:</span>
+                          <span className="ml-0 sm:ml-2 text-sm text-gray-900">{formatExecutionTime(selectedLogForDetail.execution_time)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
+                </div>
                 
-                {selectedLogForDetail.ip_address && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">IP地址</label>
-                    <p className="text-sm text-gray-900">{selectedLogForDetail.ip_address}</p>
+                {/* 操作详情 */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">操作详情</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <div>
+                      <span className="text-sm font-medium text-gray-600">操作:</span>
+                      <p className="text-sm text-gray-900 mt-1 break-words">{selectedLogForDetail.action}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-gray-600">描述:</span>
+                      <p className="text-sm text-gray-900 mt-1 break-words">{selectedLogForDetail.description}</p>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
               
               {/* User Agent */}
@@ -632,14 +635,13 @@ export default function LogManagement() {
             </div>
             
             {/* 弹窗底部 */}
-            <div className="flex items-center justify-end p-6 border-t border-gray-200 space-x-3">
+            <div className="flex justify-end p-4 sm:p-6 border-t border-gray-200">
               <button
                 onClick={() => setSelectedLogForDetail(null)}
-                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
               >
                 关闭
               </button>
-
             </div>
           </div>
         </div>
