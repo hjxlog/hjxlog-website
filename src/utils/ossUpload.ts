@@ -1,6 +1,52 @@
 // 前端OSS图片上传工具函数
 import { API_BASE_URL } from '@/config/api';
 
+/**
+ * 记录错误日志到后端
+ * @param {string} action - 操作类型
+ * @param {Error} error - 错误对象
+ * @param {File} file - 文件对象
+ * @param {any} additionalData - 额外数据
+ */
+const logErrorToBackend = async (action: string, error: Error, file: File, additionalData: any = {}) => {
+  try {
+    const logData = {
+      log_type: 'error',
+      level: 'error',
+      module: 'oss_upload',
+      action,
+      description: `前端OSS上传错误: ${error.message}`,
+      error_message: error.stack || error.message,
+      file_info: {
+        name: file?.name,
+        size: file?.size,
+        type: file?.type,
+        lastModified: file?.lastModified
+      },
+      user_info: {
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        url: window.location.href
+      },
+      additional_data: additionalData
+    };
+
+    // 异步发送日志，不阻塞主流程
+    fetch(`${API_BASE_URL}/api/logs/frontend`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(logData)
+    }).catch(logError => {
+      console.warn('⚠️ [日志记录] 发送错误日志失败:', logError.message);
+    });
+
+  } catch (logError) {
+    console.warn('⚠️ [日志记录] 记录错误日志异常:', logError.message);
+  }
+};
+
 // 上传进度回调类型定义
 export interface UploadProgress {
   loaded: number;
@@ -34,7 +80,7 @@ export interface BatchUploadResult {
  * @param {File} file - 要验证的文件
  * @returns {boolean} 是否为支持的图片类型
  */
-export const validateImageType = (file) => {
+export const validateImageType = (file: File) => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
   return allowedTypes.includes(file.type);
 };
@@ -45,7 +91,7 @@ export const validateImageType = (file) => {
  * @param {number} maxSize - 最大文件大小（字节），默认15MB
  * @returns {boolean} 文件大小是否符合要求
  */
-export const validateImageSize = (file, maxSize = 15 * 1024 * 1024) => {
+export const validateImageSize = (file: File, maxSize: number = 15 * 1024 * 1024) => {
   return file.size <= maxSize;
 };
 
@@ -68,7 +114,7 @@ export const formatFileSize = (bytes) => {
  * @param {Function} onProgress - 上传进度回调函数
  * @returns {Promise<UploadResult>} 上传结果
  */
-export const uploadImageToOSS = async (file, onProgress) => {
+export const uploadImageToOSS = async (file: File, onProgress?: (progress: UploadProgress) => void) => {
   try {
     // 验证文件类型
     if (!validateImageType(file)) {
@@ -134,17 +180,26 @@ export const uploadImageToOSS = async (file, onProgress) => {
             });
           } else {
             console.log('❌ [OSS上传] 上传失败:', response.message);
-            reject(new Error(response.message || '上传失败'));
+            const error = new Error(response.message || '上传失败');
+            // 记录错误日志到后端
+            logErrorToBackend('OSS上传失败', error, file, response);
+            reject(error);
           }
         } catch (error) {
           console.error('❌ [OSS上传] 解析响应失败:', error);
-          reject(new Error('解析响应失败'));
+          const parseError = new Error('解析响应失败');
+          // 记录错误日志到后端
+          logErrorToBackend('OSS上传响应解析失败', parseError, file, { originalError: error.message });
+          reject(parseError);
         }
       });
 
       // 监听请求错误
       xhr.addEventListener('error', () => {
-        reject(new Error('网络错误'));
+        const error = new Error('网络错误');
+        // 记录错误日志到后端
+        logErrorToBackend('OSS上传网络错误', error, file);
+        reject(error);
       });
 
       // 发送请求
@@ -158,6 +213,8 @@ export const uploadImageToOSS = async (file, onProgress) => {
     });
 
   } catch (error) {
+    // 记录错误日志到后端
+    logErrorToBackend('OSS上传异常', error, file);
     return {
       success: false,
       error: error.message
@@ -172,7 +229,7 @@ export const uploadImageToOSS = async (file, onProgress) => {
  * @param {Function} onFileProgress - 单个文件上传进度回调函数
  * @returns {Promise<BatchUploadResult>} 批量上传结果
  */
-export const uploadMultipleImagesToOSS = async (files, onProgress, onFileProgress) => {
+export const uploadMultipleImagesToOSS = async (files: File[], onProgress?: (progress: any) => void, onFileProgress?: (index: number, progress: UploadProgress) => void) => {
   try {
     const results = {
       successful: [],
@@ -230,7 +287,7 @@ export const uploadMultipleImagesToOSS = async (files, onProgress, onFileProgres
  * @param {Function} onProgress - 上传进度回调函数
  * @returns {Promise<UploadResult>} 上传结果
  */
-export const uploadImageWithPresignedUrl = async (file, onProgress) => {
+export const uploadImageWithPresignedUrl = async (file: File, onProgress?: (progress: UploadProgress) => void) => {
   try {
     // 验证文件
     if (!validateImageType(file)) {
@@ -322,7 +379,7 @@ export const uploadImageWithPresignedUrl = async (file, onProgress) => {
  * @param {string} fileName - 要删除的文件名
  * @returns {Promise<boolean>} 删除是否成功
  */
-export const deleteImageFromOSS = async (fileName) => {
+export const deleteImageFromOSS = async (fileName: string) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/upload/file/${encodeURIComponent(fileName)}`, {
       method: 'DELETE'
@@ -342,7 +399,7 @@ export const deleteImageFromOSS = async (fileName) => {
  * @param {string} url - 文件URL
  * @returns {string} 文件名
  */
-export const extractFileNameFromUrl = (url) => {
+export const extractFileNameFromUrl = (url: string) => {
   try {
     const urlObj = new URL(url);
     return urlObj.pathname.substring(1); // 去掉开头的 '/'
@@ -360,7 +417,7 @@ export const extractFileNameFromUrl = (url) => {
  * @param {number} maxHeight - 最大高度
  * @returns {Promise<File>} 压缩后的图片文件
  */
-export const compressImage = (file, quality = 0.8, maxWidth = 1920, maxHeight = 1080) => {
+export const compressImage = (file: File, quality: number = 0.8, maxWidth: number = 1920, maxHeight: number = 1080) => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -384,15 +441,19 @@ export const compressImage = (file, quality = 0.8, maxWidth = 1920, maxHeight = 
       canvas.height = height;
 
       // 绘制图片
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx!.drawImage(img, 0, 0, width, height);
 
       // 转换为Blob
       canvas.toBlob((blob) => {
-        const compressedFile = new File([blob], file.name, {
-          type: file.type,
-          lastModified: Date.now()
-        });
-        resolve(compressedFile);
+        if (blob) {
+          const compressedFile = new File([blob], file.name, {
+            type: file.type,
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        } else {
+          resolve(file); // 如果压缩失败，返回原文件
+        }
       }, file.type, quality);
     };
 

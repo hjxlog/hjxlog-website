@@ -2462,6 +2462,58 @@ app.delete('/api/moments/comments/:id', async (req, res) => {
   }
 });
 
+// 前端日志记录API
+app.post('/api/logs/frontend', async (req, res) => {
+  try {
+    const {
+      log_type = 'error',
+      level = 'error',
+      module = 'frontend',
+      action,
+      description,
+      error_message,
+      file_info,
+      user_info
+    } = req.body;
+
+    if (!description) {
+      return res.status(400).json({
+        success: false,
+        message: '日志描述不能为空'
+      });
+    }
+
+    // 使用logger记录前端日志
+    if (logger) {
+      await logger.error(module, action || 'frontend_error', description, {
+        error_message,
+        file_info,
+        user_info,
+        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null
+      });
+    }
+
+    console.log('📝 [API] 前端日志记录成功:', {
+      module,
+      action,
+      description
+    });
+
+    res.json({
+      success: true,
+      message: '日志记录成功'
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 前端日志记录失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({
