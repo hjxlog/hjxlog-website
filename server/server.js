@@ -176,6 +176,25 @@ app.post('/api/upload/image', (req, res, next) => {
 
   } catch (error) {
     console.error('❌ [API] 图片上传失败:', error.message);
+    
+    // 记录OSS上传错误日志
+    if (logger) {
+      await logger.error('upload', 'oss_upload_single', error, {
+        user_id: req.user?.id || null,
+        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null,
+        request_data: {
+          file_info: req.file ? {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            fieldname: req.file.fieldname
+          } : null,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message
@@ -203,6 +222,25 @@ app.post('/api/upload/images', upload.array('images', 10), async (req, res) => {
       total: result.total
     });
 
+    // 如果有失败的文件，记录错误日志
+    if (result.failed && result.failed.length > 0 && logger) {
+      await logger.error('upload', 'oss_upload_batch', new Error(`批量上传部分失败: ${result.failed.length}/${result.total} 个文件上传失败`), {
+        user_id: req.user?.id || null,
+        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null,
+        request_data: {
+          total_files: result.total,
+          successful_count: result.successful.length,
+          failed_count: result.failed.length,
+          failed_files: result.failed.map(f => ({
+            originalname: f.file?.originalname,
+            error: f.error
+          })),
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
     res.json({
       success: true,
       data: result,
@@ -211,6 +249,25 @@ app.post('/api/upload/images', upload.array('images', 10), async (req, res) => {
 
   } catch (error) {
     console.error('❌ [API] 批量图片上传失败:', error.message);
+    
+    // 记录OSS批量上传错误日志
+    if (logger) {
+      await logger.error('upload', 'oss_upload_batch', error, {
+        user_id: req.user?.id || null,
+        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null,
+        request_data: {
+          files_info: req.files ? req.files.map(file => ({
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size
+          })) : [],
+          files_count: req.files ? req.files.length : 0,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message
@@ -277,6 +334,20 @@ app.delete('/api/upload/file/:fileName', async (req, res) => {
 
   } catch (error) {
     console.error('❌ [API] 删除文件失败:', error.message);
+    
+    // 记录OSS文件删除错误日志
+    if (logger) {
+      await logger.error('upload', 'oss_delete_file', error, {
+        user_id: req.user?.id || null,
+        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+        user_agent: req.headers['user-agent'] || null,
+        request_data: {
+          file_name: fileName,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message
