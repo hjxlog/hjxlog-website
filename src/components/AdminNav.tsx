@@ -38,7 +38,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
           {/* Logo */}
           <div className="flex items-center">
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => window.open('/', '_blank')}
               className="text-2xl font-bold text-[#165DFF] hover:text-[#0E4BA4] transition-colors"
             >
               HJXLOG
@@ -140,12 +140,12 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
                 <div className="flex items-center justify-around px-3 py-2 bg-gray-50 rounded-md mx-3">
                   <button
                     onClick={() => {
-                      navigate('/');
+                      window.open('/', '_blank');
                       setIsMobileMenuOpen(false);
                     }}
                     className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-[#165DFF] transition-colors"
                   >
-                    <i className="fas fa-external-link-alt mr-2"></i>
+                    <i className="fas fa-home mr-2"></i>
                     返回前台
                   </button>
                   <button

@@ -248,6 +248,10 @@ export default function Dashboard() {
 
   // 删除评论
   const deleteComment = async (commentId: number) => {
+    if (!window.confirm('确定要删除这条评论吗？此操作不可撤销。')) {
+      return false;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
         method: 'DELETE',

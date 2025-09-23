@@ -163,7 +163,7 @@ export default function OverviewTab({
           </button>
           
           <button
-            onClick={() => navigate('/')}
+            onClick={() => window.open('/', '_blank')}
             className="p-4 border-2 border-dashed border-slate-200 rounded-lg hover:border-[#165DFF] hover:bg-[#165DFF]/5 transition-colors text-center"
           >
             <i className="fas fa-home text-2xl text-slate-400 mb-2"></i>
