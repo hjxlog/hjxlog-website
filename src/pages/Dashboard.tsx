@@ -4,6 +4,7 @@ import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import AdminNav from '@/components/AdminNav';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { API_BASE_URL, apiRequest } from '@/config/api';
 import { 
@@ -113,6 +114,14 @@ export default function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 确认对话框状态
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   // 日志管理相关状态已简化，移除了统计分析tab
 
@@ -248,31 +257,37 @@ export default function Dashboard() {
 
   // 删除评论
   const deleteComment = async (commentId: number) => {
-    if (!window.confirm('确定要删除这条评论吗？此操作不可撤销。')) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+    return new Promise<boolean>((resolve) => {
+      setConfirmDialog({
+        isOpen: true,
+        title: '删除评论',
+        message: '确定要删除这条评论吗？此操作不可撤销。',
+        onConfirm: async () => {
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            });
+            const result = await response.json();
+            if (result.success) {
+              await fetchComments();
+              toast.success('评论删除成功');
+              resolve(true);
+            } else {
+              toast.error(result.message || '删除评论失败');
+              resolve(false);
+            }
+          } catch (error) {
+            console.error('删除评论失败:', error);
+            toast.error('删除评论失败');
+            resolve(false);
+          }
         }
       });
-      const result = await response.json();
-      if (result.success) {
-        await fetchComments();
-        toast.success('评论删除成功');
-        return true;
-      } else {
-        toast.error(result.message || '删除评论失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('删除评论失败:', error);
-      toast.error('删除评论失败');
-      return false;
-    }
+    });
   };
 
   const createWork = async (workData: Partial<Work>) => {
@@ -498,25 +513,32 @@ export default function Dashboard() {
   };
 
   const deleteMoment = async (id: number) => {
-    if (!confirm('确定要删除这条动态吗？')) {
-      return;
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: '删除动态',
+      content: '确定要删除这条动态吗？此操作不可撤销。',
+      onConfirm: async () => {
+        try {
+          const data = await apiRequest(`/api/moments/${id}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const data = await apiRequest(`/api/moments/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (data.success) {
-        await fetchMoments();
-        toast.success('动态删除成功');
-      } else {
-        toast.error(data.message || '删除失败');
+          if (data.success) {
+            await fetchMoments();
+            toast.success('动态删除成功');
+          } else {
+            toast.error(data.message || '删除失败');
+          }
+        } catch (error) {
+          console.error('删除动态失败:', error);
+          toast.error('删除失败');
+        }
+        setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} });
+      },
+      onCancel: () => {
+        setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} });
       }
-    } catch (error) {
-      console.error('删除动态失败:', error);
-      toast.error('删除失败');
-    }
+    });
   };
 
   // 处理动态表单提交
@@ -854,15 +876,27 @@ export default function Dashboard() {
   };
 
   const handleDeleteWork = async (id: number) => {
-    if (window.confirm('确定要删除这个作品吗？')) {
-      await deleteWork(id);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: '删除作品',
+      message: '确定要删除这个作品吗？此操作无法撤销。',
+      onConfirm: async () => {
+        await deleteWork(id);
+        setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+      }
+    });
   };
 
   const handleDeleteBlog = async (id: number) => {
-    if (window.confirm('确定要删除这篇博客吗？')) {
-      await deleteBlog(id);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: '删除博客',
+      message: '确定要删除这篇博客吗？此操作无法撤销。',
+      onConfirm: async () => {
+        await deleteBlog(id);
+        setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+      }
+    });
   };
 
   const handleToggleWorkFeatured = async (id: number, currentFeatured: boolean) => {
@@ -1863,6 +1897,15 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* 确认对话框 */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} })}
+      />
     </div>
   );
 }

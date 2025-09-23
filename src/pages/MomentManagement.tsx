@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PencilIcon, TrashIcon, EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import { apiRequest } from '@/config/api';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface Moment {
   id: number;
@@ -34,6 +35,12 @@ const MomentManagement: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [limit] = useState(10);
   const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    content: '',
+    onConfirm: () => {}
+  });
 
   // 获取动态列表
   const fetchMoments = async (currentPage: number = 1) => {
@@ -63,30 +70,34 @@ const MomentManagement: React.FC = () => {
 
   // 删除动态
   const handleDelete = async (id: number) => {
-    if (!confirm('确定要删除这条动态吗？此操作不可恢复。')) {
-      return;
-    }
-
-    try {
-      setDeleteLoading(id);
-      
-      const result = await apiRequest(`/api/moments/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (result.success) {
-        toast.success('动态删除成功');
-        // 重新获取当前页数据
-        fetchMoments(page);
-      } else {
-        throw new Error(result.message || '删除动态失败');
+    setConfirmDialog({
+      isOpen: true,
+      title: '删除动态',
+      content: '确定要删除这条动态吗？此操作不可恢复。',
+      onConfirm: async () => {
+        try {
+          setDeleteLoading(id);
+          
+          const result = await apiRequest(`/api/moments/${id}`, {
+            method: 'DELETE',
+          });
+          
+          if (result.success) {
+            toast.success('动态删除成功');
+            // 重新获取当前页数据
+            fetchMoments(page);
+          } else {
+            throw new Error(result.message || '删除动态失败');
+          }
+        } catch (err) {
+          console.error('删除动态失败:', err);
+          toast.error(err instanceof Error ? err.message : '删除动态失败');
+        } finally {
+          setDeleteLoading(null);
+        }
+        setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} });
       }
-    } catch (err) {
-      console.error('删除动态失败:', err);
-      toast.error(err instanceof Error ? err.message : '删除动态失败');
-    } finally {
-      setDeleteLoading(null);
-    }
+    });
   };
 
   // 格式化时间
@@ -337,8 +348,17 @@ const MomentManagement: React.FC = () => {
               </button>
             </div>
           </div>
-        )}
+        )})}}
       </div>
+      
+      {/* 确认对话框 */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        content={confirmDialog.content}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} })}
+      />
     </div>
   );
 };
