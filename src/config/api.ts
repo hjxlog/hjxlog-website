@@ -13,19 +13,36 @@ export const API_BASE_URL = import.meta.env.PROD
   : DEV_API_BASE_URL;
 
 // 通用API请求函数
-export const apiRequest = async (endpoint: string, options?: RequestInit) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
+export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  // 尝试从localStorage获取认证token
+  let authHeaders = {};
+  try {
+    const authData = localStorage.getItem('auth');
+    if (authData) {
+      const { token, expiration } = JSON.parse(authData);
+      // 检查token是否存在且未过期
+      if (token && expiration && new Date(expiration) > new Date()) {
+        authHeaders = {
+          'Authorization': `Bearer ${token}`
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Failed to parse auth data:', error);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...authHeaders,
+      ...options.headers,
     },
     ...options,
   });
-  
+
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
-  
+
   return response.json();
 };
