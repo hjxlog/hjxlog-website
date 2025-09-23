@@ -27,44 +27,13 @@ interface SystemLog {
   username?: string;
 }
 
-interface LogStats {
-  total: number;
-  today: number;
-  error_count: number;
-  warning_count: number;
-  info_count: number;
-  debug_count: number;
-  daily_stats: Array<{
-    date: string;
-    total: number;
-    error_count: number;
-    warning_count: number;
-    info_count: number;
-    debug_count: number;
-  }>;
-  module_stats: Array<{
-    module_name: string;
-    total: number;
-    error_count: number;
-    warning_count: number;
-    info_count: number;
-    debug_count: number;
-  }>;
-  hourly_stats: Array<{
-    hour: number;
-    total: number;
-    error_count: number;
-    warning_count: number;
-    info_count: number;
-    debug_count: number;
-  }>;
-}
+
 
 export default function LogManagement() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [logs, setLogs] = useState<SystemLog[]>([]);
-  const [stats, setStats] = useState<LogStats | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -79,11 +48,7 @@ export default function LogManagement() {
   const [selectedLogForDetail, setSelectedLogForDetail] = useState<SystemLog | null>(null);
   const logsPerPage = 20;
   
-  // 统计分析相关状态
-  const [statsDateRange, setStatsDateRange] = useState({
-    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7天前
-    end: new Date().toISOString().split('T')[0] // 今天
-  });
+
 
   // 获取日志列表
   const fetchLogs = async () => {
@@ -114,44 +79,7 @@ export default function LogManagement() {
     }
   };
 
-  // 获取统计数据
-  const fetchStats = async () => {
-    try {
-      const params = new URLSearchParams({
-        start_date: statsDateRange.start,
-        end_date: statsDateRange.end
-      });
-      const response = await apiRequest(`/api/admin/logs/stats?${params}`);
-      if (response.success) {
-        setStats(response.data);
-      }
-    } catch (error) {
-      console.error('获取统计数据失败:', error);
-    }
-  };
 
-  // 获取百分比
-  const getPercentage = (count: number, total: number) => {
-    return total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
-  };
-
-  // 格式化日期
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
-
-  // 格式化小时
-  const formatHour = (hour: number) => {
-    return `${hour.toString().padStart(2, '0')}:00`;
-  };
-
-  // 刷新统计数据
-  const handleRefreshStats = () => {
-    fetchStats();
-  };
 
   // 清理过期日志
   const handleCleanupLogs = async () => {
@@ -165,7 +93,6 @@ export default function LogManagement() {
       if (response.success) {
         toast.success(`成功清理 ${response.data.deleted_count} 条过期日志`);
         fetchLogs();
-        fetchStats();
       } else {
         toast.error(response.message || '清理失败');
       }
@@ -262,9 +189,7 @@ export default function LogManagement() {
     fetchLogs();
   }, [user, navigate, currentPage, searchQuery, selectedType, selectedModule, dateRange]);
 
-  useEffect(() => {
-    fetchStats();
-  }, [statsDateRange]);
+
 
   if (!user) {
     return <LoadingSpinner />;
@@ -279,313 +204,9 @@ export default function LogManagement() {
           <p className="mt-2 text-gray-600">查看和管理系统运行日志</p>
         </div>
 
-        {/* 统计卡片 */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <i className="fas fa-list text-blue-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">总日志数</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <i className="fas fa-calendar-day text-green-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">今日日志</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.today}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <i className="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">错误</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.error_count}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <i className="fas fa-exclamation-circle text-yellow-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">警告</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.warning_count}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <i className="fas fa-info-circle text-blue-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">信息</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.info_count}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <i className="fas fa-bug text-gray-600"></i>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">调试</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.debug_count}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* 统计分析区域 */}
-        {stats && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4 sm:mb-0">统计分析</h3>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="date"
-                      value={statsDateRange.start}
-                      onChange={(e) => setStatsDateRange(prev => ({ ...prev, start: e.target.value }))}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="self-center text-gray-500 hidden sm:block">至</span>
-                    <input
-                      type="date"
-                      value={statsDateRange.end}
-                      onChange={(e) => setStatsDateRange(prev => ({ ...prev, end: e.target.value }))}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <button
-                    onClick={handleRefreshStats}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    刷新
-                  </button>
-                </div>
-              </div>
 
-              {/* 日志级别分布 */}
-              <div className="mb-8">
-                <h4 className="text-md font-medium text-gray-900 mb-4">日志级别分布</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-red-800">错误</p>
-                        <p className="text-lg font-bold text-red-900">{stats.error_count}</p>
-                      </div>
-                      <div className="text-xs text-red-600">
-                        {getPercentage(stats.error_count, stats.total)}%
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-yellow-800">警告</p>
-                        <p className="text-lg font-bold text-yellow-900">{stats.warning_count}</p>
-                      </div>
-                      <div className="text-xs text-yellow-600">
-                        {getPercentage(stats.warning_count, stats.total)}%
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-blue-800">信息</p>
-                        <p className="text-lg font-bold text-blue-900">{stats.info_count}</p>
-                      </div>
-                      <div className="text-xs text-blue-600">
-                        {getPercentage(stats.info_count, stats.total)}%
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">调试</p>
-                        <p className="text-lg font-bold text-gray-900">{stats.debug_count}</p>
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {getPercentage(stats.debug_count, stats.total)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* 模块统计 */}
-               {stats.module_stats && stats.module_stats.length > 0 && (
-                 <div className="mb-8">
-                   <h4 className="text-md font-medium text-gray-900 mb-4">模块统计</h4>
-                   
-                   {/* 桌面端表格 */}
-                   <div className="hidden md:block overflow-x-auto">
-                     <table className="min-w-full divide-y divide-gray-200">
-                       <thead className="bg-gray-50">
-                         <tr>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">模块</th>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总计</th>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">错误</th>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">警告</th>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">信息</th>
-                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">调试</th>
-                         </tr>
-                       </thead>
-                       <tbody className="bg-white divide-y divide-gray-200">
-                         {stats.module_stats.map((module, index) => (
-                           <tr key={index}>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                               {module.module_name}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                               {module.total}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                               {module.error_count}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-600">
-                               {module.warning_count}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                               {module.info_count}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                               {module.debug_count}
-                             </td>
-                           </tr>
-                         ))}
-                       </tbody>
-                     </table>
-                   </div>
-                   
-                   {/* 移动端卡片 */}
-                   <div className="md:hidden space-y-4">
-                     {stats.module_stats.map((module, index) => (
-                       <div key={index} className="bg-gray-50 p-4 rounded-lg border">
-                         <div className="font-medium text-gray-900 mb-3">{module.module_name}</div>
-                         <div className="grid grid-cols-2 gap-3">
-                           <div className="text-center">
-                             <div className="text-lg font-bold text-gray-900">{module.total}</div>
-                             <div className="text-xs text-gray-600">总计</div>
-                           </div>
-                           <div className="text-center">
-                             <div className="text-lg font-bold text-red-600">{module.error_count}</div>
-                             <div className="text-xs text-red-600">错误</div>
-                           </div>
-                           <div className="text-center">
-                             <div className="text-lg font-bold text-yellow-600">{module.warning_count}</div>
-                             <div className="text-xs text-yellow-600">警告</div>
-                           </div>
-                           <div className="text-center">
-                             <div className="text-lg font-bold text-blue-600">{module.info_count}</div>
-                             <div className="text-xs text-blue-600">信息</div>
-                           </div>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               )}
-
-              {/* 每日统计 */}
-              {stats.daily_stats && stats.daily_stats.length > 0 && (
-                <div className="mb-8">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">每日统计</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-                    {stats.daily_stats.map((day, index) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded-lg border">
-                        <div className="text-xs font-medium text-gray-600 mb-2">
-                          {formatDate(day.date)}
-                        </div>
-                        <div className="text-lg font-bold text-gray-900 mb-2">
-                          {day.total}
-                        </div>
-                        <div className="space-y-1">
-                          {day.error_count > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-red-600">错误</span>
-                              <span className="text-red-600">{day.error_count}</span>
-                            </div>
-                          )}
-                          {day.warning_count > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-yellow-600">警告</span>
-                              <span className="text-yellow-600">{day.warning_count}</span>
-                            </div>
-                          )}
-                          {day.info_count > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-blue-600">信息</span>
-                              <span className="text-blue-600">{day.info_count}</span>
-                            </div>
-                          )}
-                          {day.debug_count > 0 && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-gray-600">调试</span>
-                              <span className="text-gray-600">{day.debug_count}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 小时统计 */}
-               {stats.hourly_stats && stats.hourly_stats.length > 0 && (
-                 <div>
-                   <h4 className="text-md font-medium text-gray-900 mb-4">24小时统计</h4>
-                   <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-24 gap-1 sm:gap-2">
-                     {stats.hourly_stats.map((hour, index) => (
-                       <div key={index} className="bg-gray-50 p-1 sm:p-2 rounded border text-center">
-                         <div className="text-xs text-gray-600 mb-1">
-                           {formatHour(hour.hour)}
-                         </div>
-                         <div className="text-xs sm:text-sm font-bold text-gray-900">
-                           {hour.total}
-                         </div>
-                         {hour.error_count > 0 && (
-                           <div className="text-xs text-red-600">
-                             {hour.error_count}E
-                           </div>
-                         )}
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               )}
-            </div>
-          </div>
-        )}
 
         {/* 筛选和操作栏 */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
