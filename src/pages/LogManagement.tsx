@@ -44,6 +44,7 @@ export default function LogManagement() {
   const [selectedType, setSelectedType] = useState('');
   const [selectedModule, setSelectedModule] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  // 默认按最新在前排序
 
   const [selectedLogForDetail, setSelectedLogForDetail] = useState<SystemLog | null>(null);
   const logsPerPage = 20;
@@ -57,6 +58,7 @@ export default function LogManagement() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: logsPerPage.toString(),
+        sort: 'desc', // 默认最新在前
         ...(searchQuery && { search: searchQuery }),
         ...(selectedType && { log_type: selectedType }),
         ...(selectedModule && { module: selectedModule }),
@@ -210,93 +212,107 @@ export default function LogManagement() {
 
         {/* 筛选和操作栏 */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {/* 搜索 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">搜索</label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索操作或详情..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            {/* 日志类型 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">日志类型</label>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">全部类型</option>
-                <option value="operation">操作</option>
-                <option value="error">错误</option>
-                <option value="security">安全</option>
-                <option value="system">系统</option>
-              </select>
-            </div>
-            
-            {/* 模块 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">模块</label>
-              <select
-                value={selectedModule}
-                onChange={(e) => setSelectedModule(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">全部模块</option>
-                <option value="auth">认证</option>
-                <option value="blog">博客</option>
-                <option value="work">作品</option>
-                <option value="comment">评论</option>
-                <option value="moment">动态</option>
-                <option value="upload">上传</option>
-                <option value="server">服务器</option>
-              </select>
-            </div>
-            
-            {/* 日期范围 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">日期范围</label>
-              <div className="flex space-x-2">
+          <div className="space-y-4">
+            {/* 第一行：搜索、日志类型、模块 */}
+            <div className="flex flex-col space-y-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+              {/* 搜索 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  搜索
+                </label>
                 <input
-                  type="date"
-                  value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="date"
-                  value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜索操作或详情..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+              
+              {/* 日志类型 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  日志类型
+                </label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">全部类型</option>
+                  <option value="operation">操作</option>
+                  <option value="error">错误</option>
+                  <option value="security">安全</option>
+                  <option value="system">系统</option>
+                </select>
+              </div>
+              
+              {/* 模块 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  模块
+                </label>
+                <select
+                  value={selectedModule}
+                  onChange={(e) => setSelectedModule(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">全部模块</option>
+                  <option value="auth">认证</option>
+                  <option value="blog">博客</option>
+                  <option value="work">作品</option>
+                  <option value="comment">评论</option>
+                  <option value="moment">动态</option>
+                  <option value="upload">上传</option>
+                  <option value="server">服务器</option>
+                </select>
+              </div>
             </div>
-          </div>
-          
-          {/* 操作按钮 */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <button
-              onClick={handleResetFilters}
-              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
-            >
-              <i className="fas fa-undo mr-2"></i>
-              重置筛选
-            </button>
             
-
-            
-            <button
-              onClick={handleCleanupLogs}
-              className="px-4 py-2 text-white bg-orange-600 rounded-md hover:bg-orange-700 transition-colors text-sm"
-            >
-              <i className="fas fa-broom mr-2"></i>
-              清理过期日志
-            </button>
+            {/* 第二行：日期范围、重置筛选按钮、清理过期日志按钮 */}
+            <div className="flex flex-col space-y-4 lg:flex-row lg:items-end lg:gap-4 lg:space-y-0">
+              {/* 日期范围 */}
+              <div className="lg:w-80">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  日期范围
+                </label>
+                <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                  <input
+                    type="date"
+                    value={dateRange.start}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={dateRange.end}
+                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              
+              {/* 按钮组 */}
+              <div className="flex flex-col space-y-2 lg:flex-row lg:space-y-0 lg:space-x-2 lg:flex-shrink-0">
+                {/* 重置筛选按钮 */}
+                <button
+                  onClick={handleResetFilters}
+                  className="w-full lg:w-auto px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-medium transition-colors flex items-center justify-center"
+                >
+                  <i className="fas fa-undo mr-2"></i>
+                  重置筛选
+                </button>
+                
+                {/* 清理过期日志按钮 */}
+                <button
+                  onClick={handleCleanupLogs}
+                  className="w-full lg:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors flex items-center justify-center"
+                >
+                  <i className="fas fa-broom mr-2"></i>
+                  清理过期日志
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
