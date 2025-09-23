@@ -1731,17 +1731,42 @@ app.put('/api/users/:id/password', async (req, res) => {
   }
 });
 
+// 获取单个用户信息
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
 
+    const { id } = req.params;
+    console.log('👤 [API] 获取用户信息请求:', id);
 
+    const result = await dbClient.query(
+      'SELECT id, username, email, bio, avatar, created_at FROM users WHERE id = $1',
+      [id]
+    );
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
 
+    console.log('✅ [API] 用户信息获取成功:', result.rows[0].username);
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
 
-
-
-
-
-
-
+  } catch (error) {
+    console.error('❌ [API] 获取用户信息失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
 
 // 获取博客评论
 app.get('/api/blogs/:id/comments', async (req, res) => {

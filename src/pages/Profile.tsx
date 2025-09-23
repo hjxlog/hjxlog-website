@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 import AdminNav from '@/components/AdminNav';
 import { toast } from 'sonner';
@@ -10,16 +9,55 @@ export default function Profile() {
   const { user, updateUser, logout } = useContext(AuthContext);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    username: user?.username || '',
-    email: user?.email || '',
-    bio: user?.bio || '',
-    avatar: user?.avatar || ''
+    username: '',
+    email: '',
+    bio: '',
+    avatar: ''
   });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
   const navigate = useNavigate();
+
+  // 从API获取用户数据
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.id || hasLoadedProfile) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      try {
+        setIsLoadingProfile(true);
+        const result = await apiRequest(`/api/users/${user.id}`);
+        
+        if (result.success) {
+          const userData = result.data;
+          setFormData({
+            username: userData.username || '',
+            email: userData.email || '',
+            bio: userData.bio || '',
+            avatar: userData.avatar || ''
+          });
+          // 同时更新AuthContext中的用户数据
+          updateUser(userData);
+          setHasLoadedProfile(true);
+        } else {
+          toast.error('获取用户信息失败');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        toast.error('网络错误，请稍后重试');
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user?.id, hasLoadedProfile]); // 添加hasLoadedProfile标志防止重复请求
   
   if (!user) {
     return (
@@ -33,6 +71,22 @@ export default function Profile() {
             前往登录
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <AdminNav />
+        <main className="container mx-auto px-4 py-8 sm:py-12 max-w-4xl">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#165DFF] mx-auto mb-4"></div>
+              <p className="text-slate-600">正在加载用户信息...</p>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -113,12 +167,12 @@ export default function Profile() {
       {/* 使用管理员导航组件 */}
       <AdminNav />
       
-      <main className="container mx-auto px-4 py-24 max-w-4xl">
-        <h1 className="text-3xl font-bold text-slate-800 mb-10">个人中心</h1>
+      <main className="container mx-auto px-4 py-4 sm:py-6 max-w-4xl">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-6 sm:mb-10">个人中心</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* 个人信息卡片 */}
-          <div className="bg-white rounded-xl p-6 shadow-sm lg:col-span-1">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm lg:col-span-1">
             <div className="text-center">
               <div className="relative w-32 h-32 mx-auto mb-4">
                 {formData.avatar ? (
@@ -169,16 +223,16 @@ export default function Profile() {
           </div>
           
           {/* 详细信息编辑 */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             {/* 基本信息表单 */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-slate-800">基本信息</h2>
               </div>
               
               {isEditing ? (
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleProfileUpdate} className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">用户名</label>
                       <input
@@ -228,7 +282,7 @@ export default function Profile() {
                     />
                   </div>
                   
-                  <div className="flex justify-end space-x-3">
+                  <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
@@ -247,7 +301,7 @@ export default function Profile() {
                 </form>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-slate-500 mb-1">用户名</label>
                       <p className="text-slate-800">{formData.username}</p>
@@ -268,7 +322,7 @@ export default function Profile() {
             </div>
             
             {/* 密码修改表单 */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-slate-800 mb-6">修改密码</h2>
               
               <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -320,7 +374,7 @@ export default function Profile() {
             </div>
             
             {/* 账户设置 */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-slate-800 mb-6">账户设置</h2>
               
               <div className="space-y-4">
