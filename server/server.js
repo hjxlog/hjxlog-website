@@ -2473,7 +2473,8 @@ app.post('/api/logs/frontend', async (req, res) => {
       description,
       error_message,
       file_info,
-      user_info
+      user_info,
+      additional_data
     } = req.body;
 
     if (!description) {
@@ -2483,21 +2484,69 @@ app.post('/api/logs/frontend', async (req, res) => {
       });
     }
 
+    // 构建详细的日志数据
+    const logData = {
+      error_message,
+      file_info,
+      user_info,
+      additional_data,
+      ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+      user_agent: req.headers['user-agent'] || null,
+      timestamp: new Date().toISOString(),
+      browser_info: {
+        user_agent: req.headers['user-agent'],
+        referer: req.headers['referer'],
+        origin: req.headers['origin'],
+        accept: req.headers['accept'],
+        accept_language: req.headers['accept-language'],
+        accept_encoding: req.headers['accept-encoding']
+      },
+      request_info: {
+        method: req.method,
+        url: req.url,
+        protocol: req.protocol,
+        secure: req.secure,
+        xhr: req.xhr
+      }
+    };
+
+    // 针对响应解析错误的特殊处理
+    if (additional_data?.responseText) {
+      logData.response_debug_info = {
+        response_length: additional_data.responseLength || 0,
+        response_preview: additional_data.responseText?.substring(0, 200),
+        response_full: additional_data.responseText?.length <= 1000 ? additional_data.responseText : additional_data.responseText?.substring(0, 1000) + '...(truncated)',
+        is_json_parseable: (() => {
+          try {
+            JSON.parse(additional_data.responseText);
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
+        content_type_detected: (() => {
+          const text = additional_data.responseText;
+          if (!text) return 'empty';
+          if (text.trim().startsWith('{') || text.trim().startsWith('[')) return 'json-like';
+          if (text.trim().startsWith('<')) return 'html-like';
+          if (text.trim().startsWith('<!DOCTYPE')) return 'html-document';
+          return 'text';
+        })(),
+        starts_with: additional_data.responseText?.substring(0, 50),
+        ends_with: additional_data.responseText?.length > 50 ? additional_data.responseText?.substring(additional_data.responseText.length - 50) : null
+      };
+    }
+
     // 使用logger记录前端日志
     if (logger) {
-      await logger.error(module, action || 'frontend_error', description, {
-        error_message,
-        file_info,
-        user_info,
-        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
-        user_agent: req.headers['user-agent'] || null
-      });
+      await logger.error(module, action || 'frontend_error', description, logData);
     }
 
     console.log('📝 [API] 前端日志记录成功:', {
       module,
       action,
-      description
+      description,
+      hasResponseDebugInfo: !!logData.response_debug_info
     });
 
     res.json({

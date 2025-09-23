@@ -161,14 +161,74 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
         console.log('📡 [OSS上传] 收到响应:', {
           status: xhr.status,
           statusText: xhr.statusText,
-          responseText: xhr.responseText
+          responseText: xhr.responseText,
+          responseLength: xhr.responseText?.length || 0
         });
         
+        // 检查HTTP状态码
+        if (xhr.status < 200 || xhr.status >= 300) {
+          const error = new Error(`HTTP错误: ${xhr.status} ${xhr.statusText}`);
+          logErrorToBackend('OSS上传HTTP错误', error, file, {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseText: xhr.responseText
+          });
+          reject(error);
+          return;
+        }
+        
+        // 检查响应内容是否为空
+        if (!xhr.responseText || xhr.responseText.trim() === '') {
+          const error = new Error('服务器返回空响应');
+          logErrorToBackend('OSS上传空响应', error, file, {
+            status: xhr.status,
+            responseLength: 0
+          });
+          reject(error);
+          return;
+        }
+        
         try {
-          const response = JSON.parse(xhr.responseText);
+          let response;
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch (jsonError) {
+            console.error('❌ [OSS上传] JSON解析失败:', {
+              error: jsonError.message,
+              responseText: xhr.responseText.substring(0, 500) // 只显示前500字符
+            });
+            const parseError = new Error(`响应格式错误: ${jsonError.message}`);
+            logErrorToBackend('OSS上传JSON解析失败', parseError, file, {
+               originalError: jsonError.message,
+               responseText: xhr.responseText,
+               responseLength: xhr.responseText?.length || 0,
+               status: xhr.status,
+               statusText: xhr.statusText,
+               responseHeaders: xhr.getAllResponseHeaders()
+             });
+            reject(parseError);
+            return;
+          }
+          
           console.log('📋 [OSS上传] 解析响应:', response);
           
-          if (xhr.status === 200 && response.success) {
+          // 检查响应结构
+          if (typeof response !== 'object' || response === null) {
+            const error = new Error('响应格式无效: 不是有效的对象');
+            logErrorToBackend('OSS上传响应格式无效', error, file, { response });
+            reject(error);
+            return;
+          }
+          
+          if (response.success === true) {
+            // 验证必要的数据字段
+            if (!response.data || !response.data.url) {
+              const error = new Error('响应数据不完整: 缺少必要字段');
+              logErrorToBackend('OSS上传响应数据不完整', error, file, { response });
+              reject(error);
+              return;
+            }
+            
             console.log('✅ [OSS上传] 上传成功');
             resolve({
               success: true,
@@ -181,16 +241,17 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
           } else {
             console.log('❌ [OSS上传] 上传失败:', response.message);
             const error = new Error(response.message || '上传失败');
-            // 记录错误日志到后端
-            logErrorToBackend('OSS上传失败', error, file, response);
+            logErrorToBackend('OSS上传业务失败', error, file, response);
             reject(error);
           }
         } catch (error) {
-          console.error('❌ [OSS上传] 解析响应失败:', error);
-          const parseError = new Error('解析响应失败');
-          // 记录错误日志到后端
-          logErrorToBackend('OSS上传响应解析失败', parseError, file, { originalError: error.message });
-          reject(parseError);
+          console.error('❌ [OSS上传] 处理响应时发生未知错误:', error);
+          const unknownError = new Error(`处理响应失败: ${error.message}`);
+          logErrorToBackend('OSS上传处理响应异常', unknownError, file, {
+            originalError: error.message,
+            stack: error.stack
+          });
+          reject(unknownError);
         }
       });
 
