@@ -85,6 +85,16 @@
   -webkit-line-clamp: 3;
 }
 
+/* Scrollbar Hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Glass Card Styles */
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
