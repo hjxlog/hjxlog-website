@@ -451,7 +451,7 @@ export default function LogManagement() {
       {/* 日志详情弹窗 */}
       {selectedLogForDetail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
             {/* 弹窗头部 */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">日志详情</h3>
@@ -464,7 +464,7 @@ export default function LogManagement() {
             </div>
             
             {/* 弹窗内容 */}
-            <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-120px)] sm:max-h-[calc(90vh-120px)]">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
               <div className="space-y-6">
                 {/* 基本信息 */}
                 <div>
@@ -561,7 +561,7 @@ export default function LogManagement() {
             </div>
             
             {/* 弹窗底部 */}
-            <div className="flex justify-end p-4 sm:p-6 border-t border-gray-200">
+            <div className="flex justify-end p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
               <button
                 onClick={() => setSelectedLogForDetail(null)}
                 className="w-full sm:w-auto px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
