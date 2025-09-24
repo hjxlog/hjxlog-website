@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Camera, MapPin, Calendar } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import ImageModal from '../components/ImageModal';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -49,6 +50,8 @@ export default function Photos() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const limit = 20;
 
@@ -164,14 +167,28 @@ export default function Photos() {
     });
   };
 
+  const handleImageClick = (index: number) => {
+    setCurrentImageIndex(index);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleNavigateImage = (index: number) => {
+    setCurrentImageIndex(index);
+  };
+
   // 瀑布流布局组件
   const PhotoGrid = ({ photos }: { photos: Photo[] }) => {
     return (
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <div
             key={photo.id}
-            className="break-inside-avoid bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group"
+            className="break-inside-avoid bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden group cursor-pointer"
+            onClick={() => handleImageClick(index)}
           >
             <div className="relative overflow-hidden">
               <img
@@ -293,6 +310,15 @@ export default function Photos() {
       </main>
       
       <Footer />
+
+      {/* 图片预览模态框 */}
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        photos={photos}
+        currentIndex={currentImageIndex}
+        onNavigate={handleNavigateImage}
+      />
     </div>
   );
 }
