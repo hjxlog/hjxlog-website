@@ -172,11 +172,9 @@ const Blog: React.FC = () => {
 
       <main className="container mx-auto px-4 pt-24 pb-16">
         {/* 页面标题 */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Blog</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            分享前沿技术见解，探索人文科技交汇
-          </p>
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">我的博客</h1>
+          <p className="text-xl text-slate-600">分享前沿技术见解，探索人文科技交汇</p>
         </div>
 
         {/* 搜索和筛选 */}

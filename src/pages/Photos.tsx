@@ -248,9 +248,11 @@ export default function Photos() {
       
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">摄影作品</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
+            摄影作品
+          </h1>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
             记录生活中的美好瞬间，分享摄影路上的点点滴滴
           </p>
         </div>
