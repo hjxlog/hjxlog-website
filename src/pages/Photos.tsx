@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Camera, MapPin, Calendar, Tag } from 'lucide-react';
+import { Camera, MapPin, Calendar } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -14,7 +15,6 @@ interface Photo {
   image_url: string;
   thumbnail_url?: string;
   category: string;
-  tags: string[];
   location?: string;
   taken_at?: string;
   published: boolean;
@@ -55,7 +55,7 @@ export default function Photos() {
   // 获取照片分类
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch('/api/photos/categories');
+      const response = await fetch(`${API_BASE_URL}/api/photos/categories`);
       const data: CategoriesResponse = await response.json();
       
       if (data.success) {
@@ -90,7 +90,7 @@ export default function Photos() {
 
 
 
-      const response = await fetch(`/api/photos?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/photos?${params}`);
       const data: PhotosResponse = await response.json();
 
       if (data.success) {
@@ -216,24 +216,7 @@ export default function Photos() {
                   </div>
                 )}
                 
-                {photo.tags && photo.tags.length > 0 && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Tag className="w-3 h-3 mr-1" />
-                    <div className="flex flex-wrap gap-1">
-                      {photo.tags.slice(0, 3).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="bg-gray-100 px-2 py-1 rounded text-xs"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {photo.tags.length > 3 && (
-                        <span className="text-gray-400">+{photo.tags.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>

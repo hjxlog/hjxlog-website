@@ -543,6 +543,80 @@ INSERT INTO system_logs (id, log_type, level, module, action, description, user_
 (3, 'system', 'WARN', 'database', 'backup', '数据库备份完成，但存在警告', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 30000, '备份过程中发现性能问题', NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}', CURRENT_TIMESTAMP, NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}'),
 (4, 'security', 'ERROR', 'auth', 'login', '登录失败：密码错误', NULL, 'hacker', '192.168.1.102', 'curl/7.68.0', 'POST', '/api/auth/login', '{"password": "wrong_password"}', 401, 100, '密码验证失败', 'AuthenticationError: Invalid credentials', NULL, CURRENT_TIMESTAMP, '{"username": "hacker", "password": "wrong_password"}', NULL);
 
+-- 插入照片数据
+INSERT INTO photos (title, description, image_url, thumbnail_url, category, location, taken_at, published) VALUES
+('夕阳下的城市天际线', 
+ '城市在夕阳西下时的美丽轮廓，高楼大厦在金色光芒中显得格外壮观。', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
+ '城市风光', 
+ '上海外滩', 
+ '2024-01-15 18:30:00', 
+ true),
+
+('静谧的森林小径', 
+ '阳光透过茂密的树叶洒在蜿蜒的小径上，营造出宁静祥和的氛围。', 
+ 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop', 
+ '自然风光', 
+ '黄山风景区', 
+ '2024-01-20 10:15:00', 
+ true),
+
+('海边的日出', 
+ '清晨时分，太阳从海平面缓缓升起，海水波光粼粼，景色美不胜收。', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
+ '自然风光', 
+ '青岛海滨', 
+ '2024-01-25 06:45:00', 
+ true),
+
+('古典建筑的细节', 
+ '传统建筑的精美雕刻和装饰，展现了古代工匠的精湛技艺。', 
+ 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop', 
+ '建筑摄影', 
+ '故宫博物院', 
+ '2024-02-01 14:20:00', 
+ true),
+
+('街头的生活瞬间', 
+ '捕捉城市街头的日常生活场景，展现人们的真实生活状态。', 
+ 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop', 
+ '人文纪实', 
+ '北京胡同', 
+ '2024-02-05 16:30:00', 
+ true),
+
+('山峰云海', 
+ '高山之巅，云海翻腾，仿佛置身仙境之中。', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
+ '自然风光', 
+ '华山', 
+ '2024-02-10 07:00:00', 
+ false),
+
+('现代建筑的几何美学', 
+ '现代建筑的线条和几何形状，展现了当代设计的美学理念。', 
+ 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop', 
+ '建筑摄影', 
+ '深圳CBD', 
+ '2024-02-15 12:00:00', 
+ true),
+
+('花园中的春色', 
+ '春天的花园里，各种花卉竞相开放，色彩斑斓。', 
+ 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&h=800&fit=crop', 
+ 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop', 
+ '自然风光', 
+ '苏州园林', 
+ '2024-03-01 15:45:00', 
+ true);
+
 -- 显示插入结果
 SELECT 
     'Data inserted successfully!' as result,
@@ -551,4 +625,5 @@ SELECT
     (SELECT COUNT(*) FROM works) as works_count,
     (SELECT COUNT(*) FROM comments) as comments_count,
     (SELECT COUNT(*) FROM blog_likes) as blog_likes_count,
-    (SELECT COUNT(*) FROM system_logs) as system_logs_count;
+    (SELECT COUNT(*) FROM system_logs) as system_logs_count,
+    (SELECT COUNT(*) FROM photos) as photos_count;

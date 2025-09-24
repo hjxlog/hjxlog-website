@@ -2434,9 +2434,8 @@ app.get('/api/photos', async (req, res) => {
     }
 
     if (search) {
-      whereConditions.push(`(title ILIKE $${paramIndex++} OR description ILIKE $${paramIndex} OR location ILIKE $${paramIndex} OR $${paramIndex} = ANY(tags))`);
-      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`, search);
-      paramIndex++;
+      whereConditions.push(`(title ILIKE $${paramIndex++} OR description ILIKE $${paramIndex} OR location ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     // 构建主查询
@@ -2473,9 +2472,8 @@ app.get('/api/photos', async (req, res) => {
       }
 
       if (search) {
-        countConditions.push(`(title ILIKE $${countParamIndex++} OR description ILIKE $${countParamIndex} OR location ILIKE $${countParamIndex} OR $${countParamIndex} = ANY(tags))`);
-        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`, search);
-        countParamIndex++;
+        countConditions.push(`(title ILIKE $${countParamIndex++} OR description ILIKE $${countParamIndex} OR location ILIKE $${countParamIndex})`);
+        countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
 
       countQuery += ' WHERE ' + countConditions.join(' AND ');
@@ -2579,7 +2577,7 @@ app.post('/api/photos', async (req, res) => {
     }
 
     const {
-      title, description, image_url, thumbnail_url, category, tags,
+      title, description, image_url, thumbnail_url, category,
       location, taken_at, published
     } = req.body;
 
@@ -2595,12 +2593,12 @@ app.post('/api/photos', async (req, res) => {
 
     const result = await dbClient.query(
       `INSERT INTO photos (
-        title, description, image_url, thumbnail_url, category, tags,
+        title, description, image_url, thumbnail_url, category,
         location, taken_at, published
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
       RETURNING *`,
       [
-        title, description, image_url, thumbnail_url, category, tags || [],
+        title, description, image_url, thumbnail_url, category,
         location, taken_at, published !== undefined ? published : true
       ]
     );
@@ -2629,7 +2627,7 @@ app.put('/api/photos/:id', async (req, res) => {
 
     const { id } = req.params;
     const {
-      title, description, image_url, thumbnail_url, category, tags,
+      title, description, image_url, thumbnail_url, category,
       location, taken_at, published
     } = req.body;
 
@@ -2646,11 +2644,11 @@ app.put('/api/photos/:id', async (req, res) => {
     const result = await dbClient.query(
       `UPDATE photos SET 
         title = $1, description = $2, image_url = $3, thumbnail_url = $4,
-        category = $5, tags = $6, location = $7, taken_at = $8, published = $9,
+        category = $5, location = $6, taken_at = $7, published = $8,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10 RETURNING *`,
+      WHERE id = $9 RETURNING *`,
       [
-        title, description, image_url, thumbnail_url, category, tags || [],
+        title, description, image_url, thumbnail_url, category,
         location, taken_at, published, id
       ]
     );

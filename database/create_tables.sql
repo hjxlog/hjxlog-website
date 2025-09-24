@@ -404,5 +404,47 @@ COMMENT ON COLUMN system_logs.error_message IS '错误信息';
 COMMENT ON COLUMN system_logs.execution_time IS '执行时间(毫秒)';
 COMMENT ON COLUMN system_logs.created_at IS '创建时间';
 
+-- ================================================
+-- 摄影模块表结构
+-- ================================================
+
+-- 创建照片表
+CREATE TABLE photos (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    image_url TEXT NOT NULL,
+    thumbnail_url TEXT,
+    category VARCHAR(50),
+    location VARCHAR(255),
+    taken_at DATE,
+    published BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建照片表索引
+CREATE INDEX idx_photos_category ON photos(category);
+CREATE INDEX idx_photos_published ON photos(published);
+CREATE INDEX idx_photos_created_at ON photos(created_at DESC);
+CREATE INDEX idx_photos_taken_at ON photos(taken_at DESC);
+
+-- 为照片表创建更新时间触发器
+CREATE TRIGGER update_photos_updated_at 
+    BEFORE UPDATE ON photos 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- 添加照片表注释
+COMMENT ON TABLE photos IS '摄影作品表';
+COMMENT ON COLUMN photos.title IS '照片标题';
+COMMENT ON COLUMN photos.description IS '照片描述';
+COMMENT ON COLUMN photos.image_url IS '原图链接';
+COMMENT ON COLUMN photos.thumbnail_url IS '缩略图链接';
+COMMENT ON COLUMN photos.category IS '照片分类';
+COMMENT ON COLUMN photos.location IS '拍摄地点';
+COMMENT ON COLUMN photos.taken_at IS '拍摄日期';
+COMMENT ON COLUMN photos.published IS '是否发布';
+
 -- 显示创建结果
 SELECT 'Tables created successfully!' as result;

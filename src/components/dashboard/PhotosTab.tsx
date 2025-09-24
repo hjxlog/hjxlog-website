@@ -11,7 +11,6 @@ interface Photo {
   image_url: string;
   thumbnail_url?: string;
   category: string;
-  tags: string[];
   location?: string;
   taken_at?: string;
   published: boolean;
@@ -45,7 +44,6 @@ export default function PhotosTab({}: PhotosTabProps) {
     image_url: '',
     thumbnail_url: '',
     category: '',
-    tags: '',
     location: '',
     taken_at: '',
     published: false
@@ -176,7 +174,6 @@ export default function PhotosTab({}: PhotosTabProps) {
     try {
       const photoData = {
         ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         taken_at: formData.taken_at || null
       };
       
@@ -218,7 +215,6 @@ export default function PhotosTab({}: PhotosTabProps) {
         image_url: photo.image_url,
         thumbnail_url: photo.thumbnail_url || '',
         category: photo.category,
-        tags: photo.tags.join(', '),
         location: photo.location || '',
         taken_at: photo.taken_at ? photo.taken_at.split('T')[0] : '',
         published: photo.published
@@ -231,7 +227,6 @@ export default function PhotosTab({}: PhotosTabProps) {
         image_url: '',
         thumbnail_url: '',
         category: '',
-        tags: '',
         location: '',
         taken_at: '',
         published: false
@@ -249,8 +244,7 @@ export default function PhotosTab({}: PhotosTabProps) {
   // 筛选和搜索
   const filteredPhotos = photos.filter(photo => {
     const matchesSearch = photo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         photo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         photo.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+                         photo.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || photo.category === selectedCategory;
     const matchesStatus = !selectedStatus || 
                          (selectedStatus === 'published' && photo.published) ||
@@ -563,18 +557,7 @@ export default function PhotosTab({}: PhotosTabProps) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      标签
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF]"
-                      placeholder="用逗号分隔多个标签"
-                    />
-                  </div>
+
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
