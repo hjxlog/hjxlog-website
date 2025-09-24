@@ -23,6 +23,7 @@ import MomentsTab from '@/components/dashboard/MomentsTab';
 import CommentsTab from '@/components/dashboard/CommentsTab';
 import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
+import PhotosTab from '@/components/dashboard/PhotosTab';
 import LogManagement from '@/pages/LogManagement';
 
 interface Work {
@@ -1294,6 +1295,11 @@ export default function Dashboard() {
             handleDeleteBlog={handleDeleteBlog}
             renderBlogStatusBadge={renderBlogStatusBadge}
           />
+        )}
+
+        {/* 摄影管理页面 */}
+        {activeTab === 'photos' && (
+          <PhotosTab />
         )}
 
         {/* 日志管理页面 */}

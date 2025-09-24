@@ -83,6 +83,12 @@ export default function Nav() {
           >
             博客
           </a>
+          <button 
+            onClick={() => navigate('/photos')} 
+            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+          >
+            摄影
+          </button>
 
         </div>
         
@@ -185,6 +191,15 @@ export default function Nav() {
             >
               博客
             </a>
+            <button 
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/photos');
+              }} 
+              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
+            >
+              摄影
+            </button>
 
             {isAuthenticated ? (
               <>

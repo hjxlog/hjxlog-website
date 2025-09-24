@@ -112,6 +112,12 @@ export default function PublicNav() {
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+            onClick={() => navigate('/photos')}
+          >
+            摄影
+          </button>
+          <button 
+            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
             onClick={() => navigate('/moments')}
           >
             动态
@@ -160,6 +166,15 @@ export default function PublicNav() {
               }}
             >
               博客
+            </button>
+            <button 
+              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/photos');
+              }}
+            >
+              摄影
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"

@@ -23,6 +23,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
     { key: 'overview', label: '概览', icon: 'fas fa-chart-pie' },
     { key: 'works', label: '作品管理', icon: 'fas fa-briefcase' },
     { key: 'blogs', label: '博客管理', icon: 'fas fa-blog' },
+    { key: 'photos', label: '摄影管理', icon: 'fas fa-images' },
     { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
     { key: 'comments', label: '评论管理', icon: 'fas fa-comments' },
     { key: 'logs', label: '日志管理', icon: 'fas fa-file-alt' },

@@ -16,6 +16,7 @@ import BlogManagement from "@/pages/BlogManagement";
 import BlogEditor from "@/pages/BlogEditor";
 import Moments from "@/pages/Moments";
 import MomentDetail from "@/pages/MomentDetail";
+import Photos from "@/pages/Photos";
 
 // 计算7天后的过期时间
 const getExpirationDate = () => {
@@ -162,6 +163,7 @@ export default function App() {
         <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogEditor /> : <Login />} />
         <Route path="/moments" element={<Moments />} />
         <Route path="/moments/:id" element={<MomentDetail />} />
+        <Route path="/photos" element={<Photos />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
