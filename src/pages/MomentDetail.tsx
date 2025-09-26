@@ -447,6 +447,7 @@ export default function MomentDetail() {
                     src={imageUrls[selectedImageIndex]}
                     alt={`动态图片 ${selectedImageIndex + 1}`}
                     className="max-w-full max-h-full object-contain"
+                    loading="lazy"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>

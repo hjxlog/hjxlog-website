@@ -432,7 +432,7 @@ export default function Home() {
                     onClick={() => navigate(`/works/${work.id}`)}
                   >
                     {work.cover_image && (
-                      <img src={work.cover_image} alt={work.title} className="w-full h-48 object-cover" />
+                      <img src={work.cover_image} alt={work.title} className="w-full h-48 object-cover" loading="lazy" />
                     )}
                     <div className="p-6">
                       <h3 className="text-xl font-semibold mb-2 text-slate-800">{work.title}</h3>
@@ -491,7 +491,7 @@ export default function Home() {
                     onClick={() => navigate(`/blog/${blog.id}`)}
                   >
                     {blog.cover_image && (
-                      <img src={blog.cover_image} alt={blog.title} className="w-full h-48 object-cover" />
+                      <img src={blog.cover_image} alt={blog.title} className="w-full h-48 object-cover" loading="lazy" />
                     )}
                     <div className="p-6">
                       <div className="flex items-center text-sm text-slate-500 mb-3">

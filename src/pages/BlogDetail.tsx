@@ -39,6 +39,7 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
                 src={src} 
                 alt={alt} 
                 className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
+                loading="lazy"
                 {...props}
               />
               {alt && (

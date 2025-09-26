@@ -174,6 +174,7 @@ export default function Works() {
                   <img
                     src={work.cover_image}
                     alt={work.title}
+                    loading="lazy"
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>

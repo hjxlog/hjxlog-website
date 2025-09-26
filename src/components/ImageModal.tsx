@@ -138,6 +138,7 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
           className={`max-w-full max-h-[80vh] object-contain transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
+          loading="lazy"
           onLoad={() => setImageLoaded(true)}
         />
 
