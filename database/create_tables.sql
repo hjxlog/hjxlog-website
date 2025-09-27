@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS works CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS system_logs CASCADE;
+DROP TABLE IF EXISTS photos CASCADE;
 
 -- 创建用户表
 CREATE TABLE users (
@@ -337,14 +338,6 @@ COMMENT ON COLUMN moment_comments.admin_reply_at IS '管理员回复时间';
 COMMENT ON COLUMN moment_likes.moment_id IS '关联的动态ID';
 COMMENT ON COLUMN moment_likes.ip_address IS '点赞者IP地址';
 COMMENT ON COLUMN moment_likes.user_agent IS '用户代理信息';
-
--- 插入示例动态数据
-INSERT INTO moments (content, author_id, visibility) VALUES 
-('欢迎来到我的动态空间！这里会分享一些日常的想法和有趣的内容。', 'admin', 'public'),
-('今天学习了新的技术栈，感觉收获满满！', 'admin', 'public'),
-('分享一些最近拍摄的照片，希望大家喜欢。', 'admin', 'public');
-
-
 
 -- ================================================
 -- 系统日志模块表结构
