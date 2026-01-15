@@ -16,6 +16,7 @@ interface MessageListProps {
   isTyping: boolean;
   currentResponse: string;
   onQuickQuestion?: (question: string) => void;
+  disabled?: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -23,6 +24,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   isTyping,
   currentResponse,
   onQuickQuestion,
+  disabled = false,
 }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -42,19 +44,34 @@ export const MessageList: React.FC<MessageListProps> = ({
               <>
                 <button
                   onClick={() => onQuickQuestion('这个人的技术栈是什么？')}
-                  className="block w-full text-left px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
+                  disabled={disabled}
+                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    disabled
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
                 >
                   这个人的技术栈是什么？
                 </button>
                 <button
                   onClick={() => onQuickQuestion('他写过哪些博客？')}
-                  className="block w-full text-left px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
+                  disabled={disabled}
+                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    disabled
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
                 >
                   他写过哪些博客？
                 </button>
                 <button
                   onClick={() => onQuickQuestion('介绍一下他的作品')}
-                  className="block w-full text-left px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm"
+                  disabled={disabled}
+                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    disabled
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
                 >
                   介绍一下他的作品
                 </button>

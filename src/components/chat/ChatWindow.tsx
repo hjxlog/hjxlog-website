@@ -1,7 +1,7 @@
 /**
  * 聊天窗口组件
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageList, Message } from './MessageList';
 import { InputArea } from './InputArea';
 import { API_BASE_URL } from '@/config/api';
@@ -10,13 +10,47 @@ interface ChatWindowProps {
   onClose: () => void;
 }
 
+interface QuotaData {
+  remaining: number;
+  globalRemaining: number;
+}
+
 export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [currentResponse, setCurrentResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<QuotaData>({
+    remaining: 3,
+    globalRemaining: 100,
+  });
+
+  // 获取配额信息
+  useEffect(() => {
+    const fetchQuota = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/quota`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setQuota(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch quota:', error);
+      }
+    };
+
+    fetchQuota();
+  }, []);
 
   const sendMessage = async (message: string) => {
+    // 检查配额
+    if (quota.remaining <= 0 || quota.globalRemaining <= 0) {
+      setError('今日提问次数已达上限，请明天再试');
+      return;
+    }
+
     // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -37,6 +71,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 429) {
+          throw new Error(errorData.message || '今日提问次数已达上限');
+        }
         throw new Error('Network response was not ok');
       }
 
@@ -58,7 +96,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.token) {
+              if (data.remaining !== undefined && data.globalRemaining !== undefined) {
+                setQuota(prev => ({
+                  ...prev,
+                  remaining: data.remaining,
+                  globalRemaining: data.globalRemaining,
+                }));
+              } else if (data.token) {
                 fullResponse += data.token;
                 setCurrentResponse(fullResponse);
               } else if (data.done) {
@@ -84,14 +128,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
       }
     } catch (error) {
       console.error('Chat error:', error);
-      setError('抱歉，我遇到了一些问题，请稍后再试。');
+      setError(error instanceof Error ? error.message : '抱歉，我遇到了一些问题，请稍后再试。');
       setIsTyping(false);
     }
   };
 
   // 快捷问题点击
   const handleQuickQuestion = (question: string) => {
-    if (!isTyping) {
+    if (!isTyping && quota.remaining > 0 && quota.globalRemaining > 0) {
       sendMessage(question);
     }
   };
@@ -111,6 +155,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
         </button>
       </div>
 
+      {/* Quota warning */}
+      {(quota.remaining === 0 || quota.globalRemaining === 0) && (
+        <div className="mx-4 mt-4 p-3 bg-orange-100 text-orange-700 rounded-lg text-sm">
+          📅 今日提问次数已达上限，请明天再试
+        </div>
+      )}
+
       {/* Error message */}
       {error && (
         <div className="mx-4 mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
@@ -124,10 +175,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
         isTyping={isTyping}
         currentResponse={currentResponse}
         onQuickQuestion={handleQuickQuestion}
+        disabled={quota.remaining <= 0 || quota.globalRemaining <= 0}
       />
 
       {/* Input */}
-      <InputArea onSendMessage={sendMessage} disabled={isTyping} />
+      <InputArea
+        onSendMessage={sendMessage}
+        disabled={isTyping || quota.remaining <= 0 || quota.globalRemaining <= 0}
+      />
     </div>
   );
 };
