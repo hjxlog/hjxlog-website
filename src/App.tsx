@@ -17,6 +17,8 @@ import BlogEditor from "@/pages/BlogEditor";
 import Moments from "@/pages/Moments";
 import MomentDetail from "@/pages/MomentDetail";
 import Photos from "@/pages/Photos";
+import KnowledgeBase from "@/pages/KnowledgeBase";
+import { AIAssistant } from "@/components/chat/AIAssistant";
 
 // 计算7天后的过期时间
 const getExpirationDate = () => {
@@ -149,6 +151,7 @@ export default function App() {
       value={{ isAuthenticated, login, logout, user, updateUser }}
     >
       <Toaster position="top-right" richColors />
+      <AIAssistant />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -164,7 +167,7 @@ export default function App() {
         <Route path="/moments" element={<Moments />} />
         <Route path="/moments/:id" element={<MomentDetail />} />
         <Route path="/photos" element={<Photos />} />
-
+        <Route path="/admin/knowledge-base" element={isAuthenticated ? <KnowledgeBase /> : <Login />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthContext.Provider>

@@ -16,6 +16,7 @@ import {
   deleteFromOSS 
 } from './utils/ossConfig.js';
 import { requestLogMiddleware, errorLogMiddleware, createLogger } from './utils/logMiddleware.js';
+import { createChatRouter } from './routes/chatRouter.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -131,6 +132,18 @@ app.use((error, req, res, next) => {
 });
 
 // API路由
+
+// ==================== AI 聊天相关API ====================
+// 使用路由函数获取 dbClient，确保在数据库连接后可用
+app.use('/api/chat', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createChatRouter(() => dbClient)(req, res, next);
+});
 
 // ==================== 图片上传相关API ====================
 
