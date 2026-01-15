@@ -10,6 +10,7 @@ import {
   ClockIcon,
   XMarkIcon,
   ChevronRightIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 
 interface Stats {
@@ -101,7 +102,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
   }, [modalOpen]);
 
   const handleRebuild = async () => {
-    if (!confirm('确定要重建知识库吗？这将清空现有数据并重新生成所有向量。\n\n注意：重建过程可能需要较长时间，请耐心等待。')) {
+    if (!confirm('确定要重建知识库吗？这将清空现有数据并重新生成所有向量。\n\n注意：重建过程可能需要较长时间，特别是照片分析，请耐心等待。')) {
       return;
     }
 
@@ -111,7 +112,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
       await apiRequest('/api/knowledge-base/rebuild-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blogs: true, works: true }),
+        body: JSON.stringify({ blogs: true, works: true, photos: true }),
       });
 
       toast.success('知识库重建成功！');
@@ -134,6 +135,8 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
     try {
       const endpoint = sourceType === 'blog'
         ? `/api/knowledge-base/blog/${sourceId}`
+        : sourceType === 'photo'
+        ? `/api/knowledge-base/photo/${sourceId}`
         : `/api/knowledge-base/work/${sourceId}`;
 
       await apiRequest(endpoint, { method: 'DELETE' });
@@ -244,7 +247,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
       {activeSubTab === 'overview' && stats && (
         <div className="min-h-[400px]">
           {/* 统计卡片 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-6">
                 <div className="flex items-center">
@@ -296,6 +299,25 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
                 </div>
               </div>
             </div>
+
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 bg-pink-500 rounded-md p-3">
+                    <PhotoIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p className="text-sm font-medium text-gray-500">照片</p>
+                    <p className="mt-1 text-2xl font-semibold text-gray-900">
+                      {stats.byType.photo?.items || 0} 张
+                      <span className="text-sm text-gray-500 ml-2">
+                        ({stats.byType.photo?.chunks || 0} 块)
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 说明卡片 */}
@@ -305,7 +327,13 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
               <div className="flex items-start">
                 <span className="text-blue-500 mr-2">•</span>
                 <p className="text-sm text-blue-800 flex-1">
-                  知识库从已发布的博客和作品中自动生成向量嵌入
+                  知识库从已发布的博客、作品和照片中自动生成向量嵌入
+                </p>
+              </div>
+              <div className="flex items-start">
+                <span className="text-blue-500 mr-2">•</span>
+                <p className="text-sm text-blue-800 flex-1">
+                  照片会通过AI分析图片内容，提取地点、场景等信息用于智能搜索
                 </p>
               </div>
               <div className="flex items-start">
@@ -317,7 +345,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
               <div className="flex items-start">
                 <span className="text-blue-500 mr-2">•</span>
                 <p className="text-sm text-blue-800 flex-1">
-                  点击"重建知识库"会重新生成所有向量数据
+                  点击"重建知识库"会重新生成所有向量数据（照片分析较慢，请耐心等待）
                 </p>
               </div>
               {stats.lastUpdated && (
@@ -370,9 +398,11 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                         item.source_type === 'blog'
                           ? 'bg-green-100 text-green-800'
+                          : item.source_type === 'photo'
+                          ? 'bg-pink-100 text-pink-800'
                           : 'bg-purple-100 text-purple-800'
                       }`}>
-                        {item.source_type === 'blog' ? '博客' : '作品'}
+                        {item.source_type === 'blog' ? '博客' : item.source_type === 'photo' ? '照片' : '作品'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -440,9 +470,11 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mr-3 ${
                     modalItem.source_type === 'blog'
                       ? 'bg-green-100 text-green-800'
+                      : modalItem.source_type === 'photo'
+                      ? 'bg-pink-100 text-pink-800'
                       : 'bg-purple-100 text-purple-800'
                   }`}>
-                    {modalItem.source_type === 'blog' ? '博客' : '作品'}
+                    {modalItem.source_type === 'blog' ? '博客' : modalItem.source_type === 'photo' ? '照片' : '作品'}
                   </span>
                   <h3 className="text-lg font-medium text-gray-900">
                     {modalItem.title}

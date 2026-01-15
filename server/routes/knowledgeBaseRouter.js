@@ -116,6 +116,57 @@ export function createKnowledgeBaseRouter(getDbClient) {
   });
 
   /**
+   * POST /api/knowledge-base/photo/:id
+   * 添加或更新照片到知识库
+   */
+  router.post('/photo/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const dbClient = getDbClient();
+      const service = new KnowledgeBaseService(dbClient);
+
+      const result = await service.addPhoto(parseInt(id));
+
+      res.json({
+        success: result.success,
+        message: result.message,
+        chunks: result.chunks,
+      });
+    } catch (error) {
+      console.error('[KnowledgeBase] API error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  });
+
+  /**
+   * DELETE /api/knowledge-base/photo/:id
+   * 从知识库删除照片
+   */
+  router.delete('/photo/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const dbClient = getDbClient();
+      const service = new KnowledgeBaseService(dbClient);
+
+      const result = await service.deletePhoto(parseInt(id));
+
+      res.json({
+        success: result.success,
+        deleted: result.deleted,
+      });
+    } catch (error) {
+      console.error('[KnowledgeBase] API error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  });
+
+  /**
    * GET /api/knowledge-base/list
    * 获取知识库内容列表（按源分组）
    */
@@ -223,7 +274,7 @@ export function createKnowledgeBaseRouter(getDbClient) {
    */
   router.post('/rebuild-sync', async (req, res) => {
     try {
-      const { blogs, works } = req.body;
+      const { blogs, works, photos } = req.body;
 
       const dbClient = getDbClient();
       const service = new KnowledgeBaseService(dbClient);
@@ -231,12 +282,13 @@ export function createKnowledgeBaseRouter(getDbClient) {
       const result = await service.rebuildAll({
         blogs: blogs !== false,
         works: works !== false,
+        photos: photos !== false,
       });
 
       res.json({
         success: result.success,
         stats: result.stats,
-        message: `重建完成：博客 ${result.stats.totalBlogs} 篇，作品 ${result.stats.totalWorks} 个，文档块 ${result.stats.totalChunks} 个`,
+        message: `重建完成：博客 ${result.stats.totalBlogs} 篇，作品 ${result.stats.totalWorks} 个，照片 ${result.stats.totalPhotos} 张，文档块 ${result.stats.totalChunks} 个`,
       });
     } catch (error) {
       console.error('[KnowledgeBase] API error:', error);

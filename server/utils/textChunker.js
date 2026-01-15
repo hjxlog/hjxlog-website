@@ -127,4 +127,43 @@ function splitWork(work) {
   }));
 }
 
-export { CHUNK_CONFIG, splitText, splitBlog, splitWork };
+/**
+ * 处理摄影作品
+ * @param {Object} photo - 照片对象
+ * @param {string} analysis - AI分析结果
+ * @returns {Array<{title: string, content: string}>}
+ */
+function splitPhoto(photo, analysis) {
+  // 生成向量化文本
+  const text = [
+    `作品标题：${photo.title}`,
+    `画面内容分析：${analysis}`,
+  ];
+
+  if (photo.location) {
+    text.push(`拍摄地点：${photo.location}`);
+  }
+
+  if (photo.description) {
+    text.push(`作品描述：${photo.description}`);
+  }
+
+  if (photo.category) {
+    text.push(`作品分类：${photo.category}`);
+  }
+
+  if (photo.taken_at) {
+    const date = new Date(photo.taken_at);
+    text.push(`拍摄时间：${date.getFullYear()}年${date.getMonth() + 1}月`);
+  }
+
+  const fullText = text.join('\n\n');
+
+  // 摄影作品通常不需要分块，直接作为一个整体
+  return [{
+    title: photo.title,
+    content: fullText,
+  }];
+}
+
+export { CHUNK_CONFIG, splitText, splitBlog, splitWork, splitPhoto };

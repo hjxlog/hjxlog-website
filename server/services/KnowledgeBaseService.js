@@ -5,6 +5,7 @@
 import pg from 'pg';
 import { ZhipuAI } from 'zhipuai';
 import * as textChunker from '../utils/textChunker.js';
+import ImageAnalysisService from './ImageAnalysisService.js';
 
 const { Client } = pg;
 
@@ -14,6 +15,7 @@ class KnowledgeBaseService {
     this.zhipuClient = new ZhipuAI({
       apiKey: process.env.ZHIPU_API_KEY,
     });
+    this.imageAnalysisService = new ImageAnalysisService();
   }
 
   /**
@@ -242,6 +244,127 @@ class KnowledgeBaseService {
   }
 
   /**
+   * 添加或更新照片到知识库
+   * @param {number} photoId - 照片 ID
+   * @returns {Promise<{success: boolean, chunks: number, message: string}>}
+   */
+  async addPhoto(photoId) {
+    try {
+      console.log(`[KnowledgeBase] 添加照片到知识库: ${photoId}`);
+
+      // 1. 获取照片内容
+      const photoResult = await this.db.query(
+        'SELECT * FROM photos WHERE id = $1',
+        [photoId]
+      );
+
+      if (photoResult.rows.length === 0) {
+        return { success: false, chunks: 0, message: '照片不存在' };
+      }
+
+      const photo = photoResult.rows[0];
+
+      // 2. 删除旧的向量数据
+      await this.db.query(
+        'DELETE FROM knowledge_base WHERE source_type = $1 AND source_id = $2',
+        ['photo', photoId]
+      );
+
+      // 3. 使用AI分析图片
+      console.log(`[KnowledgeBase] 正在分析图片: ${photo.image_url}`);
+      const analysisResult = await this.imageAnalysisService.analyzeImage(
+        photo.image_url,
+        {
+          title: photo.title,
+          description: photo.description,
+          location: photo.location,
+          category: photo.category,
+          taken_at: photo.taken_at,
+        }
+      );
+
+      if (!analysisResult.success) {
+        console.error('[KnowledgeBase] 图片分析失败:', analysisResult.error);
+        // 即使分析失败，也使用基本信息生成向量
+      }
+
+      const analysis = analysisResult.analysis || photo.description || '摄影作品';
+
+      // 4. 生成文本块
+      const chunks = textChunker.splitPhoto(photo, analysis);
+      console.log(`[KnowledgeBase] 生成了 ${chunks.length} 个文本块`);
+
+      // 5. 向量化
+      const texts = chunks.map(c => c.content);
+      const response = await this.zhipuClient.embeddings.create({
+        model: 'embedding-2',
+        input: texts,
+      });
+
+      const embeddings = response.data.map(d => d.embedding);
+
+      // 6. 存入数据库
+      for (let i = 0; i < chunks.length; i++) {
+        const vectorStr = `[${embeddings[i].join(',')}]`;
+        await this.db.query(
+          `INSERT INTO knowledge_base (source_type, source_id, title, content, metadata, embedding)
+           VALUES ($1, $2, $3, $4, $5, $6::vector)`,
+          [
+            'photo',
+            photoId,
+            chunks[i].title,
+            chunks[i].content,
+            JSON.stringify({
+              category: photo.category,
+              location: photo.location,
+              taken_at: photo.taken_at,
+              published: photo.published,
+              image_url: photo.image_url,
+              analysis: analysis,
+            }),
+            vectorStr,
+          ]
+        );
+      }
+
+      console.log(`[KnowledgeBase] 照片添加成功: ${chunks.length} 个文档块`);
+      return {
+        success: true,
+        chunks: chunks.length,
+        message: `成功添加 ${chunks.length} 个文档块`,
+      };
+    } catch (error) {
+      console.error('[KnowledgeBase] 添加照片失败:', error);
+      return {
+        success: false,
+        chunks: 0,
+        message: error.message,
+      };
+    }
+  }
+
+  /**
+   * 从知识库删除照片
+   * @param {number} photoId - 照片 ID
+   * @returns {Promise<{success: boolean, deleted: number}>}
+   */
+  async deletePhoto(photoId) {
+    try {
+      const result = await this.db.query(
+        'DELETE FROM knowledge_base WHERE source_type = $1 AND source_id = $2',
+        ['photo', photoId]
+      );
+      return {
+        success: true,
+        deleted: result.rowCount || 0,
+      };
+    } catch (error) {
+      console.error('[KnowledgeBase] 删除照片失败:', error);
+      return { success: false, deleted: 0 };
+    }
+  }
+
+  /**
    * 获取知识库内容列表（按源分组）
    * @param {Object} options - 查询选项
    * @returns {Promise<{success: boolean, data: Array, total: number}>}
@@ -278,13 +401,14 @@ class KnowledgeBaseService {
         SELECT
           gd.source_type,
           gd.source_id,
-          COALESCE(b.title, w.title) as title,
-          COALESCE(b.category, w.category) as category,
+          COALESCE(b.title, w.title, p.title) as title,
+          COALESCE(b.category, w.category, p.category) as category,
           gd.created_at,
           gd.chunk_count
         FROM grouped_data gd
         LEFT JOIN blogs b ON gd.source_type = 'blog' AND b.id = gd.source_id
         LEFT JOIN works w ON gd.source_type = 'work' AND w.id = gd.source_id
+        LEFT JOIN photos p ON gd.source_type = 'photo' AND p.id = gd.source_id
       `;
 
       params.push(parseInt(limit), offset);
@@ -298,11 +422,17 @@ class KnowledgeBaseService {
       console.log('[KnowledgeBase] 列表查询原始结果:', result.rows);
 
       // 处理分组数据
+      const typeLabels = {
+        blog: '博客',
+        work: '作品',
+        photo: '照片',
+      };
+
       const groupedData = result.rows.map(row => ({
         source_type: row.source_type,
         source_id: row.source_id,
-        title: row.title || `未命名${row.source_type === 'blog' ? '博客' : '作品'}`,
-        source_title: row.title || `未命名${row.source_type === 'blog' ? '博客' : '作品'}`,
+        title: row.title || `未命名${typeLabels[row.source_type] || '文档'}`,
+        source_title: row.title || `未命名${typeLabels[row.source_type] || '文档'}`,
         category: row.category || '',
         chunk_count: parseInt(row.chunk_count),
         created_at: row.created_at,
@@ -375,7 +505,7 @@ class KnowledgeBaseService {
    * @returns {Promise<{success: boolean, stats: Object}>}
    */
   async rebuildAll(options = {}) {
-    const { blogs = true, works = true } = options;
+    const { blogs = true, works = true, photos = true } = options;
 
     try {
       console.log('[KnowledgeBase] 开始重建知识库...');
@@ -386,6 +516,7 @@ class KnowledgeBaseService {
 
       let totalBlogs = 0;
       let totalWorks = 0;
+      let totalPhotos = 0;
       let totalChunks = 0;
 
       // 处理博客
@@ -420,6 +551,25 @@ class KnowledgeBaseService {
         console.log(`[KnowledgeBase] 处理了 ${totalWorks} 个作品`);
       }
 
+      // 处理照片
+      if (photos) {
+        const photosResult = await this.db.query(
+          'SELECT id FROM photos WHERE published = true'
+        );
+
+        for (const row of photosResult.rows) {
+          const result = await this.addPhoto(row.id);
+          if (result.success) {
+            totalPhotos++;
+            totalChunks += result.chunks;
+          }
+          // 照片处理需要较慢，延迟2秒
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        console.log(`[KnowledgeBase] 处理了 ${totalPhotos} 张照片`);
+      }
+
       // 更新最后更新时间
       await this.db.query(`
         INSERT INTO chat_global_usage (request_date, total_requests)
@@ -432,6 +582,7 @@ class KnowledgeBaseService {
         stats: {
           totalBlogs,
           totalWorks,
+          totalPhotos,
           totalChunks,
         },
       };
@@ -442,6 +593,7 @@ class KnowledgeBaseService {
         stats: {
           totalBlogs: 0,
           totalWorks: 0,
+          totalPhotos: 0,
           totalChunks: 0,
         },
       };
