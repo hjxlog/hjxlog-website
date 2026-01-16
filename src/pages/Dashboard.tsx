@@ -25,6 +25,7 @@ import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
 import PhotosTab from '@/components/dashboard/PhotosTab';
 import KnowledgeBaseTab from '@/components/dashboard/KnowledgeBaseTab';
+import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
 import LogManagement from '@/pages/LogManagement';
 
 interface Work {
@@ -1314,6 +1315,11 @@ export default function Dashboard() {
         {/* 知识库管理页面 */}
         {activeTab === 'knowledge' && (
           <KnowledgeBaseTab />
+        )}
+
+        {/* 提示词管理页面 */}
+        {activeTab === 'prompts' && (
+          <PromptManagementTab />
         )}
 
       {/* 评论回复模态框 */}

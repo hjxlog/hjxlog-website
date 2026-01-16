@@ -27,6 +27,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
     { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
     { key: 'comments', label: '评论管理', icon: 'fas fa-comments' },
     { key: 'knowledge', label: '知识库', icon: 'fas fa-brain' },
+    { key: 'prompts', label: '提示词管理', icon: 'fas fa-magic' },
     { key: 'logs', label: '日志管理', icon: 'fas fa-file-alt' },
   ];
 

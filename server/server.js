@@ -18,6 +18,7 @@ import {
 import { requestLogMiddleware, errorLogMiddleware, createLogger } from './utils/logMiddleware.js';
 import { createChatRouter } from './routes/chatRouter.js';
 import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
+import { createPromptRouter } from './routes/promptRouter.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -155,6 +156,17 @@ app.use('/api/knowledge-base', (req, res, next) => {
     });
   }
   createKnowledgeBaseRouter(() => dbClient)(req, res, next);
+});
+
+// ==================== 提示词配置相关API ====================
+app.use('/api/prompts', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createPromptRouter(() => dbClient)(req, res, next);
 });
 
 // ==================== 图片上传相关API ====================

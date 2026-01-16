@@ -4,6 +4,7 @@
  */
 import EmbeddingService from './EmbeddingService.js';
 import LLMService from './LLMService.js';
+import PromptService from './PromptService.js';
 
 /**
  * 系统提示词
@@ -21,6 +22,7 @@ class RAGService {
     this.db = dbClient;
     this.embeddingService = new EmbeddingService();
     this.llmService = new LLMService();
+    this.promptService = new PromptService(dbClient);
   }
 
   /**
@@ -42,8 +44,8 @@ class RAGService {
     // 2. 智能检索（结合相似度梯度和分层检索）
     const documents = await this.smartSearch(queryEmbedding);
 
-    // 3. 构建 Prompt
-    const prompt = this.buildPrompt(question, documents);
+    // 3. 构建 Prompt (现在是异步的)
+    const prompt = await this.buildPrompt(question, documents);
 
     // 4. 流式生成回答
     yield* this.llmService.streamChat(prompt);
@@ -311,30 +313,84 @@ class RAGService {
    * 构建提示词
    * @param {string} question - 用户问题
    * @param {Array} documents - 检索到的文档
-   * @returns {Object} 提示对象
+   * @returns {Promise<Object>} 提示对象
    */
-  buildPrompt(question, documents) {
-    if (documents.length === 0) {
-      return {
-        system: SYSTEM_PROMPT,
-        messages: [{
-          role: 'user',
-          content: `用户问题：${question}\n\n注意：知识库中没有找到相关信息。`,
-        }],
-      };
+  async buildPrompt(question, documents) {
+    // 对文档按地点/时间进行预去重，避免LLM返回重复
+    const uniqueDocs = this.preprocessDocuments(documents);
+
+    // 构建上下文字符串
+    const contextStr = uniqueDocs.length > 0
+      ? uniqueDocs
+          .map((doc, i) => `[来源${i + 1}] ${doc.title}\n${doc.content}`)
+          .join('\n\n')
+      : '知识库中没有找到相关信息。';
+
+    // 根据检索结果类型自动选择提示词模板
+    const templateResult = await this.promptService.selectTemplateByDocuments(uniqueDocs);
+
+    let systemPrompt = SYSTEM_PROMPT;
+    let userPromptTemplate = '';
+
+    if (templateResult.success && templateResult.data) {
+      const template = templateResult.data;
+      // 使用模板的system_prompt和user_prompt_template
+      systemPrompt = template.system_prompt || SYSTEM_PROMPT;
+      userPromptTemplate = template.user_prompt_template;
+    } else {
+      // 降级到默认策略
+      userPromptTemplate = `**重要要求**：
+1. 基于参考信息回答，不要编造
+2. 避免重复相同的信息
+3. 保持回答简洁准确`;
     }
 
-    const contextStr = documents
-      .map((doc, i) => `[来源${i + 1}] ${doc.title}\n${doc.content}`)
-      .join('\n\n');
+    // 替换变量
+    let userPrompt = userPromptTemplate
+      .replace(/{context}/g, contextStr)
+      .replace(/{question}/g, question);
 
     return {
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{
         role: 'user',
-        content: `参考信息：\n\n${contextStr}\n\n用户问题：${question}`,
+        content: userPrompt,
       }],
     };
+  }
+
+  /**
+   * 预处理文档 - 去重和排序
+   * @param {Array} documents - 原始文档
+   * @returns {Array} 处理后的文档
+   */
+  preprocessDocuments(documents) {
+    // 提取地点信息用于去重
+    const locationMap = new Map();
+
+    documents.forEach(doc => {
+      const location = doc.metadata?.location_text;
+      const year = doc.metadata?.year;
+
+      if (location && year) {
+        const key = `${year}-${location}`;
+
+        // 同一地点同一年，只保留最相关的一个
+        if (!locationMap.has(key) || doc.similarity > locationMap.get(key).similarity) {
+          locationMap.set(key, doc);
+        }
+      } else {
+        // 没有地点信息的文档，按source_id去重
+        const key = `${doc.source_type}-${doc.source_id}`;
+        if (!locationMap.has(key) || doc.similarity > locationMap.get(key).similarity) {
+          locationMap.set(key, doc);
+        }
+      }
+    });
+
+    // 按相似度排序返回
+    return Array.from(locationMap.values())
+      .sort((a, b) => b.similarity - a.similarity);
   }
 
   /**
