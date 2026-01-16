@@ -45,7 +45,7 @@ class KnowledgeBaseService {
         ['blog', blogId]
       );
 
-      // 3. 分块
+      // 3. 分块（新策略返回带 metadata 的对象）
       const chunks = textChunker.splitBlog(blog);
       console.log(`[KnowledgeBase] 生成了 ${chunks.length} 个文本块`);
 
@@ -64,23 +64,27 @@ class KnowledgeBaseService {
 
         const embeddings = response.data.map(d => d.embedding);
 
-        // 5. 存入数据库
+        // 5. 存入数据库 - 使用分块时生成的 metadata
         for (let j = 0; j < batch.length; j++) {
           const vectorStr = `[${embeddings[j].join(',')}]`;
+          const chunk = batch[j];
+
+          // 合并基础 metadata 和批次信息
+          const finalMetadata = {
+            ...chunk.metadata,
+            global_chunk_index: Math.floor(i / batchSize) * batchSize + j,
+            total_chunks: chunks.length,
+          };
+
           await this.db.query(
             `INSERT INTO knowledge_base (source_type, source_id, title, content, metadata, embedding)
              VALUES ($1, $2, $3, $4, $5, $6::vector)`,
             [
               'blog',
               blogId,
-              batch[j].title,
-              batch[j].content,
-              JSON.stringify({
-                category: blog.category,
-                published: blog.published,
-                chunk_index: Math.floor(i / batchSize) * batchSize + j,
-                total_chunks: chunks.length,
-              }),
+              chunk.title,
+              chunk.content,
+              JSON.stringify(finalMetadata),
               vectorStr,
             ]
           );
@@ -136,7 +140,7 @@ class KnowledgeBaseService {
         ['work', workId]
       );
 
-      // 3. 分块
+      // 3. 分块（新策略返回带 metadata 的对象）
       const chunks = textChunker.splitWork(work);
       console.log(`[KnowledgeBase] 生成了 ${chunks.length} 个文本块`);
 
@@ -155,24 +159,27 @@ class KnowledgeBaseService {
 
         const embeddings = response.data.map(d => d.embedding);
 
-        // 5. 存入数据库
+        // 5. 存入数据库 - 使用分块时生成的 metadata
         for (let j = 0; j < batch.length; j++) {
           const vectorStr = `[${embeddings[j].join(',')}]`;
+          const chunk = batch[j];
+
+          // 合并基础 metadata 和批次信息
+          const finalMetadata = {
+            ...chunk.metadata,
+            global_chunk_index: Math.floor(i / batchSize) * batchSize + j,
+            total_chunks: chunks.length,
+          };
+
           await this.db.query(
             `INSERT INTO knowledge_base (source_type, source_id, title, content, metadata, embedding)
              VALUES ($1, $2, $3, $4, $5, $6::vector)`,
             [
               'work',
               workId,
-              batch[j].title,
-              batch[j].content,
-              JSON.stringify({
-                category: work.category,
-                status: work.status,
-                featured: work.featured,
-                chunk_index: Math.floor(i / batchSize) * batchSize + j,
-                total_chunks: chunks.length,
-              }),
+              chunk.title,
+              chunk.content,
+              JSON.stringify(finalMetadata),
               vectorStr,
             ]
           );
@@ -290,7 +297,7 @@ class KnowledgeBaseService {
 
       const analysis = analysisResult.analysis || photo.description || '摄影作品';
 
-      // 4. 生成文本块
+      // 4. 生成文本块（新策略返回带 metadata 的对象）
       const chunks = textChunker.splitPhoto(photo, analysis);
       console.log(`[KnowledgeBase] 生成了 ${chunks.length} 个文本块`);
 
@@ -303,25 +310,27 @@ class KnowledgeBaseService {
 
       const embeddings = response.data.map(d => d.embedding);
 
-      // 6. 存入数据库
+      // 6. 存入数据库 - 使用分块时生成的 metadata
       for (let i = 0; i < chunks.length; i++) {
         const vectorStr = `[${embeddings[i].join(',')}]`;
+        const chunk = chunks[i];
+
+        // 合并基础 metadata 和全局索引
+        const finalMetadata = {
+          ...chunk.metadata,
+          global_chunk_index: i,
+          total_chunks: chunks.length,
+        };
+
         await this.db.query(
           `INSERT INTO knowledge_base (source_type, source_id, title, content, metadata, embedding)
            VALUES ($1, $2, $3, $4, $5, $6::vector)`,
           [
             'photo',
             photoId,
-            chunks[i].title,
-            chunks[i].content,
-            JSON.stringify({
-              category: photo.category,
-              location: photo.location,
-              taken_at: photo.taken_at,
-              published: photo.published,
-              image_url: photo.image_url,
-              analysis: analysis,
-            }),
+            chunk.title,
+            chunk.content,
+            JSON.stringify(finalMetadata),
             vectorStr,
           ]
         );

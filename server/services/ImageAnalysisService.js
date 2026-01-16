@@ -3,7 +3,6 @@
  * 使用智谱AI视觉模型分析图片内容，提取地点、场景等信息
  */
 import { ZhipuAI } from 'zhipuai';
-import fetch from 'node-fetch';
 
 class ImageAnalysisService {
   constructor() {
@@ -25,9 +24,9 @@ class ImageAnalysisService {
       // 构建分析提示词
       const prompt = this.buildAnalysisPrompt(metadata);
 
-      // 调用智谱AI视觉模型
+      // 调用智谱AI视觉模型，直接使用URL
       const response = await this.zhipuClient.chat.completions.create({
-        model: 'glm-4v',  // 使用视觉模型
+        model: 'glm-4v',
         messages: [
           {
             role: 'user',
@@ -74,11 +73,22 @@ class ImageAnalysisService {
   buildAnalysisPrompt(metadata) {
     const { title, description, location, category, taken_at } = metadata;
 
-    let prompt = '请分析这张摄影作品，提取以下信息：\n\n';
-    prompt += '1. **拍摄地点**：具体位置（城市、景点、地标等）\n';
-    prompt += '2. **场景类型**：自然风光、城市建筑、人像、街拍、夜景等\n';
-    prompt += '3. **主要元素**：画面中的主要物体、人物、建筑等\n';
-    prompt += '4. **氛围描述**：画面的整体感觉和氛围\n';
+    let prompt = '你是一个专业的摄影作品分析师。请仔细观察这张图片，提取关键信息用于后续的智能检索。\n\n';
+
+    prompt += '**重点要求**：\n';
+    prompt += '1. 如果能识别出具体的地理位置（城市、景点、地标），请明确指出，这是最重要的信息\n';
+    prompt += '2. 描述画面的主要场景和内容\n';
+    prompt += '3. 提取关键元素和特征\n\n';
+
+    prompt += '请按以下格式回答（简洁明了，200字以内）：\n\n';
+    prompt += '**拍摄地点**：如果能识别，请给出具体位置（如"日本京都清水寺"、"中国上海外滩"等）\n';
+    prompt += '**场景类型**：自然风光、城市建筑、人像、街拍、夜景等\n';
+    prompt += '**画面内容**：主要物体、人物、建筑、景色等\n';
+    prompt += '**视觉特征**：颜色、光影、构图等\n';
+
+    if (location) {
+      prompt += `\n[已知拍摄地点：${location}，请结合图片内容确认或补充]`;
+    }
 
     if (title) {
       prompt += `\n作品标题：${title}`;
@@ -88,10 +98,6 @@ class ImageAnalysisService {
       prompt += `\n作品描述：${description}`;
     }
 
-    if (location) {
-      prompt += `\n拍摄地点：${location}`;
-    }
-
     if (category) {
       prompt += `\n作品分类：${category}`;
     }
@@ -99,8 +105,6 @@ class ImageAnalysisService {
     if (taken_at) {
       prompt += `\n拍摄时间：${taken_at}`;
     }
-
-    prompt += '\n\n请用简洁的中文描述（200字以内），重点突出地点信息，方便后续向量化搜索。';
 
     return prompt;
   }
