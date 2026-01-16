@@ -1,16 +1,5 @@
 import React from 'react';
-
-interface Blog {
-  id: number;
-  title: string;
-  excerpt: string;
-  category: string;
-  published: boolean;
-  tags: string[];
-  views?: number;
-  likes?: number;
-  created_at?: string;
-}
+import { Blog } from '@/types';
 
 interface BlogsTabProps {
   blogs: Blog[];
@@ -32,7 +21,6 @@ interface BlogsTabProps {
   setBlogSelectedStatus: (status: string) => void;
   openBlogForm: (blog?: Blog) => void;
   handleDeleteBlog: (id: number) => Promise<void>;
-  renderBlogStatusBadge: (published: boolean) => JSX.Element;
 }
 
 export default function BlogsTab({
@@ -54,9 +42,18 @@ export default function BlogsTab({
   setBlogSelectedCategory,
   setBlogSelectedStatus,
   openBlogForm,
-  handleDeleteBlog,
-  renderBlogStatusBadge
+  handleDeleteBlog
 }: BlogsTabProps) {
+  const renderBlogStatusBadge = (published: boolean) => {
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+      }`}>
+        {published ? '已发布' : '草稿'}
+      </span>
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">

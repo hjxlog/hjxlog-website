@@ -2,13 +2,17 @@ import React from 'react';
 
 interface Comment {
   id: number;
+  blog_id: number;
   blog_title?: string;
   author_name: string;
   author_email?: string;
   content: string;
   admin_reply?: string;
   admin_reply_at?: string;
+  ip_address?: string;
+  user_agent?: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface CommentsTabProps {
