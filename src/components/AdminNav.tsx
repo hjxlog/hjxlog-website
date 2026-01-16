@@ -105,7 +105,13 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
             </button>
             <span className="ml-3 text-gray-400">|</span>
             <button 
-              onClick={() => setActiveTab && setActiveTab('overview')}
+              onClick={() => {
+                if (setActiveTab) {
+                  setActiveTab('overview');
+                } else {
+                  navigate('/dashboard?tab=overview');
+                }
+              }}
               className="ml-3 text-gray-600 font-medium hidden sm:inline hover:text-[#165DFF] transition-colors cursor-pointer"
             >
               管理后台
