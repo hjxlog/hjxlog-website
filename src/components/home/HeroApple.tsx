@@ -81,10 +81,13 @@ const HeroApple = () => {
         >
           {/* Avatar & Badge */}
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-blue-600 to-purple-600">
-               <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center bg-slate-100">
-                  {/* Placeholder Avatar */}
-                  <span className="font-bold text-slate-700 text-lg">ME</span>
+            <div className="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-blue-100 to-purple-100 shadow-sm">
+               <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center p-[2px]">
+                  <img 
+                    src="https://file.hjxlog.com/blog/images/avatar.jpg" 
+                    alt="JianXian"
+                    className="w-full h-full object-cover rounded-full"
+                  />
                </div>
             </div>
             <div>
@@ -93,7 +96,7 @@ const HeroApple = () => {
             </div>
             <div className="ml-auto md:ml-4 px-3 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full border border-blue-100 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              Available for hire
+              Building in public
             </div>
           </div>
 
@@ -130,9 +133,15 @@ const HeroApple = () => {
             <a href="mailto:contact@example.com" className="hover:text-red-500 transition-colors"><Mail size={24} /></a>
             <div className="w-px h-6 bg-slate-300 mx-2"></div>
             <div className="flex gap-4">
-              <div title="Full Stack"><Terminal size={20} /></div>
-              <div title="AI"><Cpu size={20} /></div>
-              <div title="Performance"><Zap size={20} /></div>
+              <div title="Full Stack Developer" className="text-slate-400 hover:text-slate-900 transition-colors cursor-help">
+                <Terminal size={20} />
+              </div>
+              <div title="Artificial Intelligence" className="text-slate-400 hover:text-purple-500 transition-colors cursor-help">
+                <Cpu size={20} />
+              </div>
+              <div title="High Performance" className="text-slate-400 hover:text-yellow-500 transition-colors cursor-help">
+                <Zap size={20} />
+              </div>
             </div>
           </div>
         </motion.div>
