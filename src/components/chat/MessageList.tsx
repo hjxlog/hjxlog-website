@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Bot, Laptop, FileText, Palette } from 'lucide-react';
 
 export interface Message {
   id: string;
@@ -33,51 +34,66 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages, currentResponse]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar">
+    <div 
+      className={`flex-1 hide-scrollbar ${
+        messages.length === 0 
+          ? 'overflow-hidden p-2' 
+          : 'overflow-y-auto p-2 space-y-6'
+      }`}
+    >
       {messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full text-center p-4">
-          <div className="w-16 h-16 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
-            <span className="text-3xl">🤖</span>
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <div className="w-12 h-12 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-3 shadow-sm">
+            <Bot size={24} className="text-blue-500" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Hello, I'm AI Assistant</h2>
-          <p className="text-sm text-slate-500 max-w-[240px] leading-relaxed mb-8">
-            Ask me anything about this website, projects, or technical stack.
+          <h2 className="text-lg font-bold text-slate-900 mb-1">你好，我是 AI 助手</h2>
+          <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed mb-4">
+            你可以问我关于这个网站、项目或技术栈的任何问题。
           </p>
-          <div className="w-full space-y-3">
+          <div className="w-full px-6 space-y-2">
             {onQuickQuestion && (
               <>
                 <button
                   onClick={() => onQuickQuestion('这个人的技术栈是什么？')}
                   disabled={disabled}
-                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
                       ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
                       : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  <span className="mr-2">💻</span> 这个人的技术栈是什么？
+                  <span className="flex items-center">
+                    <Laptop size={14} className="mr-2 text-blue-500" /> 
+                    这个人的技术栈是什么？
+                  </span>
                 </button>
                 <button
                   onClick={() => onQuickQuestion('他写过哪些博客？')}
                   disabled={disabled}
-                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
                       ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
                       : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  <span className="mr-2">📝</span> 他写过哪些博客？
+                  <span className="flex items-center">
+                    <FileText size={14} className="mr-2 text-green-500" /> 
+                    他写过哪些博客？
+                  </span>
                 </button>
                 <button
                   onClick={() => onQuickQuestion('介绍一下他的作品')}
                   disabled={disabled}
-                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
                       ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
                       : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  <span className="mr-2">🎨</span> 介绍一下他的作品
+                  <span className="flex items-center">
+                    <Palette size={14} className="mr-2 text-purple-500" /> 
+                    介绍一下他的作品
+                  </span>
                 </button>
               </>
             )}
@@ -110,9 +126,10 @@ export const MessageList: React.FC<MessageListProps> = ({
 
       {isTyping && currentResponse && (
         <div className="flex justify-start">
-          <div className="max-w-[80%] rounded-2xl px-4 py-2 bg-gray-100 text-gray-900">
-            <ReactMarkdown>{currentResponse}</ReactMarkdown>
-            <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-1" />
+          <div className="max-w-[85%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm bg-white text-slate-800 border border-slate-100 rounded-tl-none">
+            <div className="prose prose-sm prose-slate max-w-none">
+              <ReactMarkdown>{currentResponse}</ReactMarkdown>
+            </div>
           </div>
         </div>
       )}

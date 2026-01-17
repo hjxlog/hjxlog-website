@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageList, Message } from './MessageList';
 import { InputArea } from './InputArea';
 import { API_BASE_URL } from '@/config/api';
+import { Bot, X } from 'lucide-react';
 
 interface ChatWindowProps {
   onClose: () => void;
@@ -146,10 +147,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/50 bg-white/50 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-100 to-purple-100 flex items-center justify-center border border-white shadow-sm">
-            <span className="text-lg">🤖</span>
+            <Bot size={20} className="text-blue-500" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 text-sm">AI Assistant</h3>
+            <h3 className="font-semibold text-slate-900 text-sm">AI 助手</h3>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span className="text-xs text-slate-500">Online</span>
@@ -160,9 +161,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
           onClick={onClose} 
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X size={20} />
         </button>
       </div>
 
