@@ -381,21 +381,21 @@ export default function Moments() {
         {/* Timeline Container */}
         <div className="relative">
           {/* Vertical Timeline Line */}
-          <div className="hidden md:block absolute left-[100px] top-0 bottom-0 w-px bg-slate-200" />
+          <div className="hidden md:block absolute left-[104px] top-0 bottom-0 w-px bg-slate-200" />
 
           {/* Moments List */}
-          <div className="space-y-5">
+          <div className="space-y-8">
             {loading && moments.length === 0 ? (
               // Loading Skeleton (Timeline Style)
               <div className="space-y-12">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex flex-col md:flex-row gap-4 md:gap-8">
+                  <div key={i} className="flex flex-col md:flex-row gap-4 md:gap-12">
                     <div className="w-full md:w-[80px] flex md:flex-col items-center md:items-end gap-3 md:gap-0 md:text-right pt-0 md:pt-2">
                       <div className="h-5 w-12 bg-slate-200 rounded" />
                       <div className="h-4 w-8 bg-slate-100 rounded md:mt-1" />
                     </div>
                     <div className="relative flex-1">
-                      <div className="hidden md:block absolute -left-[37px] top-3 w-4 h-4 rounded-full bg-slate-100 border-4 border-[#f5f5f7]" />
+                      <div className="hidden md:block absolute -left-8 top-3 w-4 h-4 rounded-full bg-slate-100 border-4 border-[#f5f5f7]" />
                       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200/60 h-64" />
                     </div>
                   </div>
@@ -421,7 +421,7 @@ export default function Moments() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="relative group"
+                      className={`relative group ${isNewYear && index !== 0 ? 'md:mt-16' : ''}`}
                     >
                       {/* Year Marker */}
                       {isNewYear && (
@@ -430,7 +430,7 @@ export default function Moments() {
                         </div>
                       )}
 
-                      <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                      <div className="flex flex-col md:flex-row gap-4 md:gap-12">
                         {/* Timeline Date (Left) */}
                         <div className="w-full md:w-[80px] flex md:flex-col items-center md:items-end gap-3 md:gap-0 md:text-right pt-0 md:pt-1 flex-shrink-0">
                           <div className="text-2xl font-bold text-slate-900 leading-none">{day}</div>
@@ -445,13 +445,13 @@ export default function Moments() {
                         {/* Timeline Node & Content (Right) */}
                         <div className="relative flex-1 pb-4">
                           {/* Node */}
-                          <div className="hidden md:block absolute -left-5 top-4 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-slate-300 group-hover:border-[#165DFF] group-hover:scale-110 transition-all duration-300 z-10 shadow-sm" />
+                          <div className="hidden md:block absolute -left-[31px] top-4 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-slate-300 group-hover:border-[#165DFF] group-hover:scale-110 transition-all duration-300 z-10 shadow-sm" />
                           
                           {/* Content Card */}
                           <article className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-md transition-all duration-300 group-hover:border-slate-300">
-                            <div className="p-4">
+                            <div className="p-8">
                               {/* Content */}
-                              <div className="prose prose-slate max-w-none mb-2">
+                              <div className="prose prose-slate max-w-none mb-4">
                                 {renderContent(moment.content)}
                               </div>
 
