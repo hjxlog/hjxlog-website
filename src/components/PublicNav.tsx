@@ -7,16 +7,11 @@ export default function PublicNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 导航栏滚动效果
+  const [isScrolled, setIsScrolled] = useState(false);
+  
   useEffect(() => {
-    const nav = document.getElementById('mainNav');
-    if (!nav) return;
-    
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        nav.classList.add('nav-scrolled');
-      } else {
-        nav.classList.remove('nav-scrolled');
-      }
+      setIsScrolled(window.scrollY > 20);
     };
     
     window.addEventListener('scroll', handleScroll);
@@ -28,7 +23,7 @@ export default function PublicNav() {
     const scrollToSection = () => {
       const element = document.getElementById(section);
       if (element) {
-        const extraOffset = 64; // 额外间距
+        const extraOffset = 80; // 额外间距，稍微加大一点以避开导航栏
         
         const offsetTop = element.offsetTop  - extraOffset;
         window.scrollTo({
@@ -51,8 +46,9 @@ export default function PublicNav() {
   // 处理作品点击
   const handleWorksClick = () => {
     if (location.pathname === '/') {
-      // 在首页，跳转到作品section
-      handleNavClick('work');
+      // 在首页，跳转到作品section (假设作品部分有id='works')
+      // 但目前Home.tsx里是AppleWorksScroll，我们可能需要给它加个ID
+      navigate('/works'); // 暂时直接跳转路由，保持行为一致
     } else {
       // 在其他页面，跳转到作品页面
       navigate('/works');
@@ -61,17 +57,16 @@ export default function PublicNav() {
 
   // 处理博客点击
   const handleBlogClick = () => {
-    if (location.pathname === '/') {
-      // 在首页，跳转到博客section
-      handleNavClick('blog');
-    } else {
-      // 在其他页面，跳转到博客页面
-      navigate('/blogs');
-    }
+      navigate('/blog');
   };
 
   return (
-    <nav id="mainNav" className="fixed top-0 left-0 right-0 py-4 px-6 transition-all duration-300">
+    <nav 
+      id="mainNav" 
+      className={`fixed top-0 left-0 right-0 py-4 px-6 transition-all duration-300 z-50 ${
+        isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50' : 'bg-white/0'
+      }`}
+    >
       <div className="container mx-auto flex items-center justify-between">
         {/* 左侧：Logo */}
         <div className="text-2xl font-bold text-[#165DFF] cursor-pointer" onClick={() => {
