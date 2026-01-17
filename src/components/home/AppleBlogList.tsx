@@ -26,7 +26,7 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
             最新思考
           </h2>
           <button 
-            onClick={() => navigate('/blog')}
+            onClick={() => navigate('/blogs')}
             className="text-[#0066cc] hover:underline flex items-center gap-1 font-medium"
           >
             阅读全部 <ChevronRight className="w-4 h-4" />
@@ -86,8 +86,8 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
         
         {/* Footer Link */}
         <div className="mt-12 text-center">
-           <button 
-             onClick={() => navigate('/blog')}
+           <button
+             onClick={() => navigate('/blogs')}
              className="inline-flex items-center justify-center px-8 py-3 rounded-full bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
            >
              进入博客专栏

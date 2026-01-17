@@ -57,7 +57,7 @@ export default function PublicNav() {
 
   // 处理博客点击
   const handleBlogClick = () => {
-      navigate('/blog');
+      navigate('/blogs');
   };
 
   return (

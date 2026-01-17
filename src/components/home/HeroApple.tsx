@@ -92,7 +92,7 @@ const HeroApple = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-900 text-lg">JianXian</h3>
-              <p className="text-slate-500 text-sm">@IndieHacker</p>
+              <p className="text-slate-500 text-sm">@Developer</p>
             </div>
             <div className="ml-auto md:ml-4 px-3 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full border border-blue-100 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
