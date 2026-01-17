@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe } from 'lucide-react';
+import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe, Cpu, HardDrive, Monitor, Award, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AppleSection = ({ 
@@ -20,6 +20,130 @@ const AppleSection = ({
     {children}
   </section>
 );
+
+const AboutModal = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden font-sans text-sm border border-slate-300"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Window Header */}
+        <div className="h-8 bg-[#e3e3e3] border-b border-[#d1d1d1] flex items-center justify-between px-4">
+           <div className="flex space-x-2">
+              <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 border border-black/10 transition-colors"></button>
+              <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-black/10"></div>
+              <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-black/10"></div>
+           </div>
+           <div className="font-semibold text-slate-500 text-xs">关于我</div>
+           <div className="w-14"></div>
+        </div>
+
+        {/* Combined Content Area */}
+        <div className="p-8 md:p-10 max-h-[80vh] overflow-y-auto">
+           <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+              {/* Left Column: Profile */}
+              <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-6 shrink-0 md:w-1/3">
+                 <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-slate-200 to-white shadow-lg mx-auto md:mx-0">
+                    <img 
+                      src="https://file.hjxlog.com/blog/images/avatar.jpg" 
+                      alt="Avatar" 
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                 </div>
+                 <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Huang Jianxian</h2>
+                    <p className="text-slate-500 text-xs font-medium mt-1">Independent Developer, 2026</p>
+                 </div>
+                 
+                 <div className="space-y-3 text-xs w-full pt-2 border-t border-slate-100">
+                    <div className="flex justify-between md:justify-start gap-4">
+                       <span className="text-slate-500 font-semibold w-16 text-right md:text-left">角色</span>
+                       <span className="text-slate-900">全栈工程师</span>
+                    </div>
+                    <div className="flex justify-between md:justify-start gap-4">
+                       <span className="text-slate-500 font-semibold w-16 text-right md:text-left">驱动力</span>
+                       <span className="text-slate-900">无限学习力</span>
+                    </div>
+                    <div className="flex justify-between md:justify-start gap-4">
+                       <span className="text-slate-500 font-semibold w-16 text-right md:text-left">坐标</span>
+                       <span className="text-slate-900">远程 / 数字游民</span>
+                    </div>
+                    <div className="flex justify-between md:justify-start gap-4">
+                       <span className="text-slate-500 font-semibold w-16 text-right md:text-left">微信</span>
+                       <span className="text-slate-900 select-all font-mono">hjx_log</span>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Right Column: Skills & Contact */}
+              <div className="flex-1 space-y-8 md:border-l border-slate-100 md:pl-10">
+                 
+                 {/* Skills Section */}
+                 <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                       <Monitor size={16} className="text-blue-500" />
+                       <h3 className="font-bold text-slate-900">核心技术栈</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                       {[
+                         { label: "Frontend (React/Next.js)", color: "bg-blue-500", width: "90%" },
+                         { label: "Backend (Node/Go)", color: "bg-purple-500", width: "85%" },
+                         { label: "AI Engineering (LLM)", color: "bg-green-500", width: "80%" },
+                         { label: "UI/UX Design", color: "bg-yellow-500", width: "75%" },
+                       ].map((skill, i) => (
+                         <div key={i} className="space-y-1.5">
+                            <div className="flex justify-between text-xs font-medium text-slate-600">
+                               <span>{skill.label}</span>
+                            </div>
+                            <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                               <motion.div 
+                                 initial={{ width: 0 }}
+                                 animate={{ width: skill.width }}
+                                 transition={{ duration: 1, delay: 0.2 + (0.1 * i) }}
+                                 className={`h-full ${skill.color} shadow-sm`}
+                               />
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 {/* Contact Section */}
+                 <div className="space-y-4 pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-2 mb-2">
+                       <Globe size={16} className="text-blue-500" />
+                       <h3 className="font-bold text-slate-900">社交网络</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                       <a href="https://github.com" target="_blank" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
+                          <Github size={14} /> GitHub 代码库
+                       </a>
+                       <a href="https://twitter.com" target="_blank" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
+                          <Twitter size={14} /> Twitter 动态
+                       </a>
+                       <a href="/blogs" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
+                          <BookOpen size={14} /> 技术博客
+                       </a>
+                       <a href="mailto:contact@hjxlog.com" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
+                          <Mail size={14} /> Email
+                       </a>
+                    </div>
+                 </div>
+
+              </div>
+           </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const TerminalModal = ({ onClose }: { onClose: () => void }) => {
   const [lines, setLines] = useState<string[]>([]);
@@ -169,6 +293,9 @@ const HeroApple = () => {
         {activeModal === 'terminal' && (
           <TerminalModal onClose={() => setActiveModal(null)} />
         )}
+        {activeModal === 'about' && (
+          <AboutModal onClose={() => setActiveModal(null)} />
+        )}
       </AnimatePresence>
       
       {/* Background Gradients */}
@@ -226,7 +353,7 @@ const HeroApple = () => {
                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
              </button>
              <button 
-               onClick={() => navigate('/about')}
+               onClick={() => setActiveModal('about')}
                className="px-8 py-4 rounded-full font-medium text-slate-600 hover:bg-slate-100 transition-all border border-slate-200"
              >
                关于我
