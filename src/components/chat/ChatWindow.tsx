@@ -141,14 +141,25 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed bottom-20 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50">
+    <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-50 border border-white/20 overflow-hidden ring-1 ring-black/5">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-2xl">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🤖</span>
-          <h3 className="font-semibold">AI 助手</h3>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/50 bg-white/50 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-100 to-purple-100 flex items-center justify-center border border-white shadow-sm">
+            <span className="text-lg">🤖</span>
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 text-sm">AI Assistant</h3>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-xs text-slate-500">Online</span>
+            </div>
+          </div>
         </div>
-        <button onClick={onClose} className="hover:bg-white/20 p-1 rounded">
+        <button 
+          onClick={onClose} 
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -157,14 +168,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
 
       {/* Quota warning */}
       {(quota.remaining === 0 || quota.globalRemaining === 0) && (
-        <div className="mx-4 mt-4 p-3 bg-orange-100 text-orange-700 rounded-lg text-sm">
-          📅 今日提问次数已达上限，请明天再试
+        <div className="mx-4 mt-4 p-3 bg-orange-50/80 backdrop-blur-sm text-orange-600 rounded-xl text-xs border border-orange-100 flex items-center gap-2">
+          <span className="text-base">📅</span> 今日提问次数已达上限，请明天再试
         </div>
       )}
 
       {/* Error message */}
       {error && (
-        <div className="mx-4 mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+        <div className="mx-4 mt-4 p-3 bg-red-50/80 backdrop-blur-sm text-red-600 rounded-xl text-xs border border-red-100">
           {error}
         </div>
       )}

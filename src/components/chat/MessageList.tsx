@@ -33,47 +33,51 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages, currentResponse]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar">
       {messages.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          <p className="text-4xl mb-4">🤖</p>
-          <p>你好！我是 AI 助手</p>
-          <p className="text-sm mt-2">可以问我关于这个网站的任何问题</p>
-          <div className="mt-4 space-y-2">
+        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+          <div className="w-16 h-16 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
+            <span className="text-3xl">🤖</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Hello, I'm AI Assistant</h2>
+          <p className="text-sm text-slate-500 max-w-[240px] leading-relaxed mb-8">
+            Ask me anything about this website, projects, or technical stack.
+          </p>
+          <div className="w-full space-y-3">
             {onQuickQuestion && (
               <>
                 <button
                   onClick={() => onQuickQuestion('这个人的技术栈是什么？')}
                   disabled={disabled}
-                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
                     disabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  这个人的技术栈是什么？
+                  <span className="mr-2">💻</span> 这个人的技术栈是什么？
                 </button>
                 <button
                   onClick={() => onQuickQuestion('他写过哪些博客？')}
                   disabled={disabled}
-                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
                     disabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  他写过哪些博客？
+                  <span className="mr-2">📝</span> 他写过哪些博客？
                 </button>
                 <button
                   onClick={() => onQuickQuestion('介绍一下他的作品')}
                   disabled={disabled}
-                  className={`block w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-sm transition-all duration-300 border ${
                     disabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
                   }`}
                 >
-                  介绍一下他的作品
+                  <span className="mr-2">🎨</span> 介绍一下他的作品
                 </button>
               </>
             )}
@@ -87,14 +91,16 @@ export const MessageList: React.FC<MessageListProps> = ({
           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
         >
           <div
-            className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+            className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm ${
               message.role === 'user'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-900'
+                ? 'bg-blue-600 text-white rounded-tr-none'
+                : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
             }`}
           >
             {message.role === 'assistant' ? (
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <div className="prose prose-sm prose-slate max-w-none">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
             ) : (
               <p>{message.content}</p>
             )}
