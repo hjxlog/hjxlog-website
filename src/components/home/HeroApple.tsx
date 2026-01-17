@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ChevronRight, Github, Twitter, Mail, Terminal, Cpu, Zap, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AppleSection = ({ 
@@ -20,6 +20,105 @@ const AppleSection = ({
     {children}
   </section>
 );
+
+const TerminalModal = ({ onClose }: { onClose: () => void }) => {
+  const [lines, setLines] = useState<string[]>([]);
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    const commands = [
+      { text: "user@hjxlog:~$ neofetch", delay: 500 },
+      { text: "Fetching system info...", delay: 800 },
+      { text: "-----------------------", delay: 1000 },
+      { text: "OS: macOS / Web", delay: 1100 },
+      { text: "Host: JianXian's Portfolio", delay: 1200 },
+      { text: "Kernel: React 18.2.0", delay: 1300 },
+      { text: "Uptime: Forever", delay: 1400 },
+      { text: "Shell: zsh 5.9", delay: 1500 },
+      { text: "Resolution: Responsive", delay: 1600 },
+      { text: "DE: Tailwind CSS", delay: 1700 },
+      { text: "WM: Framer Motion", delay: 1800 },
+      { text: "CPU: Human Brain (Neural Engine)", delay: 1900 },
+      { text: "Memory: Infinite Learning Capacity", delay: 2000 },
+      { text: "", delay: 2100 },
+      { text: "user@hjxlog:~$ cat skills.txt", delay: 2500 },
+      { text: "Languages: TypeScript, Python, Rust, Go", delay: 2800 },
+      { text: "Frontend:  React, Next.js, Vue, Tailwind", delay: 2900 },
+      { text: "Backend:   Node.js, PostgreSQL, Redis, Docker", delay: 3000 },
+      { text: "AI/ML:     LangChain, OpenAI API, PyTorch", delay: 3100 },
+      { text: "", delay: 3200 },
+      { text: "user@hjxlog:~$ _", delay: 3500 },
+    ];
+
+    let timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    commands.forEach(({ text, delay }) => {
+      const timeout = setTimeout(() => {
+        setLines(prev => {
+          // If the last line is a cursor line (ends with _), replace it or append new
+          const newLines = [...prev];
+          if (newLines.length > 0 && newLines[newLines.length - 1].endsWith('_')) {
+             newLines.pop();
+          }
+          return [...newLines, text];
+        });
+        if (text.endsWith('_')) setIsTyping(false);
+      }, delay);
+      timeouts.push(timeout);
+    });
+
+    return () => timeouts.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="w-full max-w-2xl bg-[#1e1e1e] rounded-xl shadow-2xl border border-slate-700/50 overflow-hidden font-mono text-sm"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Window Header */}
+        <div className="flex items-center px-4 py-3 bg-[#252526] border-b border-slate-700/50 justify-between">
+          <div className="flex space-x-2">
+            <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 transition-colors"></button>
+            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+            <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          </div>
+          <div className="text-xs text-slate-400">terminal — -zsh — 80x24</div>
+          <div className="w-10"></div> {/* Spacer for centering */}
+        </div>
+        
+        {/* Terminal Content */}
+        <div className="p-6 text-slate-300 min-h-[400px] max-h-[60vh] overflow-y-auto font-mono">
+           {lines.map((line, index) => (
+             <div key={index} className="mb-1 whitespace-pre-wrap">
+               {line.startsWith('user@hjxlog') ? (
+                 <span className="text-green-400">{line}</span>
+               ) : line.includes(':') && !line.startsWith('http') ? (
+                 <span>
+                   <span className="text-blue-400">{line.split(':')[0]}:</span>
+                   {line.split(':').slice(1).join(':')}
+                 </span>
+               ) : (
+                 line
+               )}
+             </div>
+           ))}
+           {isTyping && <span className="animate-pulse">_</span>}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
+
+
 
 const CodeWindow = () => (
   <div className="rounded-xl overflow-hidden bg-[#1e1e1e] shadow-2xl border border-slate-700/50 font-mono text-sm w-full max-w-lg mx-auto transform transition-transform hover:scale-[1.02] duration-500">
@@ -62,9 +161,16 @@ const CodeWindow = () => (
 
 const HeroApple = () => {
   const navigate = useNavigate();
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   return (
     <AppleSection className="min-h-[90vh] flex items-center justify-center relative">
+      <AnimatePresence>
+        {activeModal === 'terminal' && (
+          <TerminalModal onClose={() => setActiveModal(null)} />
+        )}
+      </AnimatePresence>
+      
       {/* Background Gradients */}
       <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-slate-50 to-transparent -z-10"></div>
       <div className="absolute right-[-10%] top-[20%] w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[100px] -z-10"></div>
@@ -133,15 +239,13 @@ const HeroApple = () => {
             <a href="mailto:contact@example.com" className="hover:text-red-500 transition-colors"><Mail size={24} /></a>
             <div className="w-px h-6 bg-slate-300 mx-2"></div>
             <div className="flex gap-4">
-              <div title="Full Stack Developer" className="text-slate-400 hover:text-slate-900 transition-colors cursor-help">
+              <button 
+                onClick={() => setActiveModal('terminal')}
+                title="Full Stack Developer" 
+                className="text-slate-400 hover:text-slate-900 transition-colors cursor-pointer hover:scale-110 transform duration-200"
+              >
                 <Terminal size={20} />
-              </div>
-              <div title="Artificial Intelligence" className="text-slate-400 hover:text-purple-500 transition-colors cursor-help">
-                <Cpu size={20} />
-              </div>
-              <div title="High Performance" className="text-slate-400 hover:text-yellow-500 transition-colors cursor-help">
-                <Zap size={20} />
-              </div>
+              </button>
             </div>
           </div>
         </motion.div>
