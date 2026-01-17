@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Heart, MessageCircle, Calendar, Eye, ArrowLeft, Send } from 'lucide-react';
+import { Calendar, Eye, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import PublicNav from '@/components/PublicNav';
 import { apiRequest } from '@/config/api';
@@ -17,48 +17,18 @@ interface Moment {
   id: number;
   content: string;
   visibility: 'public' | 'private';
-  likes_count: number;
-  comments_count: number;
   views_count: number;
   created_at: string;
   updated_at: string;
   images: MomentImage[];
 }
 
-interface Comment {
-  id: number;
-  moment_id: number;
-  parent_id?: number;
-  author_name: string;
-  author_email: string;
-  content: string;
-  status: 'pending' | 'approved' | 'rejected';
-  ip_address: string;
-  user_agent: string;
-  created_at: string;
-}
-
-interface CommentForm {
-  author_name: string;
-  author_email: string;
-  content: string;
-  parent_id?: number;
-}
-
 export default function MomentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [moment, setMoment] = useState<Moment | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [commentsLoading, setCommentsLoading] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-  const [commentForm, setCommentForm] = useState<CommentForm>({
-    author_name: '',
-    author_email: '',
-    content: '',
-  });
-  const [submittingComment, setSubmittingComment] = useState(false);
 
   // 获取动态详情
   const fetchMoment = async () => {
@@ -80,89 +50,6 @@ export default function MomentDetail() {
       navigate('/moments');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 获取评论列表
-  const fetchComments = async () => {
-    if (!id) return;
-    
-    try {
-      setCommentsLoading(true);
-      const data = await apiRequest(`/api/moments/${id}/comments`);
-
-      if (data.success) {
-        setComments(data.data);
-      } else {
-        toast.error(data.message || '获取评论失败');
-      }
-    } catch (error) {
-      console.error('获取评论失败:', error);
-      toast.error('获取评论失败');
-    } finally {
-      setCommentsLoading(false);
-    }
-  };
-
-  // 点赞动态
-  const handleLike = async () => {
-    if (!id || !moment) return;
-    
-    try {
-      const data = await apiRequest(`/api/moments/${id}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (data.success) {
-        setMoment(prev => prev ? { ...prev, likes_count: data.likes_count } : null);
-        toast.success(data.message);
-      } else {
-        toast.error(data.message || '点赞失败');
-      }
-    } catch (error) {
-      console.error('点赞失败:', error);
-      toast.error('点赞失败');
-    }
-  };
-
-  // 提交评论
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id || !commentForm.author_name || !commentForm.author_email || !commentForm.content) {
-      toast.error('请填写完整的评论信息');
-      return;
-    }
-
-    try {
-      setSubmittingComment(true);
-      const data = await apiRequest(`/api/moments/${id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(commentForm),
-      });
-
-      if (data.success) {
-        toast.success(data.message);
-        setCommentForm({ author_name: '', author_email: '', content: '' });
-        // 重新获取评论列表
-        fetchComments();
-        // 更新动态评论数
-        if (moment) {
-          setMoment(prev => prev ? { ...prev, comments_count: prev.comments_count + 1 } : null);
-        }
-      } else {
-        toast.error(data.message || '评论提交失败');
-      }
-    } catch (error) {
-      console.error('评论提交失败:', error);
-      toast.error('评论提交失败');
-    } finally {
-      setSubmittingComment(false);
     }
   };
 
@@ -195,7 +82,6 @@ export default function MomentDetail() {
 
   useEffect(() => {
     fetchMoment();
-    fetchComments();
   }, [id]);
 
   if (loading) {
@@ -317,19 +203,6 @@ export default function MomentDetail() {
               {/* 动态信息栏 */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-6 text-sm text-gray-600">
-                  <button
-                    onClick={handleLike}
-                    className="flex items-center gap-1 hover:text-red-600 transition-colors group"
-                  >
-                    <Heart className="w-4 h-4 group-hover:fill-current" />
-                    <span>{moment.likes_count}</span>
-                  </button>
-                  
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{moment.comments_count}</span>
-                  </div>
-                  
                   <div className="flex items-center gap-1">
                     <Eye className="w-4 h-4" />
                     <span>{moment.views_count}</span>
@@ -345,82 +218,6 @@ export default function MomentDetail() {
               </div>
             </div>
           </article>
-
-          {/* 评论区 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">评论 ({comments.length})</h3>
-              
-              {/* 评论表单 */}
-              <form onSubmit={handleSubmitComment} className="mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <input
-                    type="text"
-                    placeholder="您的姓名"
-                    value={commentForm.author_name}
-                    onChange={(e) => setCommentForm(prev => ({ ...prev, author_name: e.target.value }))}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                  <input
-                    type="email"
-                    placeholder="您的邮箱"
-                    value={commentForm.author_email}
-                    onChange={(e) => setCommentForm(prev => ({ ...prev, author_email: e.target.value }))}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <textarea
-                  placeholder="写下您的评论..."
-                  value={commentForm.content}
-                  onChange={(e) => setCommentForm(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  rows={4}
-                  required
-                />
-                <div className="flex justify-end mt-4">
-                  <button
-                    type="submit"
-                    disabled={submittingComment}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Send className="w-4 h-4" />
-                    {submittingComment ? '提交中...' : '发表评论'}
-                  </button>
-                </div>
-              </form>
-
-              {/* 评论列表 */}
-              {commentsLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : comments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  暂无评论，快来发表第一条评论吧！
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {comments.map((comment) => (
-                    <div key={comment.id} className="border-b border-gray-100 pb-4 last:border-b-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium text-gray-900">{comment.author_name}</span>
-                        <span className="text-sm text-gray-500">{formatTime(comment.created_at)}</span>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed">{comment.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 

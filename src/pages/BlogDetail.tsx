@@ -205,18 +205,6 @@ interface BlogPost {
   cover_image: string;
   published: boolean;
   featured?: boolean;
-  likes?: number;
-  comments?: Comment[];
-}
-
-interface Comment {
-  id: number;
-  author: string;
-  content: string;
-  date: string;
-  avatar: string;
-  admin_reply?: string;
-  admin_reply_at?: string;
 }
 
 interface RelatedPost {
@@ -233,15 +221,8 @@ const BlogDetail: React.FC = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [newComment, setNewComment] = useState('');
-  const [commentAuthor, setCommentAuthor] = useState('');
-  const [commentEmail, setCommentEmail] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
   const [hasToc, setHasToc] = useState(false);
 
   // 使用回到顶部功能
@@ -296,8 +277,6 @@ const BlogDetail: React.FC = () => {
         }
         
         setPost(blogData);
-        setComments(blogData.comments || []);
-        setLikeCount(blogData.likes || 0);
         
         // 检测是否有目录
         if (blogData.content) {
@@ -351,7 +330,6 @@ const BlogDetail: React.FC = () => {
     if (id) {
       fetchPost();
       fetchRelatedPosts();
-      fetchComments();
       incrementViews();
     }
   }, [id]);
@@ -375,99 +353,7 @@ const BlogDetail: React.FC = () => {
     }
   };
 
-  const handleLike = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setLikeCount(result.likes);
-          setLiked(!liked);
-          toast.success('点赞成功！感谢您的支持 ❤️');
-        } else {
-          // IP限制或其他业务逻辑错误
-          toast.info(result.message || '您已经点过赞了');
-        }
-      } else {
-        const errorResult = await response.json();
-        toast.error(errorResult.message || '点赞失败，请稍后重试');
-      }
-    } catch (error: any) {
-      console.error('❌ [BlogDetail] 点赞失败:', error);
-      toast.error('网络错误，请稍后重试');
-    }
-  };
 
-  // 获取评论
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}/comments`);
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setComments(result.data.map((comment: any) => ({
-            id: comment.id,
-            author: comment.author_name,
-            content: comment.content,
-            date: new Date(comment.created_at).toLocaleDateString(),
-            avatar: '/default-avatar.svg',
-            admin_reply: comment.admin_reply,
-            admin_reply_at: comment.admin_reply_at ? new Date(comment.admin_reply_at).toLocaleDateString() : undefined
-          })));
-        }
-      }
-    } catch (error: any) {
-      console.error('❌ [BlogDetail] 获取评论失败:', error);
-    }
-  };
-
-  const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!newComment.trim() || !commentAuthor.trim()) {
-      toast.error('请填写姓名和评论内容');
-      return;
-    }
-
-    setSubmittingComment(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          author_name: commentAuthor,
-          author_email: commentEmail,
-          content: newComment
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          toast.success('评论提交成功！');
-          setNewComment('');
-          setCommentAuthor('');
-          setCommentEmail('');
-          // 重新获取评论列表
-          fetchComments();
-        }
-      } else {
-        toast.error('评论提交失败，请稍后重试');
-      }
-    } catch (error: any) {
-      console.error('❌ [BlogDetail] 提交评论失败:', error);
-      toast.error('评论提交失败，请稍后重试');
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -540,12 +426,7 @@ const BlogDetail: React.FC = () => {
             </svg>
             {post.category}
           </span>
-          <span className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            {likeCount} likes
-          </span>
+
         </div>
         <div className="flex flex-wrap gap-2 mb-6">
           {post.tags.map((tag, index) => (
@@ -582,112 +463,9 @@ const BlogDetail: React.FC = () => {
         )}
       </div>
 
-      {/* 点赞按钮 */}
-      <div className="flex justify-center mb-8">
-        <button 
-          onClick={handleLike}
-          className={`flex items-center px-6 py-3 rounded-full transition duration-300 ${liked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-          </svg>
-          {liked ? '已点赞' : '点赞'} ({likeCount})
-        </button>
-      </div>
 
-      {/* 评论区 */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">评论 ({comments.length})</h2>
-        
-        {/* 评论表单 */}
-        <form onSubmit={handleCommentSubmit} className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label htmlFor="commentAuthor" className="block text-gray-700 font-medium mb-2">姓名 *</label>
-              <input
-                id="commentAuthor"
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="请输入您的姓名"
-                value={commentAuthor}
-                onChange={(e) => setCommentAuthor(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="commentEmail" className="block text-gray-700 font-medium mb-2">邮箱</label>
-              <input
-                id="commentEmail"
-                type="email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="请输入您的邮箱（可选）"
-                value={commentEmail}
-                onChange={(e) => setCommentEmail(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="comment" className="block text-gray-700 font-medium mb-2">评论内容 *</label>
-            <textarea
-              id="comment"
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="请在此输入您的评论..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              required
-            />
-          </div>
-          <button 
-            type="submit" 
-            disabled={submittingComment}
-            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition duration-300 flex items-center"
-          >
-            {submittingComment && (
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            )}
-            {submittingComment ? '发布中...' : '发布评论'}
-          </button>
-        </form>
-        
-        {/* 评论列表 */}
-        <div className="space-y-6">
-          {comments.map((comment) => (
-            <div key={comment.id} className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex space-x-4">
-                <img 
-                  src={comment.avatar} 
-                  alt={comment.author} 
-                  className="w-12 h-12 rounded-full"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center mb-1">
-                    <h3 className="font-medium mr-2">{comment.author}</h3>
-                    <span className="text-sm text-gray-500">{comment.date}</span>
-                  </div>
-                  <p className="text-gray-800">{comment.content}</p>
-                </div>
-              </div>
-              
-              {/* 管理员回复 */}
-              {comment.admin_reply && (
-                <div className="mt-4 ml-16 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-                  <div className="flex items-center mb-1">
-                    <span className="font-medium text-blue-800 mr-2">管理员回复</span>
-                    {comment.admin_reply_at && (
-                      <span className="text-sm text-blue-600">{comment.admin_reply_at}</span>
-                    )}
-                  </div>
-                  <p className="text-blue-900">{comment.admin_reply}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+
+
 
       {/* 相关博客 */}
       <div>

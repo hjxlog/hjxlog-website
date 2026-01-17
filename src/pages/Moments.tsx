@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Calendar, Plus, ChevronDown, ChevronUp, Send, Clock, User, Image as ImageIcon } from 'lucide-react';
-import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { ChevronDown, Image as ImageIcon, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AuthContext } from '@/contexts/authContext';
 import { toast } from 'sonner';
 import PublicNav from '../components/PublicNav';
 import Footer from '@/components/Footer';
@@ -17,33 +14,14 @@ interface MomentImage {
   sort_order: number;
 }
 
-interface Comment {
-  id: number;
-  moment_id: number;
-  parent_id?: number;
-  author_name: string;
-  author_email: string;
-  content: string;
-  status: string;
-  ip_address?: string;
-  user_agent?: string;
-  admin_reply?: string;
-  admin_reply_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 interface Moment {
   id: number;
   content: string;
   visibility: 'public' | 'private';
-  likes_count: number;
-  comments_count: number;
   views_count: number;
   created_at: string;
   updated_at: string;
   images: MomentImage[];
-  comments?: Comment[];
 }
 
 interface MomentsResponse {
@@ -61,19 +39,9 @@ export default function Moments() {
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
-  const [showCommentForm, setShowCommentForm] = useState<Set<number>>(new Set());
-  const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
-  const [commentNames, setCommentNames] = useState<Record<number, string>>({});
-  const [commentEmails, setCommentEmails] = useState<Record<number, string>>({});
-  const [submittingComment, setSubmittingComment] = useState<Set<number>>(new Set());
-  const [adminReplies, setAdminReplies] = useState<Record<number, string>>({});
-  const [submittingReply, setSubmittingReply] = useState<Set<number>>(new Set());
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [selectedMomentImages, setSelectedMomentImages] = useState<string[]>([]);
-  const { isAuthenticated } = useContext(AuthContext);
   const limit = 10;
 
   // 获取动态列表
@@ -88,7 +56,6 @@ export default function Moments() {
         } else {
           setMoments(data.data.moments);
         }
-        setTotal(data.data.total);
         setHasMore(data.data.moments.length === limit);
       } else {
         toast.error(data.message || '获取动态列表失败');
@@ -110,221 +77,13 @@ export default function Moments() {
     }
   };
 
-  // 点赞动态
-  const handleLike = async (momentId: number) => {
-    try {
-      const data = await apiRequest(`/api/moments/${momentId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (data.success) {
-        setMoments(prev => prev.map(moment => 
-          moment.id === momentId 
-            ? { ...moment, likes_count: data.likes_count }
-            : moment
-        ));
-        toast.success(data.message);
-      } else {
-        toast.error(data.message || '点赞失败');
-      }
-    } catch (error) {
-      console.error('点赞失败:', error);
-      toast.error('点赞失败');
-    }
-  };
-
-  // 获取评论列表
-  const fetchComments = async (momentId: number) => {
-    try {
-      const data = await apiRequest(`/api/moments/${momentId}/comments`);
-      
-      if (data.success) {
-        setMoments(prev => prev.map(moment => 
-          moment.id === momentId 
-            ? { ...moment, comments: data.data }
-            : moment
-        ));
-      }
-    } catch (error) {
-      console.error('获取评论失败:', error);
-    }
-  };
-
-  // 切换评论显示
-  const toggleComments = async (momentId: number) => {
-    const newShowCommentForm = new Set(showCommentForm);
-    
-    if (newShowCommentForm.has(momentId)) {
-      newShowCommentForm.delete(momentId);
-    } else {
-      newShowCommentForm.add(momentId);
-      // 如果还没有加载评论，则加载评论
-      const moment = moments.find(m => m.id === momentId);
-      if (!moment?.comments) {
-        await fetchComments(momentId);
-      }
-    }
-    
-    setShowCommentForm(newShowCommentForm);
-  };
-
-  // 切换评论展开/收起
-  const toggleExpandComments = (momentId: number) => {
-    const newExpanded = new Set(expandedComments);
-    if (newExpanded.has(momentId)) {
-      newExpanded.delete(momentId);
-    } else {
-      newExpanded.add(momentId);
-    }
-    setExpandedComments(newExpanded);
-  };
-
-  // 提交评论
-  const handleSubmitComment = async (momentId: number) => {
-    const content = commentTexts[momentId]?.trim();
-    const author_name = commentNames[momentId]?.trim();
-    const author_email = commentEmails[momentId]?.trim();
-    
-    if (!content) {
-      toast.error('请输入评论内容');
-      return;
-    }
-    
-    if (!author_name) {
-      toast.error('请输入您的姓名');
-      return;
-    }
-
-    const newSubmitting = new Set(submittingComment);
-    newSubmitting.add(momentId);
-    setSubmittingComment(newSubmitting);
-
-    try {
-      const data = await apiRequest(`/api/moments/${momentId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          content, 
-          author_name,
-          author_email: author_email || ''
-        }),
-      });
-
-      if (data.success) {
-        // 清空评论输入框
-        setCommentTexts(prev => ({ ...prev, [momentId]: '' }));
-        setCommentNames(prev => ({ ...prev, [momentId]: '' }));
-        setCommentEmails(prev => ({ ...prev, [momentId]: '' }));
-        // 重新获取评论列表
-        await fetchComments(momentId);
-        // 更新评论数量
-        setMoments(prev => prev.map(moment => 
-          moment.id === momentId 
-            ? { ...moment, comments_count: moment.comments_count + 1 }
-            : moment
-        ));
-        toast.success('评论发布成功');
-      } else {
-        toast.error(data.message || '评论发布失败');
-      }
-    } catch (error) {
-      console.error('评论发布失败:', error);
-      toast.error('评论发布失败');
-    } finally {
-      const newSubmitting = new Set(submittingComment);
-      newSubmitting.delete(momentId);
-      setSubmittingComment(newSubmitting);
-    }
-  };
-
-  // 提交管理员回复
-  const handleSubmitReply = async (commentId: number) => {
-    const admin_reply = adminReplies[commentId]?.trim();
-    
-    if (!admin_reply) {
-      toast.error('请输入回复内容');
-      return;
-    }
-
-    const newSubmitting = new Set(submittingReply);
-    newSubmitting.add(commentId);
-    setSubmittingReply(newSubmitting);
-
-    try {
-      const data = await apiRequest(`/api/moments/comments/${commentId}/reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ admin_reply }),
-      });
-
-      if (data.success) {
-        // 清空回复输入框
-        setAdminReplies(prev => ({ ...prev, [commentId]: '' }));
-        // 重新获取评论列表
-        const momentId = data.data.moment_id;
-        await fetchComments(momentId);
-        toast.success('回复成功');
-      } else {
-        toast.error(data.message || '回复失败');
-      }
-    } catch (error) {
-      console.error('回复失败:', error);
-      toast.error('回复失败');
-    } finally {
-      const newSubmitting = new Set(submittingReply);
-      newSubmitting.delete(commentId);
-      setSubmittingReply(newSubmitting);
-    }
-  };
-
-  // 更新评论文本
-  const updateCommentText = (momentId: number, text: string) => {
-    setCommentTexts(prev => ({ ...prev, [momentId]: text }));
-  };
-
-  // 更新评论姓名
-  const updateCommentName = (momentId: number, name: string) => {
-    setCommentNames(prev => ({ ...prev, [momentId]: name }));
-  };
-
-  // 更新评论邮箱
-  const updateCommentEmail = (momentId: number, email: string) => {
-    setCommentEmails(prev => ({ ...prev, [momentId]: email }));
-  };
-
-  // 更新管理员回复内容
-  const updateAdminReply = (commentId: number, content: string) => {
-    setAdminReplies(prev => ({ ...prev, [commentId]: content }));
-  };
-
   // 处理图片点击放大
   const handleImageClick = (imageUrls: string[], index: number) => {
     setSelectedMomentImages(imageUrls);
     setSelectedImageIndex(index);
   };
 
-  // 格式化时间
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
-    return date.toLocaleDateString('zh-CN');
-  };
 
   // 格式化精确时间 (HH:mm)
   const formatExactTime = (dateString: string) => {
@@ -506,148 +265,7 @@ export default function Moments() {
                                 </div>
                               )}
 
-                              {/* Comments Section */}
-                              <AnimatePresence>
-                                {showCommentForm.has(moment.id) && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                  >
-                                    <div className="mt-6 pt-6 bg-slate-50/50 rounded-xl p-4 md:p-6 border border-slate-100">
-                                      {/* Comment List */}
-                                      {moment.comments && moment.comments.length > 0 && (
-                                        <div className="space-y-6 mb-8">
-                                          {(expandedComments.has(moment.id) ? moment.comments : moment.comments.slice(0, 3)).map((comment) => (
-                                            <div key={comment.id} className="flex gap-3">
-                                              <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-500">
-                                                {comment.author_name.charAt(0).toUpperCase()}
-                                              </div>
-                                              <div className="flex-1">
-                                                <div className="bg-white p-3 rounded-tr-xl rounded-br-xl rounded-bl-xl shadow-sm border border-slate-100">
-                                                  <div className="flex justify-between items-start mb-1">
-                                                    <span className="text-sm font-bold text-slate-800">{comment.author_name}</span>
-                                                    <span className="text-xs text-slate-400">{formatTime(comment.created_at)}</span>
-                                                  </div>
-                                                  <p className="text-sm text-slate-600 leading-relaxed">{comment.content}</p>
-                                                </div>
-                                                
-                                                {/* Admin Reply */}
-                                                {comment.admin_reply && (
-                                                  <div className="ml-4 mt-2 flex gap-3">
-                                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-blue-600 border border-blue-200">
-                                                      博主
-                                                    </div>
-                                                    <div className="bg-blue-50/50 p-2.5 rounded-tr-xl rounded-br-xl rounded-bl-xl border border-blue-100/50 flex-1">
-                                                      <p className="text-sm text-slate-700">{comment.admin_reply}</p>
-                                                      <p className="text-[10px] text-slate-400 mt-1 text-right">{formatTime(comment.admin_reply_at || '')}</p>
-                                                    </div>
-                                                  </div>
-                                                )}
 
-                                                {/* Reply Form for Admin */}
-                                                {isAuthenticated && !comment.admin_reply && (
-                                                  <div className="mt-2 ml-2">
-                                                    <button 
-                                                      onClick={() => {
-                                                        const newSubmitting = new Set(submittingReply);
-                                                        if (newSubmitting.has(comment.id)) {
-                                                          newSubmitting.delete(comment.id);
-                                                        } else {
-                                                          newSubmitting.add(comment.id);
-                                                        }
-                                                        setSubmittingReply(newSubmitting);
-                                                      }}
-                                                      className="text-xs text-blue-600 hover:underline font-medium"
-                                                    >
-                                                      回复
-                                                    </button>
-                                                    
-                                                    {submittingReply.has(comment.id) && (
-                                                      <div className="mt-2 flex gap-2">
-                                                        <input
-                                                          type="text"
-                                                          placeholder="输入回复内容..."
-                                                          value={adminReplies[comment.id] || ''}
-                                                          onChange={(e) => updateAdminReply(comment.id, e.target.value)}
-                                                          className="flex-1 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                                                        />
-                                                        <button
-                                                          onClick={() => handleSubmitReply(comment.id)}
-                                                          className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                                                        >
-                                                          发送
-                                                        </button>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          ))}
-                                          
-                                          {moment.comments.length > 3 && (
-                                            <button
-                                              onClick={() => toggleExpandComments(moment.id)}
-                                              className="w-full py-2 text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center justify-center gap-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-                                            >
-                                              {expandedComments.has(moment.id) ? (
-                                                <>收起评论 <ChevronUp className="w-4 h-4" /></>
-                                              ) : (
-                                                <>查看全部 {moment.comments.length} 条评论 <ChevronDown className="w-4 h-4" /></>
-                                              )}
-                                            </button>
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {/* Comment Form */}
-                                      <div className="space-y-4">
-                                        <textarea
-                                          placeholder="写下你的评论..."
-                                          value={commentTexts[moment.id] || ''}
-                                          onChange={(e) => updateCommentText(moment.id, e.target.value)}
-                                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none h-24 text-sm"
-                                        />
-                                        <div className="flex gap-4">
-                                          <div className="flex-1 grid grid-cols-2 gap-4">
-                                            <div className="relative">
-                                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                              <input
-                                                type="text"
-                                                placeholder="昵称 (必填)"
-                                                value={commentNames[moment.id] || ''}
-                                                onChange={(e) => updateCommentName(moment.id, e.target.value)}
-                                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                                              />
-                                            </div>
-                                            <input
-                                              type="email"
-                                              placeholder="邮箱 (选填，保密)"
-                                              value={commentEmails[moment.id] || ''}
-                                              onChange={(e) => updateCommentEmail(moment.id, e.target.value)}
-                                              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
-                                            />
-                                          </div>
-                                          <button
-                                            onClick={() => handleSubmitComment(moment.id)}
-                                            disabled={submittingComment.has(moment.id)}
-                                            className="px-6 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 font-medium text-sm shadow-lg shadow-slate-900/20"
-                                          >
-                                            {submittingComment.has(moment.id) ? (
-                                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            ) : (
-                                              <Send className="w-4 h-4" />
-                                            )}
-                                            发布
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
                             </div>
                           </article>
                         </div>

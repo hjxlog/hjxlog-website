@@ -10,8 +10,6 @@ interface Moment {
   content: string;
   images: string[];
   visibility: 'public' | 'private';
-  likes_count: number;
-  comments_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +36,7 @@ const MomentManagement: React.FC = () => {
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
     title: '',
-    content: '',
+    message: '',
     onConfirm: () => {}
   });
 
@@ -73,7 +71,7 @@ const MomentManagement: React.FC = () => {
     setConfirmDialog({
       isOpen: true,
       title: '删除动态',
-      content: '确定要删除这条动态吗？此操作不可恢复。',
+      message: '确定要删除这条动态吗？此操作不可恢复。',
       onConfirm: async () => {
         try {
           setDeleteLoading(id);
@@ -95,7 +93,7 @@ const MomentManagement: React.FC = () => {
         } finally {
           setDeleteLoading(null);
         }
-        setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} });
+        setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
       }
     });
   };
@@ -224,9 +222,6 @@ const MomentManagement: React.FC = () => {
                       可见性
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      互动数据
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       创建时间
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -275,12 +270,6 @@ const MomentManagement: React.FC = () => {
                         >
                           {moment.visibility === 'public' ? '公开' : '私密'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          <div>❤️ {moment.likes_count}</div>
-                          <div>💬 {moment.comments_count}</div>
-                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         {formatDate(moment.created_at)}
@@ -348,16 +337,16 @@ const MomentManagement: React.FC = () => {
               </button>
             </div>
           </div>
-        )})}}
+        )}
       </div>
       
       {/* 确认对话框 */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
-        content={confirmDialog.content}
+        message={confirmDialog.message}
         onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog({ isOpen: false, title: '', content: '', onConfirm: () => {} })}
+        onCancel={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} })}
       />
     </div>
   );

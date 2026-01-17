@@ -86,37 +86,6 @@ export default function Works() {
     ? works 
     : works.filter(work => work.category === selectedCategory);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900 mx-auto mb-4"></div>
-          <p className="text-slate-500 font-medium">加载精彩内容...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <Layers className="w-12 h-12 mx-auto" />
-          </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">加载失败</h3>
-          <p className="text-slate-500 mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-2.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors font-medium"
-          >
-            重新加载
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#f5f5f7] relative flex flex-col">
       {/* 顶部白色渐变背景 */}
@@ -161,7 +130,42 @@ export default function Works() {
         </div>
 
         {/* Works Grid */}
-        {filteredWorks.length === 0 ? (
+        {loading ? (
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+             {[...Array(4)].map((_, i) => (
+               <div key={i} className="bg-white rounded-[2rem] overflow-hidden border border-slate-200/60 shadow-sm h-[500px] animate-pulse">
+                 <div className="aspect-[16/10] bg-slate-200" />
+                 <div className="p-8 space-y-4">
+                   <div className="h-8 bg-slate-200 rounded w-3/4" />
+                   <div className="space-y-2">
+                     <div className="h-4 bg-slate-200 rounded w-full" />
+                     <div className="h-4 bg-slate-200 rounded w-5/6" />
+                   </div>
+                   <div className="pt-6 border-t border-slate-100 flex justify-between mt-auto">
+                     <div className="flex gap-2">
+                       <div className="h-6 w-16 bg-slate-200 rounded" />
+                       <div className="h-6 w-16 bg-slate-200 rounded" />
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+        ) : error ? (
+          <div className="text-center py-32">
+            <div className="text-red-500 mb-4">
+              <Layers className="w-12 h-12 mx-auto" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">加载失败</h3>
+            <p className="text-slate-500 mb-6">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors font-medium"
+            >
+              重新加载
+            </button>
+          </div>
+        ) : filteredWorks.length === 0 ? (
           <div className="text-center py-32 bg-white/50 backdrop-blur-sm rounded-3xl border border-dashed border-slate-200">
             <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-6">
               <FolderOpen className="w-8 h-8 text-slate-400" />

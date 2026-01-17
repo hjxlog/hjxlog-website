@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Calendar, Tag, Heart } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
-import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 
 interface BlogPost {
@@ -21,7 +20,6 @@ interface BlogPost {
   tags: string[];
   cover_image: string;
   views: number;
-  likes: number;
   published: boolean;
   featured?: boolean;
 }
@@ -282,11 +280,6 @@ const Blog: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
                         <time>{new Date(blog.created_at).toLocaleDateString('zh-CN')}</time>
-                      </div>
-                      <span>·</span>
-                      <div className="flex items-center gap-1.5">
-                        <Heart className="w-3.5 h-3.5" />
-                        <span>{blog.likes}</span>
                       </div>
                     </div>
 

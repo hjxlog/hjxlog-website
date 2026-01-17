@@ -30,24 +30,8 @@ export interface Blog {
   featured: boolean;
   cover_image?: string;
   views: number;
-  likes: number;
   created_at?: string;
   updated_at?: string;
-}
-
-export interface Comment {
-  id: number;
-  blog_id: number;
-  author_name: string;
-  author_email?: string;
-  content: string;
-  admin_reply?: string;
-  admin_reply_at?: string;
-  ip_address?: string;
-  user_agent?: string;
-  created_at: string;
-  updated_at: string;
-  blog_title?: string;
 }
 
 export interface MomentImage {
@@ -63,7 +47,6 @@ export interface Moment {
   visibility: 'public' | 'private';
   images: MomentImage[];
   user_id?: number;
-  likes?: number;
   created_at?: string;
   updated_at?: string;
 }

@@ -11,7 +11,6 @@ import { API_BASE_URL, apiRequest } from '@/config/api';
 // 导入模块化组件
 import OverviewTab from '@/components/dashboard/OverviewTab';
 import MomentsTab from '@/components/dashboard/MomentsTab';
-import CommentsTab from '@/components/dashboard/CommentsTab';
 import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
 import WorkForm from '@/components/dashboard/WorkForm';
@@ -22,7 +21,7 @@ import KnowledgeBaseTab from '@/components/dashboard/KnowledgeBaseTab';
 import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
 import LogManagement from '@/pages/LogManagement';
 
-import { Work, Blog, Comment } from '@/types';
+import { Work, Blog } from '@/types';
 
 export default function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -31,15 +30,10 @@ export default function Dashboard() {
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
 
-  const [comments, setComments] = useState<Comment[]>([]);
   const [isWorkFormOpen, setIsWorkFormOpen] = useState(false);
   const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
   const [currentWork, setCurrentWork] = useState<Work | null>(null);
   const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
-
-  const [currentComment, setCurrentComment] = useState<Comment | null>(null);
-  const [isCommentReplyOpen, setIsCommentReplyOpen] = useState(false);
-  const [replyContent, setReplyContent] = useState('');
 
   // 动态管理相关状态
   const [moments, setMoments] = useState<any[]>([]);
@@ -72,7 +66,6 @@ export default function Dashboard() {
   const [workSelectedCategory, setWorkSelectedCategory] = useState('');
   const [workSelectedStatus, setWorkSelectedStatus] = useState('');
   const worksPerPage = 6;
-
 
 
 
@@ -110,89 +103,6 @@ export default function Dashboard() {
       console.error('获取博客数据失败:', error);
       setError('获取博客数据失败');
     }
-  };
-
-
-
-
-
-  // 获取所有评论
-  const fetchComments = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/comments`);
-      const result = await response.json();
-      if (result.success) {
-        setComments(result.data);
-      } else {
-        toast.error(result.message || '获取评论失败');
-      }
-    } catch (error) {
-      console.error('获取评论失败:', error);
-      toast.error('获取评论失败');
-    }
-  };
-
-  // 回复评论
-  const replyToComment = async (commentId: number, replyContent: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}/reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ admin_reply: replyContent }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        await fetchComments();
-        toast.success('回复成功');
-        setIsCommentReplyOpen(false);
-        setReplyContent('');
-        setCurrentComment(null);
-        return true;
-      } else {
-        toast.error(result.message || '回复失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('回复评论失败:', error);
-      toast.error('回复失败');
-      return false;
-    }
-  };
-
-  // 删除评论
-  const deleteComment = async (commentId: number) => {
-    return new Promise<void>((resolve) => {
-      setConfirmDialog({
-        isOpen: true,
-        title: '删除评论',
-        message: '确定要删除这条评论吗？此操作不可撤销。',
-        onConfirm: async () => {
-          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-              }
-            });
-            const result = await response.json();
-            if (result.success) {
-              await fetchComments();
-              toast.success('评论删除成功');
-            } else {
-              toast.error(result.message || '删除评论失败');
-            }
-          } catch (error) {
-            console.error('删除评论失败:', error);
-            toast.error('删除评论失败');
-          }
-          resolve();
-        }
-      });
-    });
   };
 
   const createWork = async (workData: Partial<Work>) => {
@@ -456,7 +366,7 @@ export default function Dashboard() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchComments(), fetchMoments()]);
+      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments()]);
       setLoading(false);
     };
     
@@ -686,21 +596,6 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* 评论管理页面 */}
-            {activeTab === 'comments' && (
-              <div className="animate-fade-in">
-                <CommentsTab 
-                  comments={comments}
-                  openCommentReply={(comment) => {
-                    setCurrentComment(comment);
-                    setIsCommentReplyOpen(true);
-                    setReplyContent('');
-                  }}
-                  deleteComment={deleteComment}
-                />
-              </div>
-            )}
-
             {/* 作品管理页面 */}
             {activeTab === 'works' && (
               <div className="animate-fade-in">
@@ -787,92 +682,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-
-      {/* 评论回复模态框 */}
-      {isCommentReplyOpen && currentComment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-slate-800">回复评论</h3>
-                <button
-                  onClick={() => setIsCommentReplyOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <i className="fas fa-times text-xl"></i>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">博客</label>
-                  <p className="text-slate-900">{currentComment.blog_title || '未知博客'}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">评论者</label>
-                  <p className="text-slate-900">{currentComment.author_name}</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">原评论内容</label>
-                  <div className="bg-slate-50 p-4 rounded-lg">
-                    <p className="text-slate-800">{currentComment.content}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">回复内容</label>
-                  <textarea
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] resize-none"
-                    rows={4}
-                    placeholder="请输入回复内容..."
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    onClick={() => setIsCommentReplyOpen(false)}
-                    className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (replyContent.trim()) {
-                        const success = await replyToComment(currentComment.id, replyContent);
-                        if (success) {
-                          setIsCommentReplyOpen(false);
-                          setReplyContent('');
-                        }
-                      }
-                    }}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                    disabled={!replyContent.trim()}
-                  >
-                    发送回复
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-
-
-
-
-
-
-
-
-
 
       {/* 作品编辑表单模态框 */}
       <WorkForm

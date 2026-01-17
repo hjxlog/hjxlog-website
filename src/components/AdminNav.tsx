@@ -22,7 +22,6 @@ export const dashboardTabGroups = [
     group: '互动管理',
     tabs: [
       { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
-      { key: 'comments', label: '评论管理', icon: 'fas fa-comments' },
     ]
   },
   {

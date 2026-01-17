@@ -155,7 +155,6 @@ export default function BlogsTab({
                 <div className="flex items-center space-x-4 text-sm text-slate-500">
                   <span>{blog.category}</span>
                   <span>👁 {blog.views || 0}</span>
-                  <span>❤️ {blog.likes || 0}</span>
                   {blog.created_at && <span>{new Date(blog.created_at).toLocaleDateString()}</span>}
                 </div>
                 
