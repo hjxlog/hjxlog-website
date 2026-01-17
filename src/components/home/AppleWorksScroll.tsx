@@ -92,17 +92,6 @@ const AppleWorksScroll = ({ works }: AppleWorksScrollProps) => {
             />
           ))
         )}
-        
-        {/* View All Card (End of list) */}
-        <div 
-          onClick={() => navigate('/works')}
-          className="flex-none w-[300px] h-[500px] snap-center bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors group"
-        >
-          <div className="w-16 h-16 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform mb-4">
-            <ChevronRight className="w-8 h-8" />
-          </div>
-          <span className="text-lg font-medium text-slate-600">查看所有作品</span>
-        </div>
       </div>
     </section>
   );

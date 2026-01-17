@@ -23,7 +23,7 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
       <div className="max-w-4xl mx-auto px-6">
         <div className="flex items-center justify-between mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-            最新思考
+            最新博客
           </h2>
           <button 
             onClick={() => navigate('/blogs')}

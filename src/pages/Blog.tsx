@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Calendar, Tag, Heart } from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -164,61 +166,74 @@ const Blog: React.FC = () => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  
+  // 随机渐变生成器
+  const getGradient = (id: number) => {
+    const gradients = [
+      'from-blue-50 to-indigo-50',
+      'from-rose-50 to-orange-50',
+      'from-emerald-50 to-teal-50',
+      'from-violet-50 to-purple-50',
+      'from-amber-50 to-yellow-50',
+      'from-cyan-50 to-blue-50',
+    ];
+    return gradients[id % gradients.length];
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* 使用公共导航组件 */}
+    <div className="min-h-screen bg-[#f5f5f7] relative">
+      {/* 顶部白色渐变背景，确保导航栏区域视觉与首页一致 */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-white via-white/50 to-[#f5f5f7] z-0 pointer-events-none" />
+
       <PublicNav />
 
-      <main className="container mx-auto px-4 pt-24 pb-16">
-        {/* 页面标题 */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">我的博客</h1>
-          <p className="text-xl text-slate-600">分享前沿技术见解，探索人文科技交汇</p>
-        </div>
+      <main className="container mx-auto px-6 pt-24 pb-24 max-w-6xl relative z-10">
+        {/* Header & Search Toolbar */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-1"
+          >
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">我的博客</h1>
+            <p className="text-slate-500 text-sm font-medium">分享前沿技术见解，探索人文科技交汇</p>
+          </motion.div>
 
-        {/* 搜索和筛选 */}
-        <div className="max-w-4xl mx-auto mb-12">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* 搜索框 */}
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="搜索博客标题、内容或标签..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              
-              {/* 分类筛选下拉框 */}
-              <div className="relative min-w-[200px]">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-700 appearance-none cursor-pointer"
-                >
-                  {allCategories.map(category => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center gap-3"
+          >
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="搜索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full md:w-64 pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+              />
             </div>
-          </div>
+            
+            <div className="relative">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer hover:bg-slate-50"
+              >
+                {allCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+            </div>
+          </motion.div>
         </div>
 
-        {/* 错误提示 */}
+        {/* Error Message */}
         {error && (
-          <div className="max-w-4xl mx-auto mb-6">
+          <div className="max-w-3xl mx-auto mb-8">
             <ErrorMessage 
               message={error} 
               onRetry={fetchBlogs}
@@ -227,106 +242,119 @@ const Blog: React.FC = () => {
           </div>
         )}
 
-        {/* 博客列表 */}
-        <div className="max-w-4xl mx-auto">
+        {/* Blog Grid */}
+        <div className="max-w-5xl mx-auto">
           {loading ? (
-            <div className="py-12">
-              <LoadingSpinner size="lg" text="正在加载博客列表..." />
+            <div className="py-20 flex justify-center">
+              <LoadingSpinner size="lg" text="正在加载内容..." />
             </div>
           ) : blogs.length > 0 ? (
-             <div className="space-y-6 mb-12">
-               {blogs.map((blog, index) => (
-                <article 
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+              {blogs.map((blog, index) => (
+                <motion.article 
                   key={blog.id}
-                  className="bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all duration-300 border-l-4 border-blue-500"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="group relative bg-white rounded-[2rem] overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 cursor-pointer h-full flex flex-col"
                   onClick={() => navigate(`/blog/${blog.id}`)}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 bg-blue-500 text-white text-sm rounded-full font-medium">
+                  {/* Cover Image Area */}
+                  <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
+                    {blog.cover_image ? (
+                      <img src={blog.cover_image} alt={blog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.id)}`} />
+                    )}
+                    
+                    {/* Category Badge overlay */}
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md text-[10px] font-bold text-slate-900 rounded-full shadow-sm tracking-wide uppercase">
                         {blog.category}
                       </span>
-                      <div className="flex items-center text-sm text-gray-500 gap-2">
-                        <span>{new Date(blog.created_at).toLocaleDateString('zh-CN')}</span>
-                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <span>❤️</span>
+                  </div>
+
+                  {/* Content Body */}
+                  <div className="p-6 flex flex-col flex-1">
+                    {/* Date & Meta */}
+                    <div className="flex items-center gap-3 text-xs font-medium text-slate-400 mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <time>{new Date(blog.created_at).toLocaleDateString('zh-CN')}</time>
+                      </div>
+                      <span>·</span>
+                      <div className="flex items-center gap-1.5">
+                        <Heart className="w-3.5 h-3.5" />
                         <span>{blog.likes}</span>
                       </div>
                     </div>
-                  </div>
-                  
-                  <h2 className="text-2xl font-bold mb-3 text-gray-800 hover:text-blue-500 transition-colors">
-                    {blog.title}
-                  </h2>
-                  
-                  <p className="text-gray-600 mb-4 leading-relaxed">
-                    {blog.excerpt}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {blog.tags.map(tag => (
-                        <span 
-                          key={tag}
-                          className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md hover:bg-gray-200 transition-colors"
-                        >
+
+                    {/* Title */}
+                    <h2 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                      {blog.title}
+                    </h2>
+
+                    {/* Excerpt */}
+                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
+                      {blog.excerpt}
+                    </p>
+
+                    {/* Tags (Minimalist) */}
+                    <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-slate-50">
+                      {blog.tags.slice(0, 3).map(tag => (
+                        <span key={tag} className="text-[10px] font-semibold text-slate-500 bg-slate-100/80 px-2 py-1 rounded">
                           #{tag}
                         </span>
                       ))}
                     </div>
-                    
-                    <div className="flex items-center text-blue-500 font-medium">
-                      <span className="mr-2">阅读全文</span>
-                      <span>→</span>
-                    </div>
                   </div>
-                </article>
+                </motion.article>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <span className="text-2xl text-gray-400">🔍</span>
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                <Search className="w-6 h-6 text-slate-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">未找到相关博客</h3>
-              <p className="text-gray-600">尝试调整搜索关键词或选择其他分类</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">未找到相关内容</h3>
+              <p className="text-slate-500">尝试更换关键词或筛选条件</p>
             </div>
           )}
 
-          {/* 分页 */}
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2">
+            <div className="flex justify-center items-center gap-3">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <span>←</span>
+                <ChevronLeft className="w-5 h-5" />
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    currentPage === page
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              <div className="flex gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-10 h-10 rounded-full font-medium transition-all ${
+                      currentPage === page
+                        ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
               
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <span>→</span>
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           )}
