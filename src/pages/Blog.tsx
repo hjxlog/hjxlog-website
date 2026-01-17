@@ -181,13 +181,13 @@ const Blog: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] relative">
+    <div className="min-h-screen bg-[#f5f5f7] relative flex flex-col">
       {/* 顶部白色渐变背景，确保导航栏区域视觉与首页一致 */}
       <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-white via-white/50 to-[#f5f5f7] z-0 pointer-events-none" />
 
       <PublicNav />
 
-      <main className="container mx-auto px-6 pt-24 pb-24 max-w-6xl relative z-10">
+      <main className="container mx-auto px-6 pt-24 pb-24 max-w-6xl relative z-10 flex-1 w-full">
         {/* Header & Search Toolbar */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <motion.div 
@@ -220,7 +220,7 @@ const Blog: React.FC = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer hover:bg-slate-50"
+                className="pl-4 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm appearance-none cursor-pointer hover:bg-slate-50 hover:border-slate-300 outline-none"
               >
                 {allCategories.map(category => (
                   <option key={category} value={category}>{category}</option>
