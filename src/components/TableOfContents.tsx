@@ -85,24 +85,25 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm sticky top-24">
-      <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-        <i className="fas fa-list mr-2 text-[#165DFF]"></i>
+    <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto hide-scrollbar pr-4">
+      <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">
         目录
       </h3>
-      <nav className="space-y-1">
+      <nav className="space-y-1 relative">
+        {/* 连接线 */}
+        <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-200" />
+        
         {toc.map((item) => (
           <button
             key={item.id}
             onClick={() => scrollToHeading(item.id)}
-            className={`block w-full text-left py-1 px-2 rounded text-sm transition-colors ${
+            className={`block w-full text-left py-1.5 pl-4 text-sm transition-all border-l-2 -ml-px ${
               activeId === item.id
-                ? 'bg-[#165DFF]/10 text-[#165DFF] font-medium'
-                : 'text-slate-600 hover:text-[#165DFF] hover:bg-slate-50'
+                ? 'border-blue-500 text-blue-600 font-medium'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
-            style={{ 
-              paddingLeft: `${(item.level - 1) * 12 + 8}px`,
-              fontSize: item.level === 1 ? '14px' : '13px'
+            style={{
+              paddingLeft: `${(item.level - 1) * 1 + 1}rem`
             }}
           >
             {item.text}
