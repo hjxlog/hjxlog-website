@@ -19,6 +19,10 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const [content, setContent] = useState(value);
 
+  useEffect(() => {
+    setContent(value);
+  }, [value]);
+
   const handleChange = (val?: string) => {
     const newValue = val || '';
     setContent(newValue);
