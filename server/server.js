@@ -1957,10 +1957,13 @@ app.get('/api/photos', async (req, res) => {
     let queryParams = [];
     let paramIndex = 1;
 
-    // 只显示已发布的照片（前端访问）
+    // 筛选发布状态
     if (published === 'true') {
       whereConditions.push(`published = $${paramIndex++}`);
       queryParams.push(true);
+    } else if (published === 'false') {
+      whereConditions.push(`published = $${paramIndex++}`);
+      queryParams.push(false);
     }
 
     if (category && category !== '全部') {

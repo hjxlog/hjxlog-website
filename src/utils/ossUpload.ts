@@ -43,7 +43,7 @@ const logErrorToBackend = async (action: string, error: Error, file: File, addit
     });
 
   } catch (logError) {
-    console.warn('⚠️ [日志记录] 记录错误日志异常:', logError.message);
+    console.warn('⚠️ [日志记录] 记录错误日志异常:', (logError as Error).message);
   }
 };
 
@@ -114,7 +114,7 @@ export const formatFileSize = (bytes) => {
  * @param {Function} onProgress - 上传进度回调函数
  * @returns {Promise<UploadResult>} 上传结果
  */
-export const uploadImageToOSS = async (file: File, onProgress?: (progress: UploadProgress) => void) => {
+export const uploadImageToOSS = async (file: File, onProgress?: (progress: UploadProgress) => void): Promise<UploadResult> => {
   try {
     // 验证文件类型
     if (!validateImageType(file)) {
@@ -274,11 +274,12 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
     });
 
   } catch (error) {
+    const err = error as Error;
     // 记录错误日志到后端
-    logErrorToBackend('OSS上传异常', error, file);
+    logErrorToBackend('OSS上传异常', err, file);
     return {
       success: false,
-      error: error.message
+      error: err.message
     };
   }
 };
