@@ -1,194 +1,204 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
+import { 
+  ArrowLeft, Calendar, Clock, Tag, ChevronUp, Share2, 
+  Copy, Check, Terminal, BookOpen, Hash, ExternalLink 
+} from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import TableOfContents from '@/components/TableOfContents';
 import { useBackToTop } from '@/hooks/useBackToTop';
-// 移除对lib/api的依赖，直接调用服务器API
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
-// 动态导入 Markdown 相关模块
-const ReactMarkdown = React.lazy(() => import('react-markdown'));
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
+
+// macOS 风格代码块组件
+const CodeBlock = ({ language, children }: { language: string; children: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(children);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="my-4 rounded-lg overflow-hidden border border-slate-700/50 shadow-xl bg-[#1e1e1e]">
+      {/* Terminal Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#252526] border-b border-slate-700/50">
+        <div className="flex space-x-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 transition-colors"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] hover:bg-[#ffbd2e]/80 transition-colors"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f] hover:bg-[#27c93f]/80 transition-colors"></div>
+        </div>
+        <div className="text-xs text-slate-400 font-mono flex items-center gap-2">
+          <Terminal size={12} />
+          {language || 'text'}
+        </div>
+        <button 
+          onClick={handleCopy}
+          className="text-slate-400 hover:text-white transition-colors"
+          title="Copy code"
+        >
+          {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+        </button>
+      </div>
+      
+      {/* Code Content */}
+      <div className="relative group">
+        <SyntaxHighlighter
+          language={language || 'text'}
+          style={atomDark}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            background: 'transparent',
+            fontSize: '0.875rem',
+            lineHeight: '1.5',
+            fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+          }}
+          showLineNumbers={true}
+          wrapLines={true}
+        >
+          {children}
+        </SyntaxHighlighter>
+      </div>
+    </div>
+  );
+};
 
 // Markdown 包装组件
 const MarkdownRenderer = ({ content }: { content: string }) => {
+  const idCounts: Record<string, number> = {};
+
+  const getNodeText = (node: any): string => {
+    if (['string', 'number'].includes(typeof node)) return node.toString();
+    if (node instanceof Array) return node.map(getNodeText).join('');
+    if (typeof node === 'object' && node) {
+       if (node.props && node.props.children) return getNodeText(node.props.children);
+    }
+    return '';
+  };
+
+  const getUniqueId = (text: any) => {
+    const str = getNodeText(text);
+    let id = str.toLowerCase()
+      .replace(/[^\w\s\u4e00-\u9fa5-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
+    if (idCounts[id]) {
+      const count = idCounts[id];
+      idCounts[id]++;
+      id = `${id}-${count}`;
+    } else {
+      idCounts[id] = 1;
+    }
+    return id;
+  };
+
   return (
-    <React.Suspense fallback={<div className="animate-pulse bg-gray-200 h-64 rounded">加载内容...</div>}>
-      <ReactMarkdown 
-        components={{
-          code({ className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || '');
-            const isInline = !match;
-            return !isInline ? (
-              <CodeBlock
-                 language={match[1]}
-                 children={String(children).replace(/\n$/, '')}
-               />
-            ) : (
-              <code className={className} {...props}>
-                {children}
-              </code>
-            );
-          },
+    <ReactMarkdown 
+      remarkPlugins={[remarkGfm]}
+      components={{
+        pre: ({ children }: any) => <>{children}</>,
+        code({ node, inline, className, children, ...props }: any) {
+          const match = /language-(\w+)/.exec(className || '');
+          const language = match ? match[1] : '';
+          
+          return !inline ? (
+            <CodeBlock language={language} children={String(children).replace(/\n$/, '')} />
+          ) : (
+            <code className="px-1.5 py-0.5 rounded-md bg-slate-100 text-pink-500 font-mono text-sm border border-slate-200" {...props}>
+              {children}
+            </code>
+          );
+        },
         img({ src, alt, ...props }: any) {
           return (
-            <div className="my-6 text-center">
-              <img 
-                src={src} 
-                alt={alt} 
-                className="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-96 object-contain"
-                {...props}
-              />
+            <div className="my-8">
+              <div className="relative rounded-xl overflow-hidden shadow-lg border border-slate-200/50 group">
+                <img 
+                  src={src} 
+                  alt={alt} 
+                  className="w-full h-auto max-h-[600px] object-contain bg-slate-50"
+                  {...props}
+                />
+                <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-xl pointer-events-none"></div>
+              </div>
               {alt && (
-                <p className="text-sm text-gray-500 mt-2 italic">{alt}</p>
+                <p className="text-center text-sm text-slate-500 mt-3 font-medium flex items-center justify-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-slate-400"></span>
+                  {alt}
+                </p>
               )}
             </div>
           );
         },
         a({ href, children, ...props }: any) {
+          const isInternal = href?.startsWith('/') || href?.includes(window.location.hostname);
           return (
             <a 
               href={href} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[#165DFF] hover:text-[#0E42D2] underline"
+              target={isInternal ? "_self" : "_blank"}
+              rel={isInternal ? "" : "noopener noreferrer"}
+              className="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-800 underline decoration-blue-300 hover:decoration-blue-600 underline-offset-4 transition-all font-medium"
               {...props}
             >
               {children}
+              {!isInternal && <ExternalLink size={12} className="opacity-70" />}
             </a>
           );
         },
+        blockquote({ children }: any) {
+          return (
+            <blockquote className="border-l-4 border-blue-500 bg-blue-50/50 pl-6 py-4 my-6 rounded-r-lg italic text-slate-700 not-italic">
+              <div className="relative">
+                <span className="absolute -left-10 -top-2 text-4xl text-blue-200 font-serif">"</span>
+                {children}
+              </div>
+            </blockquote>
+          );
+        },
         h1: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h1 id={id} {...props}>{children}</h1>;
+          const id = getUniqueId(children);
+          return <h1 id={id} className="text-3xl font-bold mt-8 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2 group" {...props}>
+            {children}
+          </h1>;
         },
         h2: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h2 id={id} {...props}>{children}</h2>;
+          const id = getUniqueId(children);
+          return <h2 id={id} className="text-2xl font-bold mt-8 mb-4 flex items-center gap-2 group" {...props}>
+            {children}
+          </h2>;
         },
         h3: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h3 id={id} {...props}>{children}</h3>;
+          const id = getUniqueId(children);
+          return <h3 id={id} className="text-xl font-bold mt-6 mb-3 flex items-center gap-2" {...props}>{children}</h3>;
         },
-        h4: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h4 id={id} {...props}>{children}</h4>;
-        },
-        h5: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h5 id={id} {...props}>{children}</h5>;
-        },
-        h6: ({ children, ...props }: any) => {
-          const text = String(children);
-          const id = text.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .trim();
-          return <h6 id={id} {...props}>{children}</h6>;
-        }
+        ul: ({ children }: any) => <ul className="list-disc list-outside ml-6 my-3 space-y-1 text-slate-700">{children}</ul>,
+        ol: ({ children }: any) => <ol className="list-decimal list-outside ml-6 my-3 space-y-1 text-slate-700">{children}</ol>,
+        li: ({ children }: any) => <li className="pl-1">{children}</li>,
+        p: ({ children }: any) => <p className="my-2 leading-relaxed text-slate-700 text-[1rem]">{children}</p>,
+        table: ({ children }: any) => (
+          <div className="overflow-x-auto my-6 rounded-lg border border-slate-200 shadow-sm">
+            <table className="min-w-full divide-y divide-slate-200">{children}</table>
+          </div>
+        ),
+        thead: ({ children }: any) => <thead className="bg-slate-50">{children}</thead>,
+        th: ({ children }: any) => <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{children}</th>,
+        td: ({ children }: any) => <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 border-t border-slate-100">{children}</td>,
       }}
     >
       {content}
     </ReactMarkdown>
-    </React.Suspense>
-  );
-};
-
-// 代码高亮组件
-const CodeBlock = ({ language, children }: { language: string; children: string }) => {
-  const codeRef = React.useRef<HTMLElement>(null);
-  const [prismLoaded, setPrismLoaded] = React.useState(false);
-  
-  // 动态加载 Prism.js
-  React.useEffect(() => {
-    const loadPrism = async () => {
-      if (typeof window !== 'undefined' && !(window as any).Prism) {
-        try {
-          // 加载 Prism CSS
-          const cssLink = document.createElement('link');
-          cssLink.rel = 'stylesheet';
-          cssLink.href = 'https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css';
-          document.head.appendChild(cssLink);
-          
-          // 加载 Prism 核心
-          await new Promise((resolve, reject) => {
-            const script1 = document.createElement('script');
-            script1.src = 'https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js';
-            script1.onload = resolve;
-            script1.onerror = reject;
-            document.head.appendChild(script1);
-          });
-          
-          // 加载 Prism 自动加载器
-          await new Promise((resolve, reject) => {
-            const script2 = document.createElement('script');
-            script2.src = 'https://unpkg.com/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js';
-            script2.onload = resolve;
-            script2.onerror = reject;
-            document.head.appendChild(script2);
-          });
-          
-          setPrismLoaded(true);
-        } catch (error) {
-          console.warn('Failed to load Prism.js:', error);
-        }
-      } else if ((window as any).Prism) {
-        setPrismLoaded(true);
-      }
-    };
-    
-    loadPrism();
-  }, []);
-  
-  // 高亮代码
-  React.useEffect(() => {
-    if (prismLoaded && codeRef.current && (window as any).Prism) {
-      (window as any).Prism.highlightElement(codeRef.current);
-    }
-  }, [prismLoaded, children]);
-  
-  return (
-    <pre className="language-" style={{
-      background: '#2d3748',
-      color: '#e2e8f0',
-      padding: '1rem',
-      borderRadius: '0.5rem',
-      fontSize: '0.875rem',
-      lineHeight: '1.5',
-      overflow: 'auto'
-    }}>
-      <code ref={codeRef} className={`language-${language}`}>
-        {children}
-      </code>
-    </pre>
   );
 };
 
@@ -357,27 +367,31 @@ const BlogDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen bg-slate-50">
+      <div className="relative min-h-screen bg-slate-50 overflow-hidden flex items-center justify-center">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-blue-50/50 to-transparent -z-10"></div>
+        <div className="absolute right-[-10%] top-[20%] w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -z-10 animate-blob"></div>
+        <div className="absolute left-[-10%] bottom-[20%] w-[400px] h-[400px] bg-purple-100/40 rounded-full blur-[100px] -z-10 animate-blob animation-delay-2000"></div>
+        
         <PublicNav />
-        <div className="container mx-auto px-4 py-8 pt-24">
-          <LoadingSpinner size="lg" text="正在加载博客详情..." />
-        </div>
+        <LoadingSpinner size="lg" text="正在加载内容..." />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="relative min-h-screen bg-slate-50">
+      <div className="relative min-h-screen bg-slate-50 overflow-hidden flex flex-col items-center justify-center">
         <PublicNav />
-        <div className="container mx-auto px-4 py-8 pt-24 text-center">
-          <h1 className="text-2xl font-bold mb-4">Blog Post Not Found</h1>
-          <p className="mb-4">The blog post you're looking for doesn't exist or has been removed.</p>
+        <div className="text-center z-10 p-8 glass-panel rounded-2xl">
+          <h1 className="text-3xl font-bold mb-4 text-slate-800">404</h1>
+          <p className="mb-6 text-slate-600">抱歉，未找到该文章。</p>
           <button 
             onClick={() => navigate('/blogs')} 
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300"
+            className="bg-slate-900 text-white px-6 py-2.5 rounded-full hover:bg-slate-800 transition-all flex items-center gap-2 mx-auto"
           >
-            Back to Blog
+            <ArrowLeft size={16} />
+            返回博客列表
           </button>
         </div>
       </div>
@@ -385,125 +399,180 @@ const BlogDetail: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-50">
+    <div className="relative min-h-screen bg-[#f8fafc] selection:bg-blue-100 selection:text-blue-900">
       <PublicNav />
-      <div className="container mx-auto px-4 py-8 pt-24">
-        {/* 返回按钮 */}
-        <button 
-          onClick={() => navigate('/blogs')} 
-          className="flex items-center text-blue-500 hover:text-blue-700 mb-6 transition duration-300"
-        >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-        </svg>
-        Back to Blog
-      </button>
 
-        {/* 错误提示 */}
-        {error && (
-          <div className="mb-6">
-            <ErrorMessage 
-              message={error} 
-              onDismiss={() => setError(null)}
-            />
-          </div>
-        )}
-
-      {/* 博客标题和元信息 */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h1>
-        <div className="flex flex-wrap items-center text-gray-600 mb-4">
-
-          <span className="mr-4 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {formatDateTime(post.created_at)}
-          </span>
-          <span className="mr-4 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-            {post.category}
-          </span>
-
-        </div>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {post.tags.map((tag, index) => (
-            <span key={index} className="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full">{tag}</span>
-          ))}
-        </div>
+      {/* Dynamic Background - 更淡雅的背景 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-slate-100/80 to-transparent"></div>
+        <div className="absolute right-[-10%] top-[-10%] w-[600px] h-[600px] bg-blue-50/40 rounded-full blur-[120px] opacity-40"></div>
+        <div className="absolute left-[-10%] top-[10%] w-[500px] h-[500px] bg-purple-50/40 rounded-full blur-[120px] opacity-40"></div>
       </div>
 
-      {/* 特色图片 */}
-      <div className="mb-8">
-        <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg shadow-md">
-          <img 
-            src={post.cover_image} 
-            alt={post.title} 
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          />
+      <div className="container mx-auto px-4 lg:px-8 py-8 pt-24 pb-20 max-w-7xl">
+        {/* Top Navigation Bar */}
+        <div className="mb-6 flex justify-between items-center">
+          <button 
+            onClick={() => navigate('/blogs')} 
+            className="group flex items-center text-slate-500 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/60"
+          >
+            <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-medium">返回列表</span>
+          </button>
         </div>
-      </div>
 
-      {/* 博客内容区域 */}
-      <div className={`grid grid-cols-1 ${hasToc ? 'lg:grid-cols-4' : 'lg:grid-cols-1'} gap-8 mb-8`}>
-        {/* 主要内容 */}
-        <div className={hasToc ? 'lg:col-span-3' : 'lg:col-span-1'}>
-          <div className="prose prose-lg max-w-none">
-            <MarkdownRenderer content={post.content} />
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+           {/* Main Article Content - 增加宽度占比 */}
+           <motion.div 
+             initial={{ opacity: 0, y: 10 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.4 }}
+             className="lg:col-span-9 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-8 md:p-12"
+           >
+              {/* Immersive Header Section */}
+              <header className={`relative -mx-8 -mt-8 md:-mx-12 md:-mt-12 mb-12 overflow-hidden rounded-t-2xl ${post.cover_image ? 'text-white' : 'mb-10 pb-8 border-b border-slate-100'}`}>
+                 {post.cover_image && (
+                   <div className="absolute inset-0 z-0">
+                     <img 
+                       src={post.cover_image} 
+                       alt={post.title} 
+                       className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 backdrop-blur-[2px]"></div>
+                   </div>
+                 )}
+
+                 <div className={`relative z-10 px-8 md:px-12 flex flex-col justify-end ${post.cover_image ? 'pt-32 pb-12 min-h-[400px]' : 'pt-12'}`}>
+                     <div className="flex flex-wrap gap-3 mb-6">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md border ${
+                          post.cover_image 
+                            ? 'bg-white/20 text-white border-white/30' 
+                            : 'bg-blue-50 text-blue-600 border-blue-100'
+                        }`}>
+                          {post.category}
+                        </span>
+                        {post.tags.map(tag => (
+                          <span key={tag} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md border ${
+                            post.cover_image
+                              ? 'bg-black/30 text-slate-200 border-white/10'
+                              : 'bg-slate-50 text-slate-500 border-slate-200'
+                          }`}>
+                             {tag}
+                          </span>
+                        ))}
+                     </div>
+
+                     <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight tracking-tight ${post.cover_image ? 'text-white drop-shadow-md' : 'text-slate-900'}`}>
+                        {post.title}
+                     </h1>
+
+                     <div className={`flex flex-wrap items-center gap-6 text-sm font-medium ${post.cover_image ? 'text-slate-200' : 'text-slate-500'}`}>
+                        <div className="flex items-center gap-2">
+                           <img src="https://file.hjxlog.com/blog/images/avatar.jpg" alt="Author" className="w-8 h-8 rounded-full border-2 border-white/20" />
+                           <span className={post.cover_image ? 'text-white' : 'text-slate-700'}>JianXian</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <Calendar size={16} />
+                           {formatDate(post.created_at)}
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <Clock size={16} />
+                           <span>5 min read</span>
+                        </div>
+                     </div>
+                 </div>
+              </header>
+
+              {/* Markdown Content */}
+              <article id="blog-content" className="prose prose-lg max-w-none prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20">
+                 <MarkdownRenderer content={post.content} />
+              </article>
+
+              {/* Article Footer */}
+              <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between items-center text-sm text-slate-400">
+                 <p>最后更新于 {formatDateTime(post.updated_at || post.created_at)}</p>
+              </div>
+           </motion.div>
+
+           {/* Sidebar (TOC) - 更加紧凑 */}
+           <div className="lg:col-span-3 lg:sticky lg:top-24 space-y-6">
+              {hasToc && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="hidden lg:block bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-100 p-5"
+                >
+                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                      目录
+                   </h3>
+                   <TableOfContents content={post.content} showHeader={false} className="max-h-[60vh]" />
+                </motion.div>
+              )}
+              
+              {/* Related Posts */}
+              {relatedPosts.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                  className="bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-100 p-5"
+                >
+                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                      相关阅读
+                   </h3>
+                   <div className="space-y-3">
+                      {relatedPosts.map(post => (
+                         <a 
+                           key={post.id}
+                           href={`/blog/${post.id}`}
+                           className="block group"
+                         >
+                            <h4 className="text-sm font-medium text-slate-700 group-hover:text-blue-600 line-clamp-2 mb-1 transition-colors">
+                               {post.title}
+                            </h4>
+                            <span className="text-xs text-slate-400 block">
+                               {formatDate(post.created_at)}
+                            </span>
+                         </a>
+                      ))}
+                   </div>
+                </motion.div>
+              )}
+           </div>
         </div>
         
-        {/* 目录侧边栏 - 只在有目录时显示 */}
-        {hasToc && (
-          <div className="lg:col-span-1">
-            <TableOfContents content={post.content} />
-          </div>
-        )}
-      </div>
-
-
-
-
-
-      {/* 相关博客 */}
-      <div>
-        <h2 className="text-2xl font-bold mb-6">相关博客</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {relatedPosts.map((relatedPost) => (
-            <div key={relatedPost.id} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition duration-300">
-              <img 
-                src={relatedPost.cover_image} 
-                alt={relatedPost.title} 
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded mb-2">{relatedPost.category}</span>
-                <h3 className="text-lg font-semibold mb-2">{relatedPost.title}</h3>
-                <p className="text-gray-600 mb-3">{relatedPost.excerpt}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">{formatDate(relatedPost.created_at)}</span>
-                  <button 
-                    onClick={() => navigate(`/blog/${relatedPost.id}`)}
-                    className="text-blue-500 hover:text-blue-700 text-sm font-medium transition duration-300"
-                  >
-                    阅读更多
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Mobile Related Posts (Below Content) */}
+        <div className="lg:hidden mt-12">
+           <h3 className="text-lg font-bold text-slate-900 mb-6">相关阅读</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {relatedPosts.map(post => (
+                 <div key={post.id} onClick={() => navigate(`/blog/${post.id}`)} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
+                    <h4 className="font-medium text-slate-800 mb-2">{post.title}</h4>
+                    <div className="flex justify-between items-center text-xs text-slate-500">
+                       <span>{formatDate(post.created_at)}</span>
+                       <span className="text-blue-500">阅读</span>
+                    </div>
+                 </div>
+              ))}
+           </div>
         </div>
+
       </div>
-      </div>
-      
-      {/* 回到顶部按钮 */}
-      <button id="backToTop" className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#165DFF] text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all">
-        <i className="fas fa-arrow-up"></i>
-      </button>
-      
+
       <Footer />
+      
+      {/* Scroll to Top Button */}
+      <motion.button
+        id="backToTop"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all z-50 hover:bg-blue-600"
+      >
+        <ChevronUp size={20} />
+      </motion.button>
     </div>
   );
 };
