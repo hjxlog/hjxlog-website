@@ -19,45 +19,14 @@ export default function PublicNav() {
   }, []);
 
   // 处理导航点击
-  const handleNavClick = (section: string) => {
-    const scrollToSection = () => {
-      const element = document.getElementById(section);
-      if (element) {
-        const extraOffset = 80; // 额外间距，稍微加大一点以避开导航栏
-        
-        const offsetTop = element.offsetTop  - extraOffset;
-        window.scrollTo({
-          top: offsetTop,
-          behavior: 'smooth'
-        });
-      }
-    };
-
-    if (location.pathname !== '/') {
-      // 如果不在首页，先跳转到首页，然后滚动到对应部分
-      navigate('/');
-      setTimeout(scrollToSection, 100);
-    } else {
-      // 如果在首页，直接滚动到对应部分
-      scrollToSection();
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setIsMenuOpen(false);
+    
+    // 如果是跳转到首页，滚动到顶部
+    if (path === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  // 处理作品点击
-  const handleWorksClick = () => {
-    if (location.pathname === '/') {
-      // 在首页，跳转到作品section (假设作品部分有id='works')
-      // 但目前Home.tsx里是AppleWorksScroll，我们可能需要给它加个ID
-      navigate('/works'); // 暂时直接跳转路由，保持行为一致
-    } else {
-      // 在其他页面，跳转到作品页面
-      navigate('/works');
-    }
-  };
-
-  // 处理博客点击
-  const handleBlogClick = () => {
-      navigate('/blogs');
   };
 
   return (
@@ -69,13 +38,10 @@ export default function PublicNav() {
     >
       <div className="container mx-auto flex items-center justify-between">
         {/* 左侧：Logo */}
-        <div className="text-2xl font-bold text-[#165DFF] cursor-pointer" onClick={() => {
-          if (location.pathname === '/') {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-            navigate('/');
-          }
-        }}>
+        <div 
+          className="text-2xl font-bold text-[#165DFF] cursor-pointer" 
+          onClick={() => handleNavClick('/')}
+        >
           HJXLOG
         </div>
         
@@ -83,37 +49,31 @@ export default function PublicNav() {
         <div className="hidden md:flex items-center space-x-8">
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => {
-              if (location.pathname === '/') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
-                navigate('/');
-              }
-            }}
+            onClick={() => handleNavClick('/')}
           >
             首页
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={handleWorksClick}
+            onClick={() => handleNavClick('/works')}
           >
             作品
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={handleBlogClick}
+            onClick={() => handleNavClick('/blogs')}
           >
             博客
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => navigate('/photos')}
+            onClick={() => handleNavClick('/photos')}
           >
             摄影
           </button>
           <button 
             className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => navigate('/moments')}
+            onClick={() => handleNavClick('/moments')}
           >
             动态
           </button>
@@ -133,50 +93,31 @@ export default function PublicNav() {
           <div className="flex flex-col space-y-4">
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                if (location.pathname === '/') {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                  navigate('/');
-                }
-              }}
+              onClick={() => handleNavClick('/')}
             >
               首页
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                handleWorksClick();
-              }}
+              onClick={() => handleNavClick('/works')}
             >
               作品
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                handleBlogClick();
-              }}
+              onClick={() => handleNavClick('/blogs')}
             >
               博客
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/photos');
-              }}
+              onClick={() => handleNavClick('/photos')}
             >
               摄影
             </button>
             <button 
               className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/moments');
-              }}
+              onClick={() => handleNavClick('/moments')}
             >
               动态
             </button>

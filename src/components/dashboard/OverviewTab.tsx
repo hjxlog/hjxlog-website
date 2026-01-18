@@ -54,13 +54,21 @@ export default function OverviewTab({
     { name: '生活动态', value: moments.length, color: '#6366F1' }, // indigo-500
   ].filter(item => item.value > 0);
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return '早安';
+    if (hour >= 12 && hour < 14) return '中午好';
+    if (hour >= 14 && hour < 19) return '下午好';
+    return '晚上好';
+  };
+
   return (
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       {/* 顶部欢迎卡片 - 更加简约现代 */}
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
         <div className="z-10">
           <h2 className="text-2xl font-bold text-slate-800 mb-2">
-            早安，{user.username} 👋
+            {getGreeting()}，{user.username} 👋
           </h2>
           <p className="text-slate-500">
             准备好开始今天的创作了吗？您目前共有 <span className="font-bold text-slate-800">{works.length + blogs.length + moments.length}</span> 个内容条目。
