@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Github, Globe, ExternalLink, FolderOpen, Calendar, ArrowRight, Layers, Code2 } from 'lucide-react';
+import { Github, Globe, ExternalLink, FolderOpen, Calendar, ArrowRight, Layers } from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '../config/api';
@@ -263,25 +263,6 @@ export default function Works() {
           </div>
         )}
 
-        {/* Stats Section (Simplified) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 border-t border-slate-200 pt-16 pb-8"
-        >
-          {[
-            { label: '总作品数', value: works.length, icon: Layers },
-            { label: '技术领域', value: categories.length > 0 ? categories.length - 1 : 0, icon: Code2 },
-            { label: '开源项目', value: works.filter(w => w.github_url).length, icon: Github },
-          ].map((stat, i) => (
-            <div key={i} className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white border border-slate-100 shadow-sm">
-              <stat.icon className="w-6 h-6 text-slate-400 mb-3" />
-              <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
-              <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </motion.div>
       </main>
       <Footer />
     </div>
