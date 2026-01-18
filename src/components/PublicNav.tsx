@@ -64,7 +64,7 @@ export default function PublicNav() {
     <nav 
       id="mainNav" 
       className={`fixed top-0 left-0 right-0 py-4 px-6 transition-all duration-300 z-50 ${
-        isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50' : 'bg-white/0'
+        isScrolled || isMenuOpen ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200/50' : 'bg-white/0'
       }`}
     >
       <div className="container mx-auto flex items-center justify-between">

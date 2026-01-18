@@ -569,7 +569,7 @@ const BlogDetail: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all z-50 hover:bg-blue-600"
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-slate-900 text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all z-50 hover:bg-blue-600"
       >
         <ChevronUp size={20} />
       </motion.button>

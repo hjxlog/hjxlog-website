@@ -7,6 +7,7 @@ interface Blog {
   id: string;
   title: string;
   summary?: string;
+  excerpt?: string;
   created_at?: string;
   tags?: string[];
 }
@@ -56,7 +57,7 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
                       {blog.title}
                     </h3>
                     <p className="text-slate-500 text-base leading-relaxed line-clamp-2 md:line-clamp-3 mb-4">
-                      {blog.summary || '暂无摘要...'}
+                      {blog.summary || blog.excerpt || '暂无摘要...'}
                     </p>
                     
                     {/* Tags */}
