@@ -26,12 +26,6 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
             最新博客
           </h2>
-          <button 
-            onClick={() => navigate('/blogs')}
-            className="text-[#0066cc] hover:underline flex items-center gap-1 font-medium"
-          >
-            阅读全部 <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
 
         <div className="grid gap-6">
