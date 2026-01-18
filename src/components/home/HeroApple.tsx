@@ -65,15 +65,15 @@ const AboutModal = ({ onClose }: { onClose: () => void }) => {
                  <div className="space-y-3 text-xs w-full pt-2 border-t border-slate-100">
                     <div className="flex justify-between md:justify-start gap-4">
                        <span className="text-slate-500 font-semibold w-16 text-right md:text-left">角色</span>
-                       <span className="text-slate-900">全栈工程师</span>
+                       <span className="text-slate-900">独立开发者</span>
                     </div>
                     <div className="flex justify-between md:justify-start gap-4">
                        <span className="text-slate-500 font-semibold w-16 text-right md:text-left">驱动力</span>
-                       <span className="text-slate-900">无限学习力</span>
+                       <span className="text-slate-900">持续精进</span>
                     </div>
                     <div className="flex justify-between md:justify-start gap-4">
                        <span className="text-slate-500 font-semibold w-16 text-right md:text-left">坐标</span>
-                       <span className="text-slate-900">远程 / 数字游民</span>
+                       <span className="text-slate-900">Remote / Worldwide</span>
                     </div>
                     <div className="flex justify-between md:justify-start gap-4">
                        <span className="text-slate-500 font-semibold w-16 text-right md:text-left">微信</span>
@@ -155,15 +155,15 @@ const TerminalModal = ({ onClose }: { onClose: () => void }) => {
       { text: "Fetching system info...", delay: 800 },
       { text: "-----------------------", delay: 1000 },
       { text: "OS: macOS / Web", delay: 1100 },
-      { text: "Host: JianXian's Portfolio", delay: 1200 },
+      { text: "Host: hjxlog.com", delay: 1200 },
       { text: "Kernel: React 18.2.0", delay: 1300 },
-      { text: "Uptime: Forever", delay: 1400 },
+      { text: "Uptime: Since 2019", delay: 1400 },
       { text: "Shell: zsh 5.9", delay: 1500 },
-      { text: "Resolution: Responsive", delay: 1600 },
+      { text: "Display: Retina", delay: 1600 },
       { text: "DE: Tailwind CSS", delay: 1700 },
       { text: "WM: Framer Motion", delay: 1800 },
-      { text: "CPU: Human Brain (Neural Engine)", delay: 1900 },
-      { text: "Memory: Infinite Learning Capacity", delay: 2000 },
+      { text: "CPU: Neural Engine", delay: 1900 },
+      { text: "Memory: Infinite Learning", delay: 2000 },
       { text: "", delay: 2100 },
       { text: "user@hjxlog:~$ cat skills.txt", delay: 2500 },
       { text: "Languages: TypeScript, Python, Rust, Go", delay: 2800 },
@@ -269,11 +269,11 @@ const CodeWindow = () => (
       </div>
       <div className="flex">
         <span className="text-slate-600 select-none mr-4">4</span>
-        <span className="pl-4"><span className="text-[#9cdcfe]">mission</span>: <span className="text-[#ce9178]">'Crafting digital masterpieces'</span>,</span>
+        <span className="pl-4"><span className="text-[#9cdcfe]">mission</span>: <span className="text-[#ce9178]">'Innovation'</span>,</span>
       </div>
       <div className="flex">
         <span className="text-slate-600 select-none mr-4">5</span>
-        <span className="pl-4"><span className="text-[#dcdcaa]">build</span>: () <span className="text-[#569cd6]">=&gt;</span> <span className="text-[#ce9178]">'Future'</span></span>
+        <span className="pl-4"><span className="text-[#dcdcaa]">build</span>: () <span className="text-[#569cd6]">=&gt;</span> <span className="text-[#ce9178]">'Impact'</span></span>
       </div>
       <div className="flex">
         <span className="text-slate-600 select-none mr-4">6</span>
@@ -341,7 +341,7 @@ const HeroApple = () => {
           <p className="text-xl md:text-2xl text-slate-600 mb-8 max-w-lg leading-relaxed">
             全栈开发者与 AI 探索者。
             <br />
-            将复杂的技术转化为优雅的用户体验。
+            致力于构建优雅、高效的数字化解决方案。
           </p>
 
           <div className="flex flex-wrap gap-4 mb-10">
