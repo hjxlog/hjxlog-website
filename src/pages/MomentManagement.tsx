@@ -247,6 +247,7 @@ const MomentManagement: React.FC = () => {
                                   src={image}
                                   alt={`图片 ${index + 1}`}
                                   className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                                  loading="lazy"
                                 />
                               ))}
                               {moment.images.length > 3 && (

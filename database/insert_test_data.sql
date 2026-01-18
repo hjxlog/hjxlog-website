@@ -617,6 +617,12 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  '2024-03-01 15:45:00', 
  true);
 
+-- 插入示例动态数据
+INSERT INTO moments (content, author_id, visibility) VALUES
+('欢迎来到我的动态空间！这里会分享一些日常的想法和有趣的内容。', 'admin', 'public'),
+('今天学习了新的技术栈，感觉收获满满！', 'admin', 'public'),
+('分享一些最近拍摄的照片，希望大家喜欢。', 'admin', 'public');
+
 -- 显示插入结果
 SELECT 
     'Data inserted successfully!' as result,
@@ -626,4 +632,5 @@ SELECT
     (SELECT COUNT(*) FROM comments) as comments_count,
     (SELECT COUNT(*) FROM blog_likes) as blog_likes_count,
     (SELECT COUNT(*) FROM system_logs) as system_logs_count,
+    (SELECT COUNT(*) FROM moments) as moments_count,
     (SELECT COUNT(*) FROM photos) as photos_count;

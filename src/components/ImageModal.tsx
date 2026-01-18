@@ -138,6 +138,7 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
           className={`max-w-full max-h-[80vh] object-contain transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
+          loading="lazy"
           onLoad={() => setImageLoaded(true)}
         />
 
@@ -148,9 +149,6 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
             <p className="text-gray-300 text-sm mb-2">{currentPhoto.description}</p>
           )}
           <div className="flex items-center justify-center gap-4 text-xs text-gray-400">
-            {currentPhoto.category && (
-              <span>分类: {currentPhoto.category}</span>
-            )}
             {currentPhoto.location && (
               <span>地点: {currentPhoto.location}</span>
             )}

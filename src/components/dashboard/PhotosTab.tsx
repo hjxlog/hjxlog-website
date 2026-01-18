@@ -594,6 +594,7 @@ export default function PhotosTab({}: PhotosTabProps) {
                             src={formData.image_url}
                             alt="预览"
                             className="max-h-48 mx-auto rounded-lg"
+                            loading="lazy"
                           />
                           <button
                             type="button"

@@ -59,6 +59,7 @@ export default function MomentsTab({
                           src={image}
                           className="w-full h-24 object-cover rounded-lg"
                           alt={`动态图片 ${index + 1}`}
+                          loading="lazy"
                         />
                       ))}
                     </div>

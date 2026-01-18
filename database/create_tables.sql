@@ -200,14 +200,6 @@ COMMENT ON COLUMN moments.author_id IS '作者ID';
 COMMENT ON COLUMN moments.visibility IS '可见性(public/private/draft)';
 COMMENT ON COLUMN moments.images IS '图片URL列表（逗号分隔）';
 
--- 插入示例动态数据
-INSERT INTO moments (content, author_id, visibility) VALUES 
-('欢迎来到我的动态空间！这里会分享一些日常的想法和有趣的内容。', 'admin', 'public'),
-('今天学习了新的技术栈，感觉收获满满！', 'admin', 'public'),
-('分享一些最近拍摄的照片，希望大家喜欢。', 'admin', 'public');
-
-
-
 -- ================================================
 -- 系统日志模块表结构
 -- ================================================

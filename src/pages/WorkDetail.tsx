@@ -259,6 +259,7 @@ export default function WorkDetail() {
           <img
             src={work.cover_image}
             alt={work.title}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/40"></div>
@@ -314,6 +315,7 @@ export default function WorkDetail() {
                     <img
                       src={work.screenshots[activeScreenshot]}
                       alt={`截图 ${activeScreenshot + 1}`}
+                      loading="lazy"
                       className="w-full rounded-lg shadow-md"
                     />
                   </div>
@@ -332,6 +334,7 @@ export default function WorkDetail() {
                         <img
                           src={screenshot}
                           alt={`缩略图 ${index + 1}`}
+                          loading="lazy"
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -452,6 +455,7 @@ export default function WorkDetail() {
                     <img
                       src={relatedWork.cover_image}
                       alt={relatedWork.title}
+                      loading="lazy"
                       className="w-full h-40 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
