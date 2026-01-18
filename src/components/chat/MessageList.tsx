@@ -54,7 +54,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             {onQuickQuestion && (
               <>
                 <button
-                  onClick={() => onQuickQuestion('这个人的技术栈是什么？')}
+                  onClick={() => onQuickQuestion('博主主要擅长哪些技术领域？')}
                   disabled={disabled}
                   className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
@@ -64,11 +64,11 @@ export const MessageList: React.FC<MessageListProps> = ({
                 >
                   <span className="flex items-center">
                     <Laptop size={14} className="mr-2 text-blue-500" /> 
-                    这个人的技术栈是什么？
+                    博主主要擅长哪些技术领域？
                   </span>
                 </button>
                 <button
-                  onClick={() => onQuickQuestion('他写过哪些博客？')}
+                  onClick={() => onQuickQuestion('推荐几篇精选的技术文章')}
                   disabled={disabled}
                   className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
@@ -78,11 +78,11 @@ export const MessageList: React.FC<MessageListProps> = ({
                 >
                   <span className="flex items-center">
                     <FileText size={14} className="mr-2 text-green-500" /> 
-                    他写过哪些博客？
+                    推荐几篇精选的技术文章
                   </span>
                 </button>
                 <button
-                  onClick={() => onQuickQuestion('介绍一下他的作品')}
+                  onClick={() => onQuickQuestion('介绍一下博主的代表作品')}
                   disabled={disabled}
                   className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
                     disabled
@@ -92,7 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 >
                   <span className="flex items-center">
                     <Palette size={14} className="mr-2 text-purple-500" /> 
-                    介绍一下他的作品
+                    介绍一下博主的代表作品
                   </span>
                 </button>
               </>

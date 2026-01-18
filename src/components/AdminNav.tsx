@@ -45,12 +45,6 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
   const { user, logout } = useContext(AuthContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { path: '/dashboard', label: '仪表盘', icon: 'fas fa-tachometer-alt' },
-    { path: '/profile', label: '个人资料', icon: 'fas fa-user' },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
   const isDashboard = location.pathname === '/dashboard';
 
   // 移动端Dashboard页签
@@ -59,32 +53,21 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
 
     return (
       <div className="lg:hidden border-t border-gray-200 bg-white">
-        <div className="px-2 py-3">
-          <div className="space-y-4">
-            {dashboardTabGroups.map((group) => (
-              <div key={group.group}>
-                <h3 className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  {group.group}
-                </h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {group.tabs.map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg text-xs font-medium transition-colors ${
-                        activeTab === tab.key
-                          ? 'text-[#165DFF] bg-blue-50'
-                          : 'text-gray-600 hover:text-[#165DFF] hover:bg-gray-50'
-                      }`}
-                    >
-                      <i className={`${tab.icon} text-lg mb-1`}></i>
-                      <span className="text-center">{tab.label.replace('管理', '')}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex overflow-x-auto px-4 py-3 gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          {dashboardTabGroups.flatMap(group => group.tabs).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                activeTab === tab.key
+                  ? 'text-white bg-[#165DFF] shadow-md shadow-blue-100'
+                  : 'text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-[#165DFF]'
+              }`}
+            >
+              <i className={`${tab.icon} mr-2 text-sm`}></i>
+              <span>{tab.label.replace('管理', '')}</span>
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -143,26 +126,8 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive(item.path)
-                      ? 'text-[#165DFF] bg-blue-50'
-                      : 'text-gray-600 hover:text-[#165DFF] hover:bg-gray-50'
-                  }`}
-                >
-                  <i className={`${item.icon} mr-3 w-4 text-center`}></i>
-                  {item.label}
-                </button>
-              ))}
-
               {/* Mobile User Info */}
-              <div className="border-t border-gray-200 pt-3 mt-3">
+              <div>
                 <div className="flex items-center px-3 py-2 mb-2">
                   <div className="w-8 h-8 bg-[#165DFF] rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                     <span className="text-white text-sm font-medium">

@@ -246,11 +246,6 @@ export default function Moments() {
                                             loading="lazy"
                                           />
                                           <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-300" />
-                                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity duration-300">
-                                            <div className="bg-black/20 backdrop-blur-sm p-2 rounded-full text-white">
-                                              <ImageIcon className="w-5 h-5" />
-                                            </div>
-                                          </div>
                                         </div>
                                       ))}
                                     </div>
