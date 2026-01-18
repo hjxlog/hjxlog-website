@@ -349,7 +349,7 @@ const HeroApple = () => {
                onClick={() => navigate('/works')}
                className="group bg-slate-900 text-white px-8 py-4 rounded-full font-medium hover:bg-slate-800 transition-all flex items-center gap-2 shadow-xl shadow-slate-900/20"
              >
-               查看精选作品 
+               查看精选作品
                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
              </button>
              <button 
@@ -361,9 +361,9 @@ const HeroApple = () => {
           </div>
 
           <div className="flex items-center gap-6 text-slate-400">
-            <a href="https://github.com" className="hover:text-slate-900 transition-colors"><Github size={24} /></a>
+            <a href="https://github.com/hjxlog" className="hover:text-slate-900 transition-colors"><Github size={24} /></a>
             <a href="https://twitter.com" className="hover:text-blue-500 transition-colors"><Twitter size={24} /></a>
-            <a href="mailto:contact@example.com" className="hover:text-red-500 transition-colors"><Mail size={24} /></a>
+            <a href="mailto:hjxlog@gmail.com" className="hover:text-red-500 transition-colors"><Mail size={24} /></a>
             <div className="w-px h-6 bg-slate-300 mx-2"></div>
             <div className="flex gap-4">
               <button 
