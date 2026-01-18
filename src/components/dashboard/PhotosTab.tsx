@@ -61,7 +61,8 @@ export default function PhotosTab({}: PhotosTabProps) {
   const fetchPhotos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/photos?limit=1000`);
+      // 获取所有照片（包括未发布的）
+      const response = await fetch(`${API_BASE_URL}/api/photos?limit=1000&published=all`);
       const result = await response.json();
       if (result.success) {
         setPhotos(result.data.photos || []);
