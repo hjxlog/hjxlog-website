@@ -261,7 +261,6 @@ export default function LogManagement() {
                   <option value="auth">认证</option>
                   <option value="blog">博客</option>
                   <option value="work">作品</option>
-                  <option value="comment">评论</option>
                   <option value="moment">动态</option>
                   <option value="upload">上传</option>
                   <option value="server">服务器</option>

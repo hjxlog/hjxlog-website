@@ -7,12 +7,8 @@
 
 -- 删除已存在的表（如果存在）
 
-DROP TABLE IF EXISTS moment_likes CASCADE;
-DROP TABLE IF EXISTS moment_comments CASCADE;
 DROP TABLE IF EXISTS moments CASCADE;
 DROP TABLE IF EXISTS blog_views CASCADE;
-DROP TABLE IF EXISTS blog_likes CASCADE;
-DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS works CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -45,7 +41,6 @@ CREATE TABLE blogs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     views INTEGER DEFAULT 0,
-    likes INTEGER DEFAULT 0,
     cover_image TEXT
 );
 
@@ -124,7 +119,6 @@ COMMENT ON COLUMN blogs.tags IS '标签数组';
 COMMENT ON COLUMN blogs.published IS '是否发布';
 COMMENT ON COLUMN blogs.featured IS '是否推荐到主页';
 COMMENT ON COLUMN blogs.views IS '浏览次数';
-COMMENT ON COLUMN blogs.likes IS '点赞次数';
 COMMENT ON COLUMN blogs.cover_image IS '封面图片URL';
 
 COMMENT ON COLUMN works.title IS '作品标题';
@@ -149,32 +143,6 @@ COMMENT ON COLUMN users.bio IS '个人简介';
 
 
 
--- 创建评论表
-CREATE TABLE comments (
-    id SERIAL PRIMARY KEY,
-    blog_id INTEGER NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE,
-    author_name VARCHAR(100) NOT NULL,
-    author_email VARCHAR(100),
-    content TEXT NOT NULL,
-    ip_address INET,
-    user_agent TEXT,
-    status VARCHAR(20) DEFAULT 'approved',
-    admin_reply TEXT,
-    admin_reply_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 创建点赞记录表（用于IP限制）
-CREATE TABLE blog_likes (
-    id SERIAL PRIMARY KEY,
-    blog_id INTEGER NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
-    ip_address INET NOT NULL,
-    user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
 -- 创建博客浏览记录表（用于IP限制）
 CREATE TABLE blog_views (
     id SERIAL PRIMARY KEY,
@@ -184,49 +152,13 @@ CREATE TABLE blog_views (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建评论表索引
-CREATE INDEX idx_comments_blog_id ON comments(blog_id);
-CREATE INDEX idx_comments_parent_id ON comments(parent_id);
-CREATE INDEX idx_comments_created_at ON comments(created_at DESC);
-CREATE INDEX idx_comments_status ON comments(status);
-
--- 创建点赞记录表索引
-CREATE INDEX idx_blog_likes_blog_id ON blog_likes(blog_id);
-CREATE INDEX idx_blog_likes_ip_created ON blog_likes(ip_address, created_at);
-CREATE INDEX idx_blog_likes_created_at ON blog_likes(created_at);
-
 -- 创建博客浏览记录表索引
 CREATE INDEX idx_blog_views_blog_id ON blog_views(blog_id);
 CREATE INDEX idx_blog_views_ip_created ON blog_views(ip_address, created_at);
 CREATE INDEX idx_blog_views_created_at ON blog_views(created_at);
 
--- 为评论表创建更新时间触发器
-CREATE TRIGGER update_comments_updated_at 
-    BEFORE UPDATE ON comments 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- 添加评论表注释
-COMMENT ON TABLE comments IS '博客评论表';
-COMMENT ON TABLE blog_likes IS '博客点赞记录表（用于IP限制）';
 COMMENT ON TABLE blog_views IS '博客浏览记录表（用于IP限制）';
-
--- 添加评论表字段注释
-COMMENT ON COLUMN comments.blog_id IS '关联的博客ID';
-COMMENT ON COLUMN comments.parent_id IS '父评论ID（用于回复功能）';
-COMMENT ON COLUMN comments.author_name IS '评论者姓名';
-COMMENT ON COLUMN comments.author_email IS '评论者邮箱';
-COMMENT ON COLUMN comments.content IS '评论内容';
-COMMENT ON COLUMN comments.ip_address IS '评论者IP地址';
-COMMENT ON COLUMN comments.user_agent IS '用户代理信息';
-COMMENT ON COLUMN comments.status IS '评论状态(pending/approved/rejected)';
-COMMENT ON COLUMN comments.admin_reply IS '管理员回复内容';
-COMMENT ON COLUMN comments.admin_reply_at IS '管理员回复时间';
-
--- 添加点赞记录表字段注释
-COMMENT ON COLUMN blog_likes.blog_id IS '关联的博客ID';
-COMMENT ON COLUMN blog_likes.ip_address IS '点赞者IP地址';
-COMMENT ON COLUMN blog_likes.user_agent IS '用户代理信息';
 
 -- 添加浏览记录表字段注释
 COMMENT ON COLUMN blog_views.blog_id IS '关联的博客ID';
@@ -244,39 +176,8 @@ CREATE TABLE moments (
     author_id VARCHAR(50) DEFAULT 'admin',
     visibility VARCHAR(20) DEFAULT 'public' CHECK (visibility IN ('public', 'private', 'draft')),
     images TEXT,
-    likes_count INTEGER DEFAULT 0,
-    comments_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-
-
--- 创建动态评论表
-CREATE TABLE moment_comments (
-    id SERIAL PRIMARY KEY,
-    moment_id INTEGER NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
-    parent_id INTEGER REFERENCES moment_comments(id) ON DELETE CASCADE,
-    author_name VARCHAR(100) NOT NULL,
-    author_email VARCHAR(100),
-    content TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'approved' CHECK (status IN ('pending', 'approved', 'rejected')),
-    ip_address INET,
-    user_agent TEXT,
-    admin_reply TEXT,
-    admin_reply_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- 创建动态点赞表
-CREATE TABLE moment_likes (
-    id SERIAL PRIMARY KEY,
-    moment_id INTEGER NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
-    ip_address INET NOT NULL,
-    user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(moment_id, ip_address)
 );
 
 -- 创建动态模块索引
@@ -284,60 +185,20 @@ CREATE INDEX idx_moments_created_at ON moments(created_at DESC);
 CREATE INDEX idx_moments_visibility ON moments(visibility);
 CREATE INDEX idx_moments_author_id ON moments(author_id);
 
-
-
-CREATE INDEX idx_moment_comments_moment_id ON moment_comments(moment_id);
-CREATE INDEX idx_moment_comments_parent_id ON moment_comments(parent_id);
-CREATE INDEX idx_moment_comments_status ON moment_comments(status);
-CREATE INDEX idx_moment_comments_created_at ON moment_comments(created_at DESC);
-
-CREATE INDEX idx_moment_likes_moment_id ON moment_likes(moment_id);
-CREATE INDEX idx_moment_likes_ip_address ON moment_likes(ip_address);
-CREATE INDEX idx_moment_likes_created_at ON moment_likes(created_at DESC);
-
 -- 为动态模块表创建更新时间触发器
 CREATE TRIGGER update_moments_updated_at 
     BEFORE UPDATE ON moments 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_moment_comments_updated_at 
-    BEFORE UPDATE ON moment_comments 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
 -- 添加动态模块表注释
 COMMENT ON TABLE moments IS '动态主表';
-
-COMMENT ON TABLE moment_comments IS '动态评论表';
-COMMENT ON TABLE moment_likes IS '动态点赞记录表';
 
 -- 添加动态表字段注释
 COMMENT ON COLUMN moments.content IS '动态文字内容';
 COMMENT ON COLUMN moments.author_id IS '作者ID';
 COMMENT ON COLUMN moments.visibility IS '可见性(public/private/draft)';
 COMMENT ON COLUMN moments.images IS '图片URL列表（逗号分隔）';
-COMMENT ON COLUMN moments.likes_count IS '点赞数量';
-COMMENT ON COLUMN moments.comments_count IS '评论数量';
-
-
-
--- 添加动态评论表字段注释
-COMMENT ON COLUMN moment_comments.moment_id IS '关联的动态ID';
-COMMENT ON COLUMN moment_comments.parent_id IS '父评论ID（用于回复功能）';
-COMMENT ON COLUMN moment_comments.author_name IS '评论者姓名';
-COMMENT ON COLUMN moment_comments.author_email IS '评论者邮箱';
-COMMENT ON COLUMN moment_comments.content IS '评论内容';
-COMMENT ON COLUMN moment_comments.status IS '评论状态(pending/approved/rejected)';
-COMMENT ON COLUMN moment_comments.ip_address IS '评论者IP地址';
-COMMENT ON COLUMN moment_comments.user_agent IS '用户代理信息';
-COMMENT ON COLUMN moment_comments.admin_reply IS '管理员回复内容';
-COMMENT ON COLUMN moment_comments.admin_reply_at IS '管理员回复时间';
-
--- 添加动态点赞表字段注释
-COMMENT ON COLUMN moment_likes.moment_id IS '关联的动态ID';
-COMMENT ON COLUMN moment_likes.ip_address IS '点赞者IP地址';
-COMMENT ON COLUMN moment_likes.user_agent IS '用户代理信息';
 
 -- ================================================
 -- 系统日志模块表结构

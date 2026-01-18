@@ -7,6 +7,38 @@ interface AdminNavProps {
   setActiveTab?: (tab: string) => void;
 }
 
+// Dashboard页面内的标签页 - 分组显示 (移到函数外部以便导出)
+export const dashboardTabGroups = [
+  {
+    group: '内容管理',
+    tabs: [
+      { key: 'overview', label: '概览', icon: 'fas fa-chart-pie' },
+      { key: 'works', label: '作品管理', icon: 'fas fa-briefcase' },
+      { key: 'blogs', label: '博客管理', icon: 'fas fa-blog' },
+      { key: 'photos', label: '摄影管理', icon: 'fas fa-images' },
+    ]
+  },
+  {
+    group: '互动管理',
+    tabs: [
+      { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
+    ]
+  },
+  {
+    group: 'AI功能',
+    tabs: [
+      { key: 'knowledge', label: '知识库', icon: 'fas fa-brain' },
+      { key: 'prompts', label: '提示词管理', icon: 'fas fa-magic' },
+    ]
+  },
+  {
+    group: '系统',
+    tabs: [
+      { key: 'logs', label: '日志管理', icon: 'fas fa-file-alt' },
+    ]
+  },
+];
+
 export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,80 +50,86 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
     { path: '/profile', label: '个人资料', icon: 'fas fa-user' },
   ];
 
-  // Dashboard页面内的标签页
-  const dashboardTabs = [
-    { key: 'overview', label: '概览', icon: 'fas fa-chart-pie' },
-    { key: 'works', label: '作品管理', icon: 'fas fa-briefcase' },
-    { key: 'blogs', label: '博客管理', icon: 'fas fa-blog' },
-    { key: 'photos', label: '摄影管理', icon: 'fas fa-images' },
-    { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
-    { key: 'comments', label: '评论管理', icon: 'fas fa-comments' },
-    { key: 'logs', label: '日志管理', icon: 'fas fa-file-alt' },
-  ];
-
   const isActive = (path: string) => location.pathname === path;
   const isDashboard = location.pathname === '/dashboard';
 
+  // 移动端Dashboard页签
+  const MobileDashboardTabs = () => {
+    if (!isDashboard || !activeTab || !setActiveTab) return null;
+
+    return (
+      <div className="lg:hidden border-t border-gray-200 bg-white">
+        <div className="px-2 py-3">
+          <div className="space-y-4">
+            {dashboardTabGroups.map((group) => (
+              <div key={group.group}>
+                <h3 className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  {group.group}
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {group.tabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`flex flex-col items-center justify-center px-2 py-3 rounded-lg text-xs font-medium transition-colors ${
+                        activeTab === tab.key
+                          ? 'text-[#165DFF] bg-blue-50'
+                          : 'text-gray-600 hover:text-[#165DFF] hover:bg-gray-50'
+                      }`}
+                    >
+                      <i className={`${tab.icon} text-lg mb-1`}></i>
+                      <span className="text-center">{tab.label.replace('管理', '')}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <button 
+            <button
               onClick={() => window.open('/', '_blank')}
               className="text-2xl font-bold text-[#165DFF] hover:text-[#0E4BA4] transition-colors"
             >
               HJXLOG
             </button>
             <span className="ml-3 text-gray-400">|</span>
-            <span className="ml-3 text-gray-600 font-medium">管理后台</span>
-          </div>
-
-          {/* Navigation Links */}
-          <div className="hidden md:flex md:items-center md:space-x-4 lg:space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`flex items-center px-2 lg:px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(item.path)
-                    ? 'text-[#165DFF] bg-blue-50'
-                    : 'text-gray-600 hover:text-[#165DFF] hover:bg-gray-50'
-                }`}
-              >
-                <i className={`${item.icon} mr-1 lg:mr-2`}></i>
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          {/* User Menu */}
-          <div className="hidden md:flex md:items-center md:space-x-2 lg:space-x-4">
-            <div className="flex items-center space-x-2 lg:space-x-3">
-              <img
-                className="h-7 w-7 lg:h-8 lg:w-8 rounded-full"
-                src={user?.avatar || '/default-avatar.png'}
-                alt="用户头像"
-              />
-              <div className="text-sm hidden lg:block">
-                <div className="font-medium text-gray-900">{user?.username}</div>
-                <div className="text-gray-500">{user?.email}</div>
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="text-gray-500 hover:text-gray-700 px-2 lg:px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            <button 
+              onClick={() => {
+                if (setActiveTab) {
+                  setActiveTab('overview');
+                } else {
+                  navigate('/dashboard?tab=overview');
+                }
+              }}
+              className="ml-3 text-gray-600 font-medium hidden sm:inline hover:text-[#165DFF] transition-colors cursor-pointer"
             >
-              <i className="fas fa-sign-out-alt mr-1 lg:mr-2"></i>
-              <span className="hidden lg:inline">退出</span>
-              <span className="lg:hidden">退出</span>
+              管理后台
             </button>
+          </div>
+
+          {/* Navigation Links - Mobile only logic handles this now */}
+          <div className="hidden md:flex md:items-center md:space-x-4 lg:space-x-8">
+            {/* 顶部导航已移除，功能移至侧边栏 */}
+          </div>
+
+          {/* User Menu - Removed from desktop, moved to sidebar */}
+          <div className="hidden md:flex md:items-center md:space-x-2 lg:space-x-4">
+            {/* 用户菜单已移至侧边栏底部 */}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="切换菜单"
@@ -122,7 +160,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
                   {item.label}
                 </button>
               ))}
-              
+
               {/* Mobile User Info */}
               <div className="border-t border-gray-200 pt-3 mt-3">
                 <div className="flex items-center px-3 py-2 mb-2">
@@ -136,7 +174,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
                     <div className="text-gray-500 truncate">{user?.email || 'admin@example.com'}</div>
                   </div>
                 </div>
-                
+
                 {/* Mobile Action Buttons */}
                 <div className="flex items-center justify-around px-3 py-2 bg-gray-50 rounded-md mx-3">
                   <button
@@ -165,28 +203,8 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
           </div>
         )}
 
-        {/* Dashboard Tabs */}
-        {isDashboard && activeTab && setActiveTab && (
-          <div className="border-t border-gray-200">
-            <div className="flex space-x-2 sm:space-x-8 overflow-x-auto scrollbar-hide px-2 sm:px-0">
-              {dashboardTabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
-                    activeTab === tab.key
-                      ? 'text-[#165DFF] border-[#165DFF]'
-                      : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <i className={`${tab.icon} mr-1 sm:mr-2 text-xs sm:text-sm`}></i>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.label.replace('管理', '')}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Mobile Dashboard Tabs */}
+        <MobileDashboardTabs />
       </div>
     </nav>
   );

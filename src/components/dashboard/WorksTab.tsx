@@ -1,16 +1,5 @@
 import React from 'react';
-
-interface Work {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  tags: string[];
-  date?: string;
-  created_at?: string;
-  featured?: boolean;
-}
+import { Work } from '@/types';
 
 interface WorksTabProps {
   works: Work[];

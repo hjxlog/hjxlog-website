@@ -26,7 +26,6 @@ interface Blog {
   created_at: string;
   updated_at: string;
   views?: number;
-  likes?: number;
 }
 
 const BlogManagement: React.FC = () => {
@@ -251,7 +250,6 @@ const BlogManagement: React.FC = () => {
                         <span>分类: {blog.category}</span>
                         <span>创建: {formatDate(blog.created_at)}</span>
                         {blog.views !== undefined && <span>浏览: {blog.views}</span>}
-                        {blog.likes !== undefined && <span>点赞: {blog.likes}</span>}
                       </div>
                       {blog.tags && blog.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">

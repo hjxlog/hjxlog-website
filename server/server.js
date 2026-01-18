@@ -16,6 +16,9 @@ import {
   deleteFromOSS 
 } from './utils/ossConfig.js';
 import { requestLogMiddleware, errorLogMiddleware, createLogger } from './utils/logMiddleware.js';
+import { createChatRouter } from './routes/chatRouter.js';
+import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
+import { createPromptRouter } from './routes/promptRouter.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -131,6 +134,40 @@ app.use((error, req, res, next) => {
 });
 
 // API路由
+
+// ==================== AI 聊天相关API ====================
+// 使用路由函数获取 dbClient，确保在数据库连接后可用
+app.use('/api/chat', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createChatRouter(() => dbClient)(req, res, next);
+});
+
+// ==================== 知识库管理相关API ====================
+app.use('/api/knowledge-base', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createKnowledgeBaseRouter(() => dbClient)(req, res, next);
+});
+
+// ==================== 提示词配置相关API ====================
+app.use('/api/prompts', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createPromptRouter(() => dbClient)(req, res, next);
+});
 
 // ==================== 图片上传相关API ====================
 
@@ -610,36 +647,7 @@ app.post('/api/database/test', async (req, res) => {
   }
 });
 
-// 获取所有评论（管理员用）
-app.get('/api/comments', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    console.log('📋 [API] 获取所有评论请求');
-
-    const result = await dbClient.query(
-      `SELECT c.*, b.title as blog_title 
-       FROM comments c 
-       LEFT JOIN blogs b ON c.blog_id = b.id 
-       ORDER BY c.created_at DESC`
-    );
-
-    console.log(`✅ [API] 获取评论成功，共 ${result.rows.length} 条`);
-    res.json({
-      success: true,
-      data: result.rows
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 获取评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 // 获取博客列表
 app.get('/api/blogs', async (req, res) => {
@@ -875,68 +883,7 @@ app.post('/api/blogs/:id/view', async (req, res) => {
   }
 });
 
-// 博客点赞（带IP限制）
-app.post('/api/blogs/:id/like', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    const { id } = req.params;
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
-    const userAgent = req.get('User-Agent') || '';
-
-    console.log('❤️ [API] 博客点赞请求:', { blog_id: id, ip: clientIP });
-
-    // 检查该IP在10分钟内是否已经点赞过
-    const recentLike = await dbClient.query(
-      'SELECT id FROM blog_likes WHERE blog_id = $1 AND ip_address = $2 AND created_at > CURRENT_TIMESTAMP - INTERVAL \'10 minutes\'',
-      [id, clientIP]
-    );
-
-    if (recentLike.rows.length > 0) {
-      console.log('⚠️ [API] IP限制：该IP在10分钟内已点赞过');
-      const currentLikes = await dbClient.query('SELECT likes FROM blogs WHERE id = $1', [id]);
-      return res.status(200).json({
-        success: false,
-        likes: currentLikes.rows[0]?.likes || 0,
-        message: '您已经点过赞了，请10分钟后再试'
-      });
-    }
-
-    // 记录点赞
-    await dbClient.query(
-      'INSERT INTO blog_likes (blog_id, ip_address, user_agent) VALUES ($1, $2, $3)',
-      [id, clientIP, userAgent]
-    );
-
-    const result = await dbClient.query(
-      'UPDATE blogs SET likes = COALESCE(likes, 0) + 1 WHERE id = $1 RETURNING likes',
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '博客不存在'
-      });
-    }
-
-    console.log('✅ [API] 点赞成功，当前点赞数:', result.rows[0].likes);
-    res.json({
-      success: true,
-      likes: result.rows[0].likes,
-      message: '点赞成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 点赞失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 // 获取推荐内容（主页用）
 app.get('/api/featured', async (req, res) => {
@@ -1677,165 +1624,12 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// 获取博客评论
-app.get('/api/blogs/:id/comments', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    const { id } = req.params;
-    console.log('💬 [API] 获取博客评论:', id);
 
-    const result = await dbClient.query(
-      'SELECT * FROM comments WHERE blog_id = $1 ORDER BY created_at DESC',
-      [id]
-    );
 
-    console.log('✅ [API] 评论获取成功，数量:', result.rows.length);
-    res.json({
-      success: true,
-      data: result.rows
-    });
 
-  } catch (error) {
-    console.error('❌ [API] 获取评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
-// 添加匿名评论
-app.post('/api/blogs/:id/comments', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    const { id } = req.params;
-    const { author_name, author_email, content } = req.body;
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
-    const userAgent = req.get('User-Agent') || '';
-
-    console.log('💬 [API] 添加评论请求:', { blog_id: id, author_name, ip: clientIP });
-
-    if (!author_name || !content) {
-      return res.status(400).json({
-        success: false,
-        message: '姓名和评论内容不能为空'
-      });
-    }
-
-    const result = await dbClient.query(
-      `INSERT INTO comments (blog_id, author_name, author_email, content, ip_address, user_agent, created_at) 
-       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP) 
-       RETURNING *`,
-      [id, author_name, author_email || null, content, clientIP, userAgent]
-    );
-
-    console.log('✅ [API] 评论添加成功');
-    res.status(201).json({
-      success: true,
-      data: result.rows[0],
-      message: '评论添加成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 添加评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 管理员回复评论
-app.post('/api/comments/:id/reply', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    const { admin_reply } = req.body;
-
-    console.log('💬 [API] 管理员回复评论请求:', { comment_id: id });
-
-    if (!admin_reply) {
-      return res.status(400).json({
-        success: false,
-        message: '回复内容不能为空'
-      });
-    }
-
-    const result = await dbClient.query(
-      `UPDATE comments SET 
-          admin_reply = $1, 
-          admin_reply_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 
-        RETURNING *`,
-      [admin_reply, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '评论不存在'
-      });
-    }
-
-    console.log('✅ [API] 评论回复成功');
-    res.json({
-      success: true,
-      data: result.rows[0],
-      message: '回复成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 回复评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 删除评论
-app.delete('/api/comments/:id', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    console.log('💬 [API] 删除评论请求:', id);
-
-    const result = await dbClient.query('DELETE FROM comments WHERE id = $1 RETURNING *', [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '评论不存在'
-      });
-    }
-
-    console.log('✅ [API] 评论删除成功');
-    res.json({
-      success: true,
-      message: '评论删除成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 删除评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 // ================================================
 // 富媒体动态模块 API
@@ -1865,8 +1659,6 @@ app.get('/api/moments', async (req, res) => {
         content,
         author_id,
         visibility,
-        likes_count,
-        comments_count,
         created_at,
         updated_at,
         CASE 
@@ -1924,8 +1716,6 @@ app.get('/api/moments/:id', async (req, res) => {
         content,
         author_id,
         visibility,
-        likes_count,
-        comments_count,
         created_at,
         updated_at,
         CASE 
@@ -2131,270 +1921,14 @@ app.delete('/api/moments/:id', async (req, res) => {
   }
 });
 
-// 动态点赞（带IP限制）
-app.post('/api/moments/:id/like', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
 
-    const { id } = req.params;
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
-    const userAgent = req.get('User-Agent') || '';
 
-    console.log('❤️ [API] 动态点赞请求:', { moment_id: id, ip: clientIP });
 
-    // 检查该IP是否已经点赞过
-    const existingLike = await dbClient.query(
-      'SELECT id FROM moment_likes WHERE moment_id = $1 AND ip_address = $2',
-      [id, clientIP]
-    );
 
-    if (existingLike.rows.length > 0) {
-      // 取消点赞
-      await dbClient.query(
-        'DELETE FROM moment_likes WHERE moment_id = $1 AND ip_address = $2',
-        [id, clientIP]
-      );
 
-      await dbClient.query(
-        'UPDATE moments SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = $1',
-        [id]
-      );
 
-      const result = await dbClient.query('SELECT likes_count FROM moments WHERE id = $1', [id]);
 
-      console.log('💔 [API] 取消点赞成功');
-      res.json({
-        success: true,
-        liked: false,
-        likes_count: result.rows[0]?.likes_count || 0,
-        message: '取消点赞成功'
-      });
-    } else {
-      // 添加点赞
-      await dbClient.query(
-        'INSERT INTO moment_likes (moment_id, ip_address, user_agent) VALUES ($1, $2, $3)',
-        [id, clientIP, userAgent]
-      );
 
-      const result = await dbClient.query(
-        'UPDATE moments SET likes_count = likes_count + 1 WHERE id = $1 RETURNING likes_count',
-        [id]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: '动态不存在'
-        });
-      }
-
-      console.log('❤️ [API] 点赞成功，当前点赞数:', result.rows[0].likes_count);
-      res.json({
-        success: true,
-        liked: true,
-        likes_count: result.rows[0].likes_count,
-        message: '点赞成功'
-      });
-    }
-
-  } catch (error) {
-    console.error('❌ [API] 动态点赞失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 获取动态评论
-app.get('/api/moments/:id/comments', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    console.log('💬 [API] 获取动态评论:', id);
-
-    const result = await dbClient.query(
-      'SELECT * FROM moment_comments WHERE moment_id = $1 AND status = \'approved\' ORDER BY created_at DESC',
-      [id]
-    );
-
-    console.log('✅ [API] 动态评论获取成功，数量:', result.rows.length);
-    res.json({
-      success: true,
-      data: result.rows
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 获取动态评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 添加动态评论（支持匿名评论）
-app.post('/api/moments/:id/comments', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    const { author_name, author_email, content, parent_id } = req.body;
-    const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || '127.0.0.1';
-    const userAgent = req.get('User-Agent') || '';
-
-    console.log('💬 [API] 添加动态评论请求:', { moment_id: id, author_name, ip: clientIP });
-
-    // 验证必填字段
-    if (!author_name || !content) {
-      return res.status(400).json({
-        success: false,
-        message: '姓名和评论内容不能为空'
-      });
-    }
-
-    // 邮箱为可选字段，如果没有提供则设为空字符串
-    const email = author_email || '';
-
-    // 插入评论，状态设为approved（直接通过审核）
-    const result = await dbClient.query(
-      `INSERT INTO moment_comments (moment_id, parent_id, author_name, author_email, content, status, ip_address, user_agent, created_at) 
-       VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7, CURRENT_TIMESTAMP) 
-       RETURNING *`,
-      [id, parent_id || null, author_name, email, content, clientIP, userAgent]
-    );
-
-    // 更新动态评论数
-    await dbClient.query(
-      'UPDATE moments SET comments_count = comments_count + 1 WHERE id = $1',
-      [id]
-    );
-
-    console.log('✅ [API] 动态评论添加成功');
-    res.status(201).json({
-      success: true,
-      data: result.rows[0],
-      message: '评论添加成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 添加动态评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 管理员回复动态评论
-app.post('/api/moments/comments/:id/reply', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-    const { admin_reply } = req.body;
-
-    console.log('👨‍💼 [API] 管理员回复动态评论请求:', { comment_id: id });
-
-    if (!admin_reply) {
-      return res.status(400).json({
-        success: false,
-        message: '回复内容不能为空'
-      });
-    }
-
-    const result = await dbClient.query(
-      `UPDATE moment_comments SET 
-          admin_reply = $1, 
-          admin_reply_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2 
-        RETURNING *`,
-      [admin_reply, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '评论不存在'
-      });
-    }
-
-    console.log('✅ [API] 管理员回复成功');
-    res.json({
-      success: true,
-      data: result.rows[0],
-      message: '回复成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 管理员回复失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// 删除动态评论（管理员功能）
-app.delete('/api/moments/comments/:id', async (req, res) => {
-  try {
-    if (!dbClient) {
-      throw new Error('数据库未连接');
-    }
-
-    const { id } = req.params;
-
-    console.log('🗑️ [API] 删除动态评论请求:', id);
-
-    // 获取评论信息以更新动态评论数
-    const commentResult = await dbClient.query(
-      'SELECT moment_id FROM moment_comments WHERE id = $1',
-      [id]
-    );
-
-    if (commentResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: '评论不存在'
-      });
-    }
-
-    const momentId = commentResult.rows[0].moment_id;
-
-    // 删除评论
-    const result = await dbClient.query('DELETE FROM moment_comments WHERE id = $1 RETURNING *', [id]);
-
-    // 更新动态评论数
-    await dbClient.query(
-      'UPDATE moments SET comments_count = GREATEST(comments_count - 1, 0) WHERE id = $1',
-      [momentId]
-    );
-
-    console.log('✅ [API] 动态评论删除成功');
-    res.json({
-      success: true,
-      data: result.rows[0],
-      message: '评论删除成功'
-    });
-
-  } catch (error) {
-    console.error('❌ [API] 删除动态评论失败:', error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
 
 // ==================== 照片管理API ====================
 
@@ -2904,11 +2438,6 @@ app.listen(PORT, () => {
   console.log(`   - GET  /api/works/categories  - 获取作品分类列表`);
   console.log(`   - GET  /api/works/:id         - 获取作品详情`);
   console.log(`   - GET  /api/featured          - 获取推荐内容（主页用）`);
-
-  console.log(`   - GET  /api/blogs/:id/comments - 获取博客评论`);
-  console.log(`   - POST /api/blogs/:id/comments - 添加评论`);
-  console.log(`   - POST /api/comments/:id/reply - 管理员回复评论`);
-  console.log(`   - DELETE /api/comments/:id    - 删除评论`);
 });
 
 // 优雅关闭
