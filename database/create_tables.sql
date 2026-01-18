@@ -5,6 +5,9 @@
 -- 密码: 12345678
 -- ================================================
 
+-- 启用 pgvector 扩展
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- 删除已存在的表（如果存在）
 
 DROP TABLE IF EXISTS moments CASCADE;

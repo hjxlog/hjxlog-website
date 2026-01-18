@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL 数据库
   database:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: hjxlog-database
     environment:
       POSTGRES_DB: hjxlog
