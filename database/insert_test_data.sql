@@ -6,7 +6,7 @@
 -- ================================================
 
 -- 清空现有数据
-TRUNCATE TABLE blogs, works, users, comments, blog_likes RESTART IDENTITY CASCADE;
+TRUNCATE TABLE blog_views, moments, system_logs, photos, works, blogs, users RESTART IDENTITY CASCADE;
 
 -- 插入用户数据
 INSERT INTO users (username, email, password_hash, avatar, bio) VALUES
@@ -15,7 +15,7 @@ INSERT INTO users (username, email, password_hash, avatar, bio) VALUES
 ('guest', 'guest@hjxlog.com', '$2b$10$93QjprbEpLkLmz8.VqjGkOXyPJzZ02Dd01W5HVMxQK.cRQwxwkApG', '/avatars/guest.jpg', '访客用户');
 
 -- 插入博客数据（带有【数据库数据】标识）
-INSERT INTO blogs (title, excerpt, content, author, category, tags, published, views, likes, cover_image) VALUES
+INSERT INTO blogs (title, excerpt, content, author, category, tags, published, featured, views, cover_image) VALUES
 ('【数据库数据】React 18 新特性深度解析：并发渲染的革命性变化', 
  '深入探讨React 18中的并发渲染、自动批处理、Suspense改进等核心特性，以及它们如何改变我们构建用户界面的方式。', 
  '# React 18 新特性深度解析
@@ -59,7 +59,7 @@ function App() {
 React 18 对 Suspense 进行了重大改进，现在支持服务端渲染...', 
  'HJX', '前端开发', 
  ARRAY['React', 'JavaScript', '前端框架', '性能优化', '并发渲染'], 
- true, 1250, 89, 
+ true, true, 1250, 
  'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop'),
 
 ('【数据库数据】TypeScript 5.0 新特性：装饰器和模板字符串类型', 
@@ -94,7 +94,7 @@ class Calculator {
 新版本对模板字符串类型进行了重大改进...', 
  'HJX', '前端开发', 
  ARRAY['TypeScript', 'JavaScript', '类型系统', '装饰器'], 
- true, 980, 67, 
+ true, true, 980, 
  'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop'),
 
 ('【数据库数据】Vue 3 Composition API 最佳实践指南', 
@@ -131,7 +131,7 @@ onMounted(() => {
 ```', 
  'HJX', '前端开发', 
  ARRAY['Vue.js', 'Composition API', 'JavaScript', '前端框架'], 
- true, 1450, 112, 
+ true, true, 1450, 
  'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=800&h=400&fit=crop'),
 
 ('【数据库数据】Node.js 性能优化：从理论到实践', 
@@ -165,7 +165,7 @@ clearInterval(timer);
 ```', 
  'HJX', '后端开发', 
  ARRAY['Node.js', '性能优化', 'JavaScript', '后端'], 
- true, 890, 76, 
+ true, true, 890, 
  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop'),
 
 ('【数据库数据】PostgreSQL 高级查询技巧与性能优化', 
@@ -221,7 +221,7 @@ WHERE published = true;
 ```', 
  'HJX', '数据库', 
  ARRAY['PostgreSQL', '数据库优化', 'SQL', '性能调优'], 
- true, 756, 62, 
+ true, true, 756, 
  'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&h=400&fit=crop'),
 
 ('【数据库数据】微前端架构实践：从单体到微服务的前端演进', 
@@ -263,7 +263,7 @@ start();
 ```', 
  'HJX', '架构设计', 
  ARRAY['微前端', '架构设计', 'qiankun', '模块联邦'], 
- true, 1120, 95, 
+ true, true, 1120, 
  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop'),
 
 ('【数据库数据】Docker 容器化部署实战：从开发到生产', 
@@ -305,7 +305,7 @@ CMD ["npm", "start"]
 ```', 
  'HJX', 'DevOps', 
  ARRAY['Docker', '容器化', '部署', 'DevOps'], 
- true, 923, 81, 
+ true, true, 923, 
  'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800&h=400&fit=crop'),
 
 ('【数据库数据】全栈开发实战：构建现代化Web应用', 
@@ -353,11 +353,11 @@ project/
 ```', 
  'HJX', '全栈开发', 
  ARRAY['全栈开发', 'React', 'Node.js', 'PostgreSQL', 'Docker'], 
- true, 1456, 123, 
+ true, true, 1456, 
  'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=800&h=400&fit=crop');
 
 -- 插入作品数据
-INSERT INTO works (title, description, content, category, status, tags, technologies, features, challenges, screenshots, project_url, github_url, cover_image) VALUES
+INSERT INTO works (title, description, content, category, status, tags, technologies, features, challenges, screenshots, project_url, github_url, cover_image, featured) VALUES
 ('HJXLog 博客系统', 
  '基于React和Node.js构建的现代化博客系统，支持Markdown编辑、标签分类、搜索功能等。', 
  '# HJXLog 博客系统
@@ -387,7 +387,7 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  ARRAY['https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop'],
  'https://hjxlog.com', 
  'https://github.com/hjx/hjxlog-blog', 
- 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'),
+ 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop', true),
 
 ('React 组件库', 
  '企业级React组件库，包含常用的UI组件，支持主题定制和TypeScript。', 
@@ -414,7 +414,7 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  ARRAY['https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop'],
  'https://ui.hjxlog.com', 
  'https://github.com/hjx/react-ui-lib', 
- 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop'),
+ 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop', true),
 
 ('微前端架构方案', 
  '基于qiankun的微前端架构解决方案，支持多技术栈应用集成。', 
@@ -444,7 +444,7 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  ARRAY['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop'],
  null, 
  'https://github.com/hjx/micro-frontend-demo', 
- 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop'),
+ 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop', true),
 
 ('Node.js API 框架', 
  '轻量级的Node.js API开发框架，集成了认证、日志、缓存等常用功能。', 
@@ -475,7 +475,7 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  ARRAY['https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800&h=600&fit=crop'],
  null, 
  'https://github.com/hjx/node-api-framework', 
- 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop'),
+ 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop', true),
 
 ('数据可视化平台', 
  '基于D3.js和React的数据可视化平台，支持多种图表类型和实时数据更新。', 
@@ -502,46 +502,16 @@ INSERT INTO works (title, description, content, category, status, tags, technolo
  ARRAY['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop', 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&h=600&fit=crop'],
  'https://dataviz.hjxlog.com', 
  'https://github.com/hjx/data-visualization', 
- 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop');
+ 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop', true);
 
 
-
--- 插入评论数据
-INSERT INTO comments (blog_id, author_name, author_email, content, ip_address, user_agent, status) VALUES
-(1, '技术爱好者', 'tech@example.com', '这篇关于React 18的文章写得非常详细！并发渲染确实是一个革命性的特性，期待在项目中应用。', '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'approved'),
-(1, '前端开发者', 'frontend@example.com', '自动批处理的例子很实用，解决了我之前遇到的性能问题。感谢分享！', '192.168.1.201', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'approved'),
-(1, '学习者', 'learner@example.com', '作为React新手，这篇文章帮助我理解了很多概念。请问有推荐的实践项目吗？', '192.168.1.202', 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15', 'approved'),
-(2, 'Vue开发者', 'vue@example.com', 'TypeScript确实能大大提升开发效率，特别是在大型项目中。', '192.168.1.203', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'approved'),
-(2, '全栈工程师', 'fullstack@example.com', '类型安全真的很重要，减少了很多运行时错误。', '192.168.1.204', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'approved'),
-(3, '性能优化专家', 'perf@example.com', 'Webpack 5的模块联邦功能确实很强大，我们在微前端项目中用到了。', '192.168.1.205', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'approved'),
-(3, '构建工具爱好者', 'build@example.com', '打包优化的技巧很实用，我的项目构建时间减少了50%！', '192.168.1.206', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'approved'),
-(4, 'Node.js开发者', 'nodejs@example.com', 'Express中间件的设计模式确实很优雅，学到了很多。', '192.168.1.207', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'approved'),
-(5, 'CSS爱好者', 'css@example.com', 'Grid布局比Flexbox更适合复杂的二维布局，感谢详细的对比！', '192.168.1.208', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15', 'approved'),
-(6, '数据库专家', 'db@example.com', 'PostgreSQL的性能优化技巧很实用，特别是索引优化部分。', '192.168.1.209', 'Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0', 'approved');
-
--- 插入管理员回复的评论
-INSERT INTO comments (blog_id, parent_id, author_name, author_email, content, ip_address, user_agent, status, admin_reply, admin_reply_at) VALUES
-(1, 3, 'HJX', 'hjx@hjxlog.com', '推荐你可以尝试构建一个简单的Todo应用，然后逐步加入React 18的新特性。', '192.168.1.1', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'approved', '感谢建议！我会准备一些实践教程。', CURRENT_TIMESTAMP - INTERVAL '2 hours');
-
--- 插入点赞记录数据（模拟不同IP的点赞）
-INSERT INTO blog_likes (blog_id, ip_address, user_agent, created_at) VALUES
-(1, '192.168.1.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '1 day'),
-(1, '192.168.1.201', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '23 hours'),
-(1, '192.168.1.202', 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15', CURRENT_TIMESTAMP - INTERVAL '22 hours'),
-(2, '192.168.1.203', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '20 hours'),
-(2, '192.168.1.204', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '18 hours'),
-(3, '192.168.1.205', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '16 hours'),
-(3, '192.168.1.206', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '14 hours'),
-(4, '192.168.1.207', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', CURRENT_TIMESTAMP - INTERVAL '12 hours'),
-(5, '192.168.1.208', 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15', CURRENT_TIMESTAMP - INTERVAL '10 hours'),
-(6, '192.168.1.209', 'Mozilla/5.0 (Android 11; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0', CURRENT_TIMESTAMP - INTERVAL '8 hours');
 
 -- 系统日志测试数据
-INSERT INTO system_logs (id, log_type, level, module, action, description, user_id, username, ip_address, user_agent, request_method, request_url, request_params, response_status, execution_time, error_message, error_stack, extra_data, created_at, request_data, response_data) VALUES
-(1, 'request', 'INFO', 'auth', 'login', '用户登录成功', 1, 'admin', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'POST', '/api/auth/login', '{"remember_me": true}', 200, 150, NULL, NULL, NULL, CURRENT_TIMESTAMP, '{"username": "admin", "remember_me": true}', '{"status": "success", "token": "jwt_token_here"}'),
-(2, 'error', 'ERROR', 'blog', 'create', '创建博客失败：标题不能为空', 2, 'user2', '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'POST', '/api/blogs', '{"content": "测试内容"}', 400, 50, '标题不能为空', 'ValidationError: title is required', NULL, CURRENT_TIMESTAMP, '{"title": "", "content": "测试内容"}', NULL),
-(3, 'system', 'WARN', 'database', 'backup', '数据库备份完成，但存在警告', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 30000, '备份过程中发现性能问题', NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}', CURRENT_TIMESTAMP, NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}'),
-(4, 'security', 'ERROR', 'auth', 'login', '登录失败：密码错误', NULL, 'hacker', '192.168.1.102', 'curl/7.68.0', 'POST', '/api/auth/login', '{"password": "wrong_password"}', 401, 100, '密码验证失败', 'AuthenticationError: Invalid credentials', NULL, CURRENT_TIMESTAMP, '{"username": "hacker", "password": "wrong_password"}', NULL);
+INSERT INTO system_logs (log_type, level, module, action, description, user_id, username, ip_address, user_agent, request_method, request_url, request_params, response_status, execution_time, error_message, error_stack, extra_data, created_at, request_data, response_data) VALUES
+('request', 'INFO', 'auth', 'login', '用户登录成功', 1, 'admin', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'POST', '/api/auth/login', '{"remember_me": true}', 200, 150, NULL, NULL, NULL, CURRENT_TIMESTAMP, '{"username": "admin", "remember_me": true}', '{"status": "success", "token": "jwt_token_here"}'),
+('error', 'ERROR', 'blog', 'create', '创建博客失败：标题不能为空', 2, 'user2', '192.168.1.101', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'POST', '/api/blogs', '{"content": "测试内容"}', 400, 50, '标题不能为空', 'ValidationError: title is required', NULL, CURRENT_TIMESTAMP, '{"title": "", "content": "测试内容"}', NULL),
+('system', 'WARN', 'database', 'backup', '数据库备份完成，但存在警告', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 30000, '备份过程中发现性能问题', NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}', CURRENT_TIMESTAMP, NULL, '{"backup_size": "1.2GB", "warnings": ["某些表未优化"]}'),
+('security', 'ERROR', 'auth', 'login', '登录失败：密码错误', NULL, 'hacker', '192.168.1.102', 'curl/7.68.0', 'POST', '/api/auth/login', '{"password": "wrong_password"}', 401, 100, '密码验证失败', 'AuthenticationError: Invalid credentials', NULL, CURRENT_TIMESTAMP, '{"username": "hacker", "password": "wrong_password"}', NULL);
 
 -- 插入照片数据
 INSERT INTO photos (title, description, image_url, thumbnail_url, category, location, taken_at, published) VALUES
@@ -551,7 +521,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
  '城市风光', 
  '上海外滩', 
- '2024-01-15 18:30:00', 
+ '2024-01-15', 
  true),
 
 ('静谧的森林小径', 
@@ -560,7 +530,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop', 
  '自然风光', 
  '黄山风景区', 
- '2024-01-20 10:15:00', 
+ '2024-01-20', 
  true),
 
 ('海边的日出', 
@@ -569,7 +539,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
  '自然风光', 
  '青岛海滨', 
- '2024-01-25 06:45:00', 
+ '2024-01-25', 
  true),
 
 ('古典建筑的细节', 
@@ -578,7 +548,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop', 
  '建筑摄影', 
  '故宫博物院', 
- '2024-02-01 14:20:00', 
+ '2024-02-01', 
  true),
 
 ('街头的生活瞬间', 
@@ -587,7 +557,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop', 
  '人文纪实', 
  '北京胡同', 
- '2024-02-05 16:30:00', 
+ '2024-02-05', 
  true),
 
 ('山峰云海', 
@@ -596,7 +566,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop', 
  '自然风光', 
  '华山', 
- '2024-02-10 07:00:00', 
+ '2024-02-10', 
  false),
 
 ('现代建筑的几何美学', 
@@ -605,7 +575,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop', 
  '建筑摄影', 
  '深圳CBD', 
- '2024-02-15 12:00:00', 
+ '2024-02-15', 
  true),
 
 ('花园中的春色', 
@@ -614,7 +584,7 @@ INSERT INTO photos (title, description, image_url, thumbnail_url, category, loca
  'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop', 
  '自然风光', 
  '苏州园林', 
- '2024-03-01 15:45:00', 
+ '2024-03-01', 
  true);
 
 -- 插入示例动态数据
@@ -629,8 +599,7 @@ SELECT
     (SELECT COUNT(*) FROM users) as users_count,
     (SELECT COUNT(*) FROM blogs) as blogs_count,
     (SELECT COUNT(*) FROM works) as works_count,
-    (SELECT COUNT(*) FROM comments) as comments_count,
-    (SELECT COUNT(*) FROM blog_likes) as blog_likes_count,
+    (SELECT COUNT(*) FROM blog_views) as blog_views_count,
     (SELECT COUNT(*) FROM system_logs) as system_logs_count,
     (SELECT COUNT(*) FROM moments) as moments_count,
     (SELECT COUNT(*) FROM photos) as photos_count;
