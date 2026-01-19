@@ -22,7 +22,7 @@ interface ConnectionStatus {
 }
 
 const defaultConfig: DatabaseConfig = {
-  host: 'localhost',
+  host: '',
   port: 3306,
   database: 'hjxlog_blog',
   username: 'root',
