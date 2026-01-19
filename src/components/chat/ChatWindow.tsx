@@ -45,6 +45,25 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
     fetchQuota();
   }, []);
 
+  // 移动端锁定背景滚动
+  useEffect(() => {
+    const lockScroll = () => {
+      if (window.innerWidth < 640) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    };
+
+    lockScroll();
+    window.addEventListener('resize', lockScroll);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('resize', lockScroll);
+    };
+  }, []);
+
   const sendMessage = async (message: string) => {
     // 检查配额
     if (quota.remaining <= 0 || quota.globalRemaining <= 0) {
@@ -142,7 +161,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-50 border border-white/20 overflow-hidden ring-1 ring-black/5">
+    <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 h-[calc(100vh-140px)] sm:h-[600px] bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-50 border border-white/20 overflow-hidden ring-1 ring-black/5 transition-all duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/50 bg-white/50 backdrop-blur-md">
         <div className="flex items-center gap-3">

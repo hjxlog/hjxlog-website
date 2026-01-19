@@ -20,7 +20,7 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t border-slate-100 bg-white/50 backdrop-blur-md">
+    <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-slate-100 bg-white/50 backdrop-blur-md">
       <div className="flex gap-2 relative">
         <input
           type="text"

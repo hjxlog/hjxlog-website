@@ -50,7 +50,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed mb-4">
             你可以问我关于这个网站、项目或技术栈的任何问题。
           </p>
-          <div className="w-full px-6 space-y-2">
+          <div className="w-full px-4 sm:px-6 space-y-2">
             {onQuickQuestion && (
               <>
                 <button

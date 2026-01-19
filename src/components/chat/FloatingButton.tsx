@@ -13,7 +13,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({ onClick, isOpen 
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-50 bg-white/80 backdrop-blur-md text-slate-800 p-4 rounded-full shadow-lg border border-white/50 hover:shadow-xl hover:bg-white/90 transition-all duration-300 hover:scale-105 active:scale-95 group"
+      className="fixed bottom-6 right-4 sm:right-6 z-50 bg-white/80 backdrop-blur-md text-slate-800 p-4 rounded-full shadow-lg border border-white/50 hover:shadow-xl hover:bg-white/90 transition-all duration-300 hover:scale-105 active:scale-95 group"
       aria-label={isOpen ? "关闭AI助手" : "打开AI助手"}
     >
       {isOpen ? (
