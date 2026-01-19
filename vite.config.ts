@@ -29,7 +29,7 @@ export default defineConfig({
           'ui-vendor': ['framer-motion', 'lucide-react'],
           
           // 工具库
-          'utils-vendor': ['axios', 'clsx', 'tailwind-merge', 'zod', 'date-fns']
+          'utils-vendor': ['axios', 'clsx', 'tailwind-merge', 'zod']
         }
       }
     },
