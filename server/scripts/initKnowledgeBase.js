@@ -5,8 +5,13 @@ import pg from 'pg';
 import { config } from 'dotenv';
 import { ZhipuAI } from 'zhipuai';
 import * as textChunker from '../utils/textChunker.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+config({ path: path.join(__dirname, '../../.env') });
 
 const { Client } = pg;
 
