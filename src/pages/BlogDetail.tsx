@@ -516,7 +516,7 @@ const BlogDetail: React.FC = () => {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
-                  className="bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-100 p-5"
+                  className="hidden lg:block bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-100 p-5"
                 >
                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                       相关阅读
