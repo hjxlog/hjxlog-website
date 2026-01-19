@@ -1,16 +1,9 @@
 // API配置文件
 // 统一管理API地址，避免硬编码
 
-// 开发环境API地址
-const DEV_API_BASE_URL = 'http://localhost:3006';
-
-// 生产环境API地址（使用相对路径，通过nginx代理）
-const PROD_API_BASE_URL = '';
-
-// 根据环境变量或当前环境自动选择API地址
-export const API_BASE_URL = import.meta.env.PROD 
-  ? PROD_API_BASE_URL 
-  : DEV_API_BASE_URL;
+// 无论开发还是生产环境，都统一使用相对路径，由代理服务器（Vite Proxy 或 Nginx）处理转发
+// 这样可以避免在代码中硬编码 localhost，防止触发浏览器的本地网络权限警告
+export const API_BASE_URL = '';
 
 // 通用API请求函数
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {

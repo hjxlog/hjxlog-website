@@ -58,6 +58,12 @@ export default defineConfig({
   },
   // 开发服务器优化
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3006',
+        changeOrigin: true,
+      }
+    },
     // 预热常用文件
     warmup: {
       clientFiles: ['./src/pages/Home.tsx', './src/components/PublicNav.tsx']
