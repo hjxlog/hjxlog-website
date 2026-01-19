@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import HeroApple from '@/components/home/HeroApple';
-import AppleWorksScroll from '@/components/home/AppleWorksScroll';
-import AppleBlogList from '@/components/home/AppleBlogList';
 import { apiRequest } from '@/config/api';
+
+// 懒加载非首屏组件
+const AppleWorksScroll = lazy(() => import('@/components/home/AppleWorksScroll'));
+const AppleBlogList = lazy(() => import('@/components/home/AppleBlogList'));
 
 // 主页面组件
 export default function Home() {
@@ -50,10 +52,14 @@ export default function Home() {
         <HeroApple />
         
         {/* 2. Works Horizontal Scroll (White) */}
-        <AppleWorksScroll works={featuredData.works} />
+        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-slate-400">Loading works...</div>}>
+          <AppleWorksScroll works={featuredData.works} />
+        </Suspense>
 
         {/* 3. Blog List Section (Light Gray) */}
-        <AppleBlogList blogs={featuredData.blogs} />
+        <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-slate-400">Loading blogs...</div>}>
+          <AppleBlogList blogs={featuredData.blogs} />
+        </Suspense>
       </main>
 
       <Footer />

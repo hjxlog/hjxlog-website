@@ -22,18 +22,14 @@ export default defineConfig({
           // 全局变量配置
         },
         manualChunks: {
-          // React 核心库 - 最高优先级
-          'react-core': ['react', 'react-dom'],
-          'react-router': ['react-router-dom'],
+          // React 核心库
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           
-          // 3D 库
-          three: ['three'],
+          // UI 库
+          'ui-vendor': ['framer-motion', 'lucide-react'],
           
-          // 动画库
-          'framer-motion': ['framer-motion'],
-          
-          // 其他第三方库
-          vendor: ['axios', 'clsx', 'tailwind-merge', 'zod']
+          // 工具库
+          'utils-vendor': ['axios', 'clsx', 'tailwind-merge', 'zod', 'date-fns']
         }
       }
     },

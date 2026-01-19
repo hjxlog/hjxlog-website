@@ -1,23 +1,26 @@
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import Home from "@/pages/Home";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { AuthContext, User } from '@/contexts/authContext';
 import { Toaster } from 'sonner';
-import Login from "@/pages/Login";
-import Works from "@/pages/Works";
-import WorkDetail from "@/pages/WorkDetail";
-import Blog from "@/pages/Blog";
-import BlogDetail from "@/pages/BlogDetail";
-import Dashboard from "@/pages/Dashboard";
-import NotFound from "@/pages/NotFound";
-import Profile from "@/pages/Profile";
-
-import BlogManagement from "@/pages/BlogManagement";
-import BlogEditor from "@/pages/BlogEditor";
-import Moments from "@/pages/Moments";
-import MomentDetail from "@/pages/MomentDetail";
-import Photos from "@/pages/Photos";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { AIAssistant } from "@/components/chat/AIAssistant";
+
+// 懒加载页面组件
+const Home = lazy(() => import("@/pages/Home"));
+const Login = lazy(() => import("@/pages/Login"));
+const Works = lazy(() => import("@/pages/Works"));
+const WorkDetail = lazy(() => import("@/pages/WorkDetail"));
+const Blog = lazy(() => import("@/pages/Blog"));
+const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const BlogManagement = lazy(() => import("@/pages/BlogManagement"));
+const BlogEditor = lazy(() => import("@/pages/BlogEditor"));
+const Moments = lazy(() => import("@/pages/Moments"));
+const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
+const Photos = lazy(() => import("@/pages/Photos"));
+const KnowledgeBase = lazy(() => import("@/pages/KnowledgeBase"));
 
 // 计算7天后的过期时间
 const getExpirationDate = () => {
@@ -151,23 +154,25 @@ export default function App() {
     >
       <Toaster position="top-right" richColors />
       <AIAssistant />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/works" element={<Works />} />
-        <Route path="/works/:id" element={<WorkDetail />} />
-        <Route path="/blogs" element={<Blog />} />
-        <Route path="/blog/:id" element={<BlogDetail />} />
-        <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Login />} />
-        <Route path="/profile" element={isAuthenticated ? <Profile /> : <Login />} />
-        <Route path="/admin/blogs" element={isAuthenticated ? <BlogManagement /> : <Login />} />
-        <Route path="/admin/blog/create" element={isAuthenticated ? <BlogEditor /> : <Login />} />
-        <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogEditor /> : <Login />} />
-        <Route path="/moments" element={<Moments />} />
-        <Route path="/moments/:id" element={<MomentDetail />} />
-        <Route path="/photos" element={<Photos />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" text="加载页面资源中..." /></div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/works" element={<Works />} />
+          <Route path="/works/:id" element={<WorkDetail />} />
+          <Route path="/blogs" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Login />} />
+          <Route path="/profile" element={isAuthenticated ? <Profile /> : <Login />} />
+          <Route path="/admin/blogs" element={isAuthenticated ? <BlogManagement /> : <Login />} />
+          <Route path="/admin/blog/create" element={isAuthenticated ? <BlogEditor /> : <Login />} />
+          <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogEditor /> : <Login />} />
+          <Route path="/moments" element={<Moments />} />
+          <Route path="/moments/:id" element={<MomentDetail />} />
+          <Route path="/photos" element={<Photos />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </AuthContext.Provider>
   );
 }
