@@ -75,15 +75,15 @@ export default function OverviewTab({
           </p>
         </div>
         {/* 快速操作按钮组 */}
-        <div className="flex space-x-3 mt-4 md:mt-0 z-10">
-          <button onClick={() => openBlogForm()} className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium flex items-center">
-            <i className="fas fa-pen mr-2"></i> 写文章
+        <div className="flex w-full md:w-auto gap-2 md:gap-3 mt-4 md:mt-0 z-10">
+          <button onClick={() => openBlogForm()} className="flex-1 md:flex-none justify-center px-3 md:px-4 py-2.5 md:py-2 bg-slate-900 text-white rounded-xl md:rounded-lg hover:bg-slate-800 transition-all text-sm font-medium flex items-center whitespace-nowrap shadow-sm md:shadow-none">
+            <i className="fas fa-pen mr-1.5 md:mr-2"></i> 写文章
           </button>
-          <button onClick={() => openMomentForm()} className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium flex items-center">
-            <i className="fas fa-camera mr-2"></i> 发动态
+          <button onClick={() => openMomentForm()} className="flex-1 md:flex-none justify-center px-3 md:px-4 py-2.5 md:py-2 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-lg hover:bg-slate-50 transition-all text-sm font-medium flex items-center whitespace-nowrap shadow-sm md:shadow-none">
+            <i className="fas fa-camera mr-1.5 md:mr-2"></i> 发动态
           </button>
-          <button onClick={() => openWorkForm()} className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium flex items-center">
-            <i className="fas fa-plus mr-2"></i> 加作品
+          <button onClick={() => openWorkForm()} className="flex-1 md:flex-none justify-center px-3 md:px-4 py-2.5 md:py-2 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-lg hover:bg-slate-50 transition-all text-sm font-medium flex items-center whitespace-nowrap shadow-sm md:shadow-none">
+            <i className="fas fa-plus mr-1.5 md:mr-2"></i> 加作品
           </button>
         </div>
         {/* 装饰背景 */}
