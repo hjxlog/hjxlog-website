@@ -21,21 +21,21 @@ fi
 echo -e "${GREEN}✅ 代码拉取成功${NC}"
 echo
 
-echo -e "${BLUE}[2/4] 正在停止Docker容器...${NC}"
-docker compose down
-if [ $? -ne 0 ]; then
-    echo -e "${YELLOW}⚠️ 停止容器时出现警告，继续执行...${NC}"
-fi
-echo -e "${GREEN}✅ 容器停止完成${NC}"
-echo
-
-echo -e "${BLUE}[3/4] 正在重新构建Docker镜像（无缓存）...${NC}"
-docker compose build --no-cache
+echo -e "${BLUE}[2/4] 正在构建Docker镜像...${NC}"
+docker compose build
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ 构建镜像失败！${NC}"
     exit 1
 fi
 echo -e "${GREEN}✅ 镜像构建成功${NC}"
+echo
+
+echo -e "${BLUE}[3/4] 正在停止Docker容器...${NC}"
+docker compose down
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️ 停止容器时出现警告，继续执行...${NC}"
+fi
+echo -e "${GREEN}✅ 容器停止完成${NC}"
 echo
 
 echo -e "${BLUE}[4/4] 正在启动服务（后台模式）...${NC}"

@@ -7,6 +7,9 @@ WORKDIR /app
 # 复制 package.json 和 package-lock.json
 COPY package*.json ./
 
+# 设置淘宝 NPM 镜像（加速 npm install）
+RUN npm config set registry https://registry.npmmirror.com
+
 # 安装依赖
 RUN npm ci --only=production
 
