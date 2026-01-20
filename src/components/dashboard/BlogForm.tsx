@@ -25,6 +25,7 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [isGeneratingCategory, setIsGeneratingCategory] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
     content: '',
@@ -69,6 +70,47 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
 
   const handleContentChange = (content: string) => {
     setFormData(prev => ({ ...prev, content }));
+  };
+
+  // 处理粘贴图片上传
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    let imageFile = null;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        imageFile = items[i].getAsFile();
+        break;
+      }
+    }
+
+    if (!imageFile) return;
+
+    e.preventDefault();
+    setIsUploading(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', imageFile);
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || '上传失败');
+      }
+
+      setFormData(prev => ({ ...prev, cover_image: data.data.url }));
+    } catch (error: any) {
+      console.error('图片上传失败:', error);
+      alert(`图片上传失败: ${error.message || '未知错误'}`);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // AI 生成摘要
@@ -280,14 +322,23 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">封面图片</label>
-              <input
-                type="url"
-                name="cover_image"
-                value={formData.cover_image}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF]"
-                placeholder="输入图片URL"
-              />
+              <div className="relative">
+                <input
+                  type="url"
+                  name="cover_image"
+                  value={formData.cover_image}
+                  onChange={handleInputChange}
+                  onPaste={handlePaste}
+                  disabled={isUploading}
+                  className={`w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] ${isUploading ? 'bg-slate-50 text-slate-500' : ''}`}
+                  placeholder={isUploading ? "正在上传图片..." : "输入图片URL 或 粘贴截图 (Ctrl+V)"}
+                />
+                {isUploading && (
+                  <div className="absolute right-3 top-2.5">
+                    <i className="fas fa-spinner fa-spin text-[#165DFF]"></i>
+                  </div>
+                )}
+              </div>
               {formData.cover_image && (
                 <div className="mt-2">
                   <img

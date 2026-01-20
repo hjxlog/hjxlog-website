@@ -17,7 +17,7 @@ const generateFileName = (originalName) => {
   const ext = originalName.split('.').pop();
   const timestamp = Date.now();
   const uuid = uuidv4().substring(0, 8);
-  return `hjxlog/moments/${timestamp}-${uuid}.${ext}`;
+  return `hjxlog/images/${timestamp}-${uuid}.${ext}`;
 };
 
 // 验证文件类型
