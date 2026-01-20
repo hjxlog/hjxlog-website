@@ -19,6 +19,7 @@ import { requestLogMiddleware, errorLogMiddleware, createLogger } from './utils/
 import { createChatRouter } from './routes/chatRouter.js';
 import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
 import { createPromptRouter } from './routes/promptRouter.js';
+import { createAIRouter } from './routes/aiRouter.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -167,6 +168,17 @@ app.use('/api/prompts', (req, res, next) => {
     });
   }
   createPromptRouter(() => dbClient)(req, res, next);
+});
+
+// ==================== AI 通用服务API ====================
+app.use('/api/ai', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database not connected'
+    });
+  }
+  createAIRouter(() => dbClient)(req, res, next);
 });
 
 // ==================== 图片上传相关API ====================

@@ -22,6 +22,9 @@ interface BlogFormProps {
 
 export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [isGeneratingCategory, setIsGeneratingCategory] = useState(false);
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
     content: '',
@@ -66,6 +69,106 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
 
   const handleContentChange = (content: string) => {
     setFormData(prev => ({ ...prev, content }));
+  };
+
+  // AI 生成摘要
+  const handleAIGenerateExcerpt = async () => {
+    if (!formData.content) {
+      alert('请先输入内容，AI 才能帮您生成摘要哦！');
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch('/api/ai/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: formData.content }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || '生成失败');
+      }
+
+      setFormData(prev => ({ ...prev, excerpt: data.data.summary }));
+    } catch (error) {
+      console.error('生成摘要失败:', error);
+      alert('生成摘要失败，请稍后重试');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // AI 生成标签
+  const handleAIGenerateTags = async () => {
+    if (!formData.content) {
+      alert('请先输入内容，AI 才能帮您生成标签哦！');
+      return;
+    }
+
+    setIsGeneratingTags(true);
+
+    try {
+      const response = await fetch('/api/ai/generate-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: formData.content }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || '生成失败');
+      }
+
+      const newTags = data.data.tags.join(', ');
+      setFormData(prev => ({ ...prev, tags: newTags }));
+    } catch (error) {
+      console.error('生成标签失败:', error);
+      alert('生成标签失败，请稍后重试');
+    } finally {
+      setIsGeneratingTags(false);
+    }
+  };
+
+  // AI 生成分类
+  const handleAIGenerateCategory = async () => {
+    if (!formData.content) {
+      alert('请先输入内容，AI 才能帮您生成分类哦！');
+      return;
+    }
+
+    setIsGeneratingCategory(true);
+
+    try {
+      const response = await fetch('/api/ai/generate-category', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: formData.content }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || '生成失败');
+      }
+
+      setFormData(prev => ({ ...prev, category: data.data.category }));
+    } catch (error) {
+      console.error('生成分类失败:', error);
+      alert('生成分类失败，请稍后重试');
+    } finally {
+      setIsGeneratingCategory(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,7 +229,18 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">分类</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-slate-700">分类</label>
+                  <button
+                    type="button"
+                    onClick={handleAIGenerateCategory}
+                    disabled={isGeneratingCategory || !formData.content}
+                    className="text-sm text-[#165DFF] hover:text-[#165DFF]/80 flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <i className={`fas ${isGeneratingCategory ? 'fa-spinner fa-spin' : 'fa-layer-group'}`}></i>
+                    <span>{isGeneratingCategory ? '生成中...' : 'AI 生成分类'}</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   name="category"
@@ -189,7 +303,18 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">摘要</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-700">摘要</label>
+                <button
+                  type="button"
+                  onClick={handleAIGenerateExcerpt}
+                  disabled={isGenerating || !formData.content}
+                  className="text-sm text-[#165DFF] hover:text-[#165DFF]/80 flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <i className={`fas ${isGenerating ? 'fa-spinner fa-spin' : 'fa-magic'}`}></i>
+                  <span>{isGenerating ? '生成中...' : 'AI 生成摘要'}</span>
+                </button>
+              </div>
               <input
                 type="text"
                 name="excerpt"
@@ -202,7 +327,18 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">标签 (用逗号分隔)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-slate-700">标签 (用逗号分隔)</label>
+                <button
+                  type="button"
+                  onClick={handleAIGenerateTags}
+                  disabled={isGeneratingTags || !formData.content}
+                  className="text-sm text-[#165DFF] hover:text-[#165DFF]/80 flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <i className={`fas ${isGeneratingTags ? 'fa-spinner fa-spin' : 'fa-tags'}`}></i>
+                  <span>{isGeneratingTags ? '生成中...' : 'AI 生成标签'}</span>
+                </button>
+              </div>
               <input
                 type="text"
                 name="tags"
