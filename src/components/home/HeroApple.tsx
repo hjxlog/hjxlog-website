@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe, Cpu, HardDrive, Monitor, Award, Briefcase } from 'lucide-react';
+import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe, Cpu, HardDrive, Monitor, Award, Briefcase, X, Minus, Maximize2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AppleSection = ({ 
@@ -36,10 +36,16 @@ const AboutModal = ({ onClose }: { onClose: () => void }) => {
       >
         {/* Window Header */}
         <div className="h-8 bg-[#e3e3e3] border-b border-[#d1d1d1] flex items-center justify-between px-4">
-           <div className="flex space-x-2">
-              <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 border border-black/10 transition-colors"></button>
-              <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-black/10"></div>
-              <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-black/10"></div>
+           <div className="flex space-x-2 group">
+              <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 border border-black/10 transition-colors flex items-center justify-center">
+                <X size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+              <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-black/10 flex items-center justify-center">
+                <Minus size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-black/10 flex items-center justify-center">
+                <Maximize2 size={6} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
            </div>
            <div className="font-semibold text-slate-500 text-xs">关于我</div>
            <div className="w-14"></div>
@@ -208,10 +214,16 @@ const TerminalModal = ({ onClose }: { onClose: () => void }) => {
       >
         {/* Window Header */}
         <div className="flex items-center px-4 py-3 bg-[#252526] border-b border-slate-700/50 justify-between">
-          <div className="flex space-x-2">
-            <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 transition-colors"></button>
-            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-            <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          <div className="flex space-x-2 group">
+            <button onClick={onClose} className="w-3 h-3 rounded-full bg-[#ff5f56] hover:bg-[#ff5f56]/80 transition-colors flex items-center justify-center">
+              <X size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] flex items-center justify-center">
+              <Minus size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="w-3 h-3 rounded-full bg-[#27c93f] flex items-center justify-center">
+              <Maximize2 size={6} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </div>
           <div className="text-xs text-slate-400">terminal — -zsh — 80x24</div>
           <div className="w-10"></div> {/* Spacer for centering */}
@@ -247,10 +259,16 @@ const TerminalModal = ({ onClose }: { onClose: () => void }) => {
 const CodeWindow = () => (
   <div className="rounded-xl overflow-hidden bg-[#1e1e1e] shadow-2xl border border-slate-700/50 font-mono text-sm w-full max-w-lg mx-auto transform transition-transform hover:scale-[1.02] duration-500">
     <div className="flex items-center px-4 py-3 bg-[#252526] border-b border-slate-700/50">
-      <div className="flex space-x-2">
-        <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-        <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-        <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+      <div className="flex space-x-2 group">
+        <div className="w-3 h-3 rounded-full bg-[#ff5f56] flex items-center justify-center">
+          <X size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        <div className="w-3 h-3 rounded-full bg-[#ffbd2e] flex items-center justify-center">
+          <Minus size={8} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        <div className="w-3 h-3 rounded-full bg-[#27c93f] flex items-center justify-center">
+          <Maximize2 size={6} className="text-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
       </div>
       <div className="ml-4 text-xs text-slate-400">developer.tsx</div>
     </div>
