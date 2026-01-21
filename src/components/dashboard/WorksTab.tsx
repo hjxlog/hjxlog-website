@@ -72,7 +72,7 @@ export default function WorksTab({
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                🔍
+                <i className="fas fa-search"></i>
               </span>
             </div>
           </div>
@@ -140,28 +140,28 @@ export default function WorksTab({
                 <div className="flex space-x-2">
                    <button
                      onClick={() => handleToggleWorkFeatured(work.id, work.featured || false)}
-                     className={`transition-colors p-1 ${
+                     className={`transition-colors p-2 rounded-lg ${
                        work.featured 
-                         ? 'text-yellow-500 hover:text-yellow-600' 
-                         : 'text-gray-400 hover:text-yellow-500'
+                         ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100' 
+                         : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-50'
                      }`}
                      title={work.featured ? '取消精选' : '设为精选'}
                    >
-                     {work.featured ? '⭐' : '☆'}
+                     <i className={`${work.featured ? 'fas' : 'far'} fa-star`}></i>
                    </button>
                    <button
                      onClick={() => openWorkForm(work)}
-                     className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                     className="text-[#165DFF] hover:bg-blue-50 transition-colors p-2 rounded-lg"
                      title="编辑"
                    >
-                     ✏️
+                     <i className="fas fa-edit"></i>
                    </button>
                    <button
                      onClick={() => handleDeleteWork(work.id)}
-                     className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                     className="text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg"
                      title="删除"
                    >
-                     🗑️
+                     <i className="fas fa-trash"></i>
                    </button>
                  </div>
               </div>
@@ -175,7 +175,10 @@ export default function WorksTab({
                    work.status === 'completed' ? 'bg-blue-100 text-blue-600' :
                    'bg-gray-100 text-gray-600'
                  }`}>
-                   {work.status}
+                   {work.status === 'active' ? '进行中' : 
+                    work.status === 'completed' ? '已完成' : 
+                    work.status === 'archived' ? '已归档' : 
+                    work.status === 'planning' ? '计划中' : work.status}
                  </span>
                </div>
               
@@ -192,7 +195,9 @@ export default function WorksTab({
           ))
         ) : (
           <div className="col-span-full bg-white rounded-xl p-12 shadow-sm text-center">
-            <div className="text-6xl mb-4">💼</div>
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fas fa-briefcase text-4xl text-blue-500"></i>
+            </div>
             <h3 className="text-lg font-medium text-gray-800 mb-2">
               {workSearchQuery || workSelectedCategory || workSelectedStatus 
                 ? '没有找到匹配的作品' 
@@ -206,9 +211,9 @@ export default function WorksTab({
             {!(workSearchQuery || workSelectedCategory || workSelectedStatus) && (
               <button
                  onClick={() => openWorkForm()}
-                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
                >
-                 ➕ 添加作品
+                 <i className="fas fa-plus mr-2"></i> 添加作品
                </button>
             )}
           </div>

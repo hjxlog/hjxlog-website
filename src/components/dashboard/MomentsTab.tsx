@@ -19,9 +19,9 @@ export default function MomentsTab({
         <h2 className="text-2xl font-bold text-slate-800">动态管理</h2>
         <button
           onClick={() => openMomentForm()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
         >
-          ➕ 发布动态
+          <i className="fas fa-plus mr-2"></i> 发布动态
         </button>
       </div>
 
@@ -66,7 +66,7 @@ export default function MomentsTab({
                   )}
                   
                   <div className="flex items-center space-x-4 text-sm text-slate-500">
-                    <span>👁 {moment.views_count || 0}</span>
+                    <span><i className="fas fa-eye mr-1"></i> {moment.views_count || 0}</span>
                     {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
@@ -77,14 +77,14 @@ export default function MomentsTab({
                     className="text-gray-400 hover:text-blue-500 transition-colors p-2"
                     title="编辑"
                   >
-                    ✏️
+                    <i className="fas fa-edit"></i>
                   </button>
                   <button
                     onClick={() => deleteMoment(moment.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-2"
                     title="删除"
                   >
-                    🗑️
+                    <i className="fas fa-trash-alt"></i>
                   </button>
                 </div>
               </div>
@@ -92,14 +92,16 @@ export default function MomentsTab({
           ))
         ) : (
           <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-            <div className="text-6xl mb-4">📷</div>
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fas fa-camera text-4xl text-blue-500"></i>
+            </div>
             <h3 className="text-lg font-medium text-gray-800 mb-2">还没有动态</h3>
             <p className="text-gray-600 mb-6">开始发布你的第一条动态吧！</p>
             <button
               onClick={() => openMomentForm()}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
             >
-              ➕ 发布动态
+              <i className="fas fa-plus mr-2"></i> 发布动态
             </button>
           </div>
         )}

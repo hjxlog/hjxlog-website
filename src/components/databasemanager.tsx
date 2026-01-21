@@ -108,7 +108,7 @@ export default function DatabaseManager() {
             <h3 className={`font-semibold ${
               isConnected ? 'text-green-800' : 'text-red-800'
             }`}>
-              {isConnected ? '✅ 已连接' : '❌ 未连接'}
+              {isConnected ? <><i className="fas fa-check-circle mr-2"></i> 已连接</> : <><i className="fas fa-times-circle mr-2"></i> 未连接</>}
             </h3>
             <p className="text-sm text-gray-600 mt-1">{connectionStatus}</p>
           </div>

@@ -60,9 +60,9 @@ export default function BlogsTab({
         <h2 className="text-2xl font-bold text-slate-800">博客管理</h2>
         <button
           onClick={() => openBlogForm()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
         >
-          ➕ 写博客
+          <i className="fas fa-plus mr-2"></i> 写博客
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export default function BlogsTab({
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                🔍
+                <i className="fas fa-search"></i>
               </span>
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function BlogsTab({
                 
                 <div className="flex items-center space-x-4 text-sm text-slate-500">
                   <span>{blog.category}</span>
-                  <span>👁 {blog.views || 0}</span>
+                  <span><i className="fas fa-eye mr-1"></i> {blog.views || 0}</span>
                   {blog.created_at && <span>{new Date(blog.created_at).toLocaleDateString()}</span>}
                 </div>
                 
@@ -173,14 +173,14 @@ export default function BlogsTab({
                   className="text-gray-400 hover:text-blue-500 transition-colors p-2"
                   title="编辑"
                 >
-                  ✏️
+                  <i className="fas fa-edit"></i>
                 </button>
                 <button
                   onClick={() => handleDeleteBlog(blog.id)}
                   className="text-gray-400 hover:text-red-500 transition-colors p-2"
                   title="删除"
                 >
-                  🗑️
+                  <i className="fas fa-trash-alt"></i>
                 </button>
               </div>
             </div>
@@ -188,7 +188,9 @@ export default function BlogsTab({
         ))
         ) : (
           <div className="bg-white rounded-xl p-12 shadow-sm text-center">
-            <div className="text-6xl mb-4">📝</div>
+            <div className="text-6xl mb-4">
+              <i className="fas fa-file-alt text-4xl text-blue-500"></i>
+            </div>
             <h3 className="text-lg font-medium text-gray-800 mb-2">
               {blogSearchQuery || blogSelectedCategory || blogSelectedStatus 
                 ? '没有找到匹配的博客' 
@@ -202,9 +204,9 @@ export default function BlogsTab({
             {!(blogSearchQuery || blogSelectedCategory || blogSelectedStatus) && (
               <button
                 onClick={() => openBlogForm()}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
               >
-                ➕ 写博客
+                <i className="fas fa-plus mr-2"></i> 写博客
               </button>
             )}
           </div>
