@@ -175,7 +175,7 @@ export default function WorkDetail() {
                 </div>
 
                 {/* 项目内容 */}
-                <div className="prose prose-slate max-w-none">
+                <div className="prose prose-lg max-w-none prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
                   <MarkdownRenderer content={work.content} />
                 </div>
               </div>
