@@ -124,18 +124,18 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
 
           // GitHub 风格列表
           ul: ({ children }: any) => (
-            <ul className="list-disc list-outside ml-6 my-4 space-y-1 text-[#24292f]">
+            <ul className="list-disc list-outside ml-6 my-4 text-[#24292f] [&_p]:!my-0">
               {children}
             </ul>
           ),
           ol: ({ children }: any) => (
-            <ol className="list-decimal list-outside ml-6 my-4 space-y-1 text-[#24292f]">
+            <ol className="list-decimal list-outside ml-6 my-4 text-[#24292f] [&_p]:!my-0">
               {children}
             </ol>
           ),
           li: ({ children }: any) => (
-            <li className="pl-1 leading-relaxed">
-              <span className="text-[#24292f]">{children}</span>
+            <li className="pl-1 leading-7 text-[#24292f] my-2">
+              {children}
             </li>
           ),
 
@@ -183,6 +183,8 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
               </blockquote>
             );
           },
+          // 分割线
+          hr: () => <hr className="h-px my-4 bg-[#e7e7e7] border-0" />,
           // 标题
           h1: ({ children, ...props }: any) => {
             const text = getNodeText(children);
@@ -207,8 +209,8 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
             </div>
           ),
           thead: ({ children }: any) => <thead className="bg-[#f6f8fa]">{children}</thead>,
-          th: ({ children }: any) => <th className="px-3 py-2 text-left text-sm font-semibold text-[#24292f] border border-[#d0d7de]">{children}</th>,
-          td: ({ children }: any) => <td className="px-3 py-2 text-sm text-[#24292f] border border-[#d0d7de]">{children}</td>,
+          th: ({ children }: any) => <th className="px-4 py-3 text-left font-semibold text-[#24292f] border border-[#d0d7de]">{children}</th>,
+          td: ({ children }: any) => <td className="px-4 py-3 text-[#24292f] border border-[#d0d7de]">{children}</td>,
         }}
       >
         {content}
