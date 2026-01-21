@@ -7,8 +7,6 @@ export const useBackToTop = () => {
   const cleanupRef = useRef<(() => void) | null>(null);
   
   useEffect(() => {
-    console.log('useBackToTop: effect triggered, pathname:', location.pathname);
-    
     // 清理之前的事件监听器
     if (cleanupRef.current) {
       cleanupRef.current();
@@ -17,33 +15,27 @@ export const useBackToTop = () => {
     
     // 页面路由变化时，滚动到顶部
     window.scrollTo({ top: 0, behavior: 'auto' });
-    
+
     const initializeBackToTop = () => {
       const backToTop = document.getElementById('backToTop');
       if (!backToTop) {
-        console.log('useBackToTop: backToTop element not found');
         return false;
       }
-      
-      console.log('useBackToTop: backToTop element found, initializing...');
       
       const scrollHandler = () => {
         const scrollY = window.scrollY;
         if (scrollY > 100) {
           backToTop.style.opacity = '1';
           backToTop.style.visibility = 'visible';
-          console.log('useBackToTop: button shown, scrollY:', scrollY);
         } else {
           backToTop.style.opacity = '0';
           backToTop.style.visibility = 'hidden';
-          console.log('useBackToTop: button hidden, scrollY:', scrollY);
         }
       };
-      
+
       const clickHandler = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('useBackToTop: scrollToTop clicked');
         window.scrollTo({
           top: 0,
           behavior: 'smooth'
@@ -61,13 +53,11 @@ export const useBackToTop = () => {
       cleanupRef.current = () => {
         window.removeEventListener('scroll', scrollHandler);
         backToTop.removeEventListener('click', clickHandler);
-        console.log('useBackToTop: event listeners removed');
       };
       
-      console.log('useBackToTop: initialization complete');
       return true;
     };
-    
+
     // 使用 requestAnimationFrame 确保DOM已渲染
     const initWithDelay = () => {
       requestAnimationFrame(() => {
@@ -78,9 +68,6 @@ export const useBackToTop = () => {
             attempts++;
             if (initializeBackToTop() || attempts >= 10) {
               clearInterval(retryInterval);
-              if (attempts >= 10) {
-                console.log('useBackToTop: failed to initialize after 10 attempts');
-              }
             }
           }, 100);
         }
