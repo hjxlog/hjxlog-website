@@ -124,12 +124,12 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
 
           // GitHub 风格列表
           ul: ({ children }: any) => (
-            <ul className="list-disc list-outside ml-6 my-4 text-[#24292f] [&_p]:!my-0">
+            <ul className="list-disc list-outside ml-2 my-4 text-[#24292f] [&_p]:!my-0">
               {children}
             </ul>
           ),
           ol: ({ children }: any) => (
-            <ol className="list-decimal list-outside ml-6 my-4 text-[#24292f] [&_p]:!my-0">
+            <ol className="list-decimal list-outside ml-2 my-4 text-[#24292f] [&_p]:!my-0">
               {children}
             </ol>
           ),
