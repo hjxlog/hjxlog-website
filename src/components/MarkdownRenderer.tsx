@@ -124,12 +124,12 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
 
           // GitHub 风格列表
           ul: ({ children }: any) => (
-            <ul className="list-disc list-outside ml-2 my-4 text-[#24292f] [&_p]:!my-0">
+            <ul className="list-disc list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
               {children}
             </ul>
           ),
           ol: ({ children }: any) => (
-            <ol className="list-decimal list-outside ml-2 my-4 text-[#24292f] [&_p]:!my-0">
+            <ol className="list-decimal list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
               {children}
             </ol>
           ),
@@ -167,7 +167,7 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
                 href={href} 
                 target={isInternal ? "_self" : "_blank"}
                 rel={isInternal ? "" : "noopener noreferrer"}
-                className="text-[#0969da] hover:underline decoration-auto underline-offset-0"
+                className="text-[#0969da] hover:underline decoration-auto underline-offset-0 break-words"
                 {...props}
               >
                 {children}

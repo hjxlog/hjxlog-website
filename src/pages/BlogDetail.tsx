@@ -356,8 +356,8 @@ const BlogDetail: React.FC = () => {
         </div>
         
         {/* Mobile Related Posts (Below Content) */}
-        <div className="lg:hidden mt-12">
-           <h3 className="text-lg font-bold text-slate-900 mb-6">相关阅读</h3>
+        <div className="lg:hidden mt-8">
+           <h3 className="text-lg font-bold text-slate-900 mb-4">相关阅读</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatedPosts.map(post => (
                  <div key={post.id} onClick={() => navigate(`/blog/${post.id}`)} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
