@@ -211,7 +211,7 @@ export default function WorksTab({
             {!(workSearchQuery || workSelectedCategory || workSelectedStatus) && (
               <button
                  onClick={() => openWorkForm()}
-                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
+                 className="px-6 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center justify-center mx-auto"
                >
                  <i className="fas fa-plus mr-2"></i> 添加作品
                </button>
@@ -238,7 +238,7 @@ export default function WorksTab({
                 onClick={() => setWorkCurrentPage(page)}
                 className={`px-3 py-2 rounded-lg transition-colors ${
                   page === workCurrentPage
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-[#165DFF] text-white'
                     : 'border border-gray-300 hover:bg-gray-50'
                 }`}
               >

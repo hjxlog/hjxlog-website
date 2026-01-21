@@ -60,7 +60,7 @@ export default function BlogsTab({
         <h2 className="text-2xl font-bold text-slate-800">博客管理</h2>
         <button
           onClick={() => openBlogForm()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+          className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
         >
           <i className="fas fa-plus mr-2"></i> 写博客
         </button>
@@ -204,7 +204,7 @@ export default function BlogsTab({
             {!(blogSearchQuery || blogSelectedCategory || blogSelectedStatus) && (
               <button
                 onClick={() => openBlogForm()}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
+                className="px-6 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center justify-center mx-auto"
               >
                 <i className="fas fa-plus mr-2"></i> 写博客
               </button>
@@ -231,7 +231,7 @@ export default function BlogsTab({
                 onClick={() => setBlogCurrentPage(page)}
                 className={`px-3 py-2 rounded-lg transition-colors ${
                   page === blogCurrentPage
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-[#165DFF] text-white'
                     : 'border border-gray-300 hover:bg-gray-50'
                 }`}
               >

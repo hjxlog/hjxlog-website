@@ -19,7 +19,7 @@ export default function MomentsTab({
         <h2 className="text-2xl font-bold text-slate-800">动态管理</h2>
         <button
           onClick={() => openMomentForm()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+          className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
         >
           <i className="fas fa-plus mr-2"></i> 发布动态
         </button>
@@ -99,7 +99,7 @@ export default function MomentsTab({
             <p className="text-gray-600 mb-6">开始发布你的第一条动态吧！</p>
             <button
               onClick={() => openMomentForm()}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center mx-auto"
+              className="px-6 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center justify-center mx-auto"
             >
               <i className="fas fa-plus mr-2"></i> 发布动态
             </button>

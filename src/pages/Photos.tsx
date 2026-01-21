@@ -265,7 +265,7 @@ export default function Photos() {
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-3 rounded-full transition-all duration-300 ${
                 selectedCategory === category
-                  ? 'bg-blue-500 text-white shadow-lg'
+                  ? 'bg-[#165DFF] text-white shadow-lg'
                   : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
               }`}
             >
