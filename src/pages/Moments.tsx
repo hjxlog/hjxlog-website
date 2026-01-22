@@ -95,9 +95,10 @@ export default function Moments() {
   const renderContent = (content: string) => {
     // 简单的Markdown渲染：链接、粗体、斜体
     let rendered = content
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-2" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
       .replace(/\n/g, '<br>');
     
     return <div dangerouslySetInnerHTML={{ __html: rendered }} />;

@@ -226,6 +226,58 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
     }));
   };
 
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    let imageFile: File | null = null;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        imageFile = items[i].getAsFile();
+        break;
+      }
+    }
+
+    if (!imageFile) return;
+
+    e.preventDefault();
+    
+    const textarea = e.target as HTMLTextAreaElement;
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const textBefore = formData.content.substring(0, startPos);
+    const textAfter = formData.content.substring(endPos);
+
+    // Use a unique placeholder to avoid collisions
+    const placeholderId = Date.now();
+    const placeholder = `![上传中...](loading-${placeholderId})`;
+    const newContent = textBefore + placeholder + textAfter;
+    
+    setFormData(prev => ({ ...prev, content: newContent }));
+
+    try {
+      const result = await uploadImageToOSS(imageFile);
+      const uploadResult = result as UploadResult;
+
+      if (uploadResult.success && uploadResult.url) {
+        const imageMarkdown = `![${imageFile.name || 'image'}](${uploadResult.url})`;
+        setFormData(prev => ({
+          ...prev,
+          content: prev.content.replace(placeholder, imageMarkdown)
+        }));
+        toast.success('图片上传成功');
+      } else {
+        throw new Error(uploadResult.error || '上传失败');
+      }
+    } catch (error: any) {
+      console.error('图片粘贴上传失败:', error);
+      toast.error(`上传失败: ${error.message}`);
+      setFormData(prev => ({
+        ...prev,
+        content: prev.content.replace(placeholder, '')
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -282,6 +334,7 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData(prev => ({...prev, content: e.target.value}))}
+                onPaste={handlePaste}
                 rows={6}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] resize-none"
                 placeholder="分享你的想法..."

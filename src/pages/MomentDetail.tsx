@@ -72,9 +72,10 @@ export default function MomentDetail() {
   // 渲染动态内容（支持简单的Markdown）
   const renderContent = (content: string) => {
     let rendered = content
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-2" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
       .replace(/\n/g, '<br>');
     
     return <div dangerouslySetInnerHTML={{ __html: rendered }} />;
@@ -155,10 +156,11 @@ export default function MomentDetail() {
               {moment.images && (
                 (() => {
                   // 处理图片数据：如果是字符串则分割，如果是数组则直接使用
-                  const imageUrls = typeof moment.images === 'string' 
-                    ? moment.images.split(',').filter(url => url.trim()) 
-                    : Array.isArray(moment.images) 
-                      ? moment.images.map(img => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
+                  const imagesData = moment.images as any;
+                  const imageUrls = typeof imagesData === 'string' 
+                    ? imagesData.split(',').filter((url: string) => url.trim()) 
+                    : Array.isArray(imagesData) 
+                      ? imagesData.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
                       : [];
                   
                   if (imageUrls.length === 0) return null;
@@ -224,10 +226,11 @@ export default function MomentDetail() {
       {/* 图片预览模态框 */}
       {selectedImageIndex !== null && moment.images && (
         (() => {
-          const imageUrls = typeof moment.images === 'string' 
-            ? moment.images.split(',').filter(url => url.trim()) 
-            : Array.isArray(moment.images) 
-              ? moment.images.map(img => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
+          const imagesData = moment.images as any;
+          const imageUrls = typeof imagesData === 'string' 
+            ? imagesData.split(',').filter((url: string) => url.trim()) 
+            : Array.isArray(imagesData) 
+              ? imagesData.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
               : [];
           
           if (selectedImageIndex >= imageUrls.length) return null;

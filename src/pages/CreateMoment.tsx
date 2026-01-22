@@ -138,7 +138,7 @@ export default function CreateMoment() {
       setSubmitting(true);
       
       // 处理图片数据（移除文件上传功能）
-      const uploadedImages = [];
+      const uploadedImages: any[] = [];
       // 注意：由于移除了文件上传功能，这里不再处理本地文件
       // 如果需要图片功能，请使用外部图片URL
 
@@ -172,9 +172,10 @@ export default function CreateMoment() {
   // 渲染动态内容（支持简单的Markdown）
   const renderContent = (content: string) => {
     let rendered = content
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-2" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
       .replace(/\n/g, '<br>');
     
     return <div dangerouslySetInnerHTML={{ __html: rendered }} />;
