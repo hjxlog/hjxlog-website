@@ -173,7 +173,7 @@ export default function Works() {
             <h3 className="text-xl font-bold text-slate-900 mb-2">暂无相关作品</h3>
             <p className="text-slate-500 mb-6">该分类下暂无项目展示</p>
             <button 
-              className="text-[#165DFF] font-medium hover:underline"
+              className="text-[#165DFF] font-medium hover:underline underline-offset-4"
               onClick={() => setSelectedCategory("全部")}
             >
               查看全部作品

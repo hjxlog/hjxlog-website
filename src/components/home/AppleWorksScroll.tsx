@@ -32,7 +32,7 @@ const AppleWorksScroll = ({ works }: AppleWorksScrollProps) => {
         </div>
         <button 
           onClick={() => navigate('/works')}
-          className="hidden md:flex items-center gap-1 text-[#0066cc] hover:underline text-lg font-medium"
+          className="hidden md:flex items-center gap-1 text-[#0066cc] hover:underline underline-offset-4 text-lg font-medium"
         >
           浏览所有作品 <ChevronRight className="w-5 h-5" />
         </button>

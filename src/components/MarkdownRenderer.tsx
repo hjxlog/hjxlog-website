@@ -167,7 +167,7 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
                 href={href} 
                 target={isInternal ? "_self" : "_blank"}
                 rel={isInternal ? "" : "noopener noreferrer"}
-                className="text-[#0969da] hover:underline decoration-auto underline-offset-0 break-words"
+                className="text-[#0969da] hover:underline decoration-auto underline-offset-4 break-words"
                 {...props}
               >
                 {children}
