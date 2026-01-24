@@ -239,7 +239,7 @@ export default function Dashboard() {
   // 动态管理相关函数
   const fetchMoments = async () => {
     try {
-      const data = await apiRequest('/api/moments?page=1&limit=50');
+      const data = await apiRequest('/api/moments?page=1&limit=50&include_private=true');
       if (data.success) {
         setMoments(data.data.moments || []);
       }
