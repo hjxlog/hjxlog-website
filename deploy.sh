@@ -21,8 +21,8 @@ fi
 echo -e "${GREEN}✅ 代码拉取成功${NC}"
 echo
 
-echo -e "${BLUE}[2/4] 正在构建Docker镜像...${NC}"
-docker compose build
+echo -e "${BLUE}[2/4] 正在构建Docker镜像（无缓存）...${NC}"
+docker compose build --no-cache
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ 构建镜像失败！${NC}"
     exit 1
