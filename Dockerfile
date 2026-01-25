@@ -8,8 +8,9 @@ COPY package*.json ./
 # 设置淘宝 NPM 镜像（加速 npm install）
 RUN npm config set registry https://registry.npmmirror.com
 
-# 安装依赖并构建
-RUN npm install
+# 安装依赖（优先使用 lock；如可选依赖缺失则回退重装）
+RUN npm install --include=optional --no-audit --no-fund \
+  || (rm -f package-lock.json && npm install --no-audit --no-fund)
 
 # 复制源码
 COPY . .
