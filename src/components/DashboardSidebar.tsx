@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/contexts/authContext';
 import { dashboardTabGroups } from './AdminNav';
@@ -12,6 +12,15 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const handleToggle = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+  }, []);
+  const handleNavigateProfile = useCallback(() => {
+    navigate('/profile');
+  }, [navigate]);
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   return (
     <aside
@@ -22,7 +31,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
       <div className="flex-1 overflow-y-auto py-6 custom-scrollbar">
         {/* 折叠按钮 */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={handleToggle}
           className="absolute top-6 right-[-12px] z-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-[#165DFF] hover:border-[#165DFF] shadow-sm transition-all duration-200"
           title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
@@ -77,7 +86,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
       <div className={`p-4 border-t border-gray-100 bg-gray-50/50 ${isCollapsed ? 'flex justify-center' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
           {/* 头像 */}
-          <div className="relative group cursor-pointer" onClick={() => navigate('/profile')}>
+          <div className="relative group cursor-pointer" onClick={handleNavigateProfile}>
             <img
               className="h-9 w-9 rounded-full border border-gray-200 shadow-sm transition-transform group-hover:scale-105"
               src={user?.avatar || '/default-avatar.png'}
@@ -102,15 +111,15 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
         {/* 展开状态下的操作按钮栏 */}
         {!isCollapsed && (
           <div className="mt-3 flex space-x-1">
-             <button
-              onClick={() => navigate('/profile')}
+            <button
+              onClick={handleNavigateProfile}
               className="flex-1 flex items-center justify-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-[#165DFF] hover:border-[#165DFF] hover:bg-blue-50 transition-all"
               title="个人资料"
             >
               <i className="fas fa-user-cog mr-1.5"></i>设置
             </button>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="flex-1 flex items-center justify-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all"
               title="退出登录"
             >

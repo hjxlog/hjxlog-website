@@ -4,7 +4,7 @@ import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 
 import { toast } from 'sonner';
-import { API_BASE_URL, apiRequest } from '@/config/api';
+import { apiRequest } from '@/config/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import Empty from '@/components/Empty';
@@ -19,8 +19,8 @@ interface SystemLog {
   user_id?: number;
   ip_address?: string;
   user_agent?: string;
-  request_data?: any;
-  response_data?: any;
+  request_data?: unknown;
+  response_data?: unknown;
   error_message?: string;
   execution_time?: number;
   created_at: string;

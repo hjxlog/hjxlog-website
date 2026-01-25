@@ -1,71 +1,94 @@
-import React from 'react';
-import { apiRequest, API_BASE_URL } from '@/config/api';
-import { toast } from 'sonner';
+import React, { useMemo } from 'react';
+import { Moment } from '@/types';
+
+type DashboardMoment = Moment & {
+  views?: number;
+};
 
 interface MomentsTabProps {
-  moments: any[];
-  openMomentForm: (moment?: any) => void;
+  moments: DashboardMoment[];
+  openMomentForm: (moment?: DashboardMoment) => void;
   deleteMoment: (id: number) => Promise<void>;
 }
+
+const extractImagesAndText = (content: string) => {
+  const images: { url: string; alt: string }[] = [];
+  const text = content
+    .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+      images.push({ url, alt });
+      return '';
+    })
+    .trim();
+  return { text, images };
+};
+
+const renderTextHtml = (text: string) => (
+  text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+    .replace(/\n/g, '<br>')
+);
+
+const ImageGrid = ({ images }: { images: { url: string; alt: string }[] }) => {
+  if (images.length === 0) return null;
+
+  // 单张图片
+  if (images.length === 1) {
+    return (
+      <div className="mt-3">
+        <img
+          src={images[0].url}
+          alt={images[0].alt}
+          className="max-h-[300px] max-w-full rounded-lg border border-gray-100 object-cover"
+          onClick={() => window.open(images[0].url, '_blank')}
+          style={{ cursor: 'zoom-in' }}
+        />
+      </div>
+    );
+  }
+
+  // 2张或4张图片使用2列布局
+  const isTwoColumns = images.length === 2 || images.length === 4;
+  const gridClass = isTwoColumns 
+    ? 'grid-cols-2 max-w-[80%] sm:max-w-[60%]' // 限制宽度以保持图片尺寸适中
+    : 'grid-cols-3'; // 3张及其他数量使用3列布局
+
+  return (
+    <div className={`grid gap-2 mt-3 ${gridClass}`}>
+      {images.map((img, index) => (
+        <div 
+          key={index} 
+          className="relative aspect-square overflow-hidden rounded-lg cursor-zoom-in bg-gray-100"
+          onClick={() => window.open(img.url, '_blank')}
+        >
+          <img 
+            src={img.url} 
+            alt={img.alt} 
+            className="w-full h-full object-cover hover:opacity-90 transition-opacity" 
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function MomentsTab({
   moments,
   openMomentForm,
   deleteMoment
 }: MomentsTabProps) {
-  const extractImagesAndText = (content: string) => {
-    const images: { url: string; alt: string }[] = [];
-    const text = content
-      .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
-        images.push({ url, alt });
-        return '';
-      })
-      .trim();
-    return { text, images };
-  };
-
-  const ImageGrid = ({ images }: { images: { url: string; alt: string }[] }) => {
-    if (images.length === 0) return null;
-
-    // 单张图片
-    if (images.length === 1) {
-      return (
-        <div className="mt-3">
-          <img
-            src={images[0].url}
-            alt={images[0].alt}
-            className="max-h-[300px] max-w-full rounded-lg border border-gray-100 object-cover"
-            onClick={() => window.open(images[0].url, '_blank')}
-            style={{ cursor: 'zoom-in' }}
-          />
-        </div>
-      );
-    }
-
-    // 2张或4张图片使用2列布局
-    const isTwoColumns = images.length === 2 || images.length === 4;
-    const gridClass = isTwoColumns 
-      ? 'grid-cols-2 max-w-[80%] sm:max-w-[60%]' // 限制宽度以保持图片尺寸适中
-      : 'grid-cols-3'; // 3张及其他数量使用3列布局
-
-    return (
-      <div className={`grid gap-2 mt-3 ${gridClass}`}>
-        {images.map((img, index) => (
-          <div 
-            key={index} 
-            className="relative aspect-square overflow-hidden rounded-lg cursor-zoom-in bg-gray-100"
-            onClick={() => window.open(img.url, '_blank')}
-          >
-            <img 
-              src={img.url} 
-              alt={img.alt} 
-              className="w-full h-full object-cover hover:opacity-90 transition-opacity" 
-            />
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const momentCards = useMemo(() => (
+    moments.map((moment) => {
+      const { text, images } = extractImagesAndText(moment.content || '');
+      return {
+        ...moment,
+        images,
+        textHtml: text ? renderTextHtml(text) : '',
+        dateLabel: moment.created_at ? new Date(moment.created_at).toLocaleDateString() : '',
+      };
+    })
+  ), [moments]);
 
   return (
     <div>
@@ -84,8 +107,7 @@ export default function MomentsTab({
       {/* 动态列表 */}
       <div className="space-y-4">
         {moments.length > 0 ? (
-          moments.map(moment => {
-            const { text, images } = extractImagesAndText(moment.content);
+          momentCards.map(moment => {
             return (
               <div key={moment.id} className="bg-white rounded-xl p-6 shadow-sm">
                 <div className="flex justify-between items-start">
@@ -98,23 +120,19 @@ export default function MomentsTab({
                       </span>
                     </div>
                     
-                    {text && (
+                    {moment.textHtml && (
                       <div className="prose prose-gray max-w-none mb-3">
                         <div dangerouslySetInnerHTML={{ 
-                          __html: text
-                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
-                            .replace(/\n/g, '<br>')
+                          __html: moment.textHtml
                         }} />
                       </div>
                     )}
 
-                    <ImageGrid images={images} />
+                    <ImageGrid images={moment.images} />
                     
                     <div className="flex items-center space-x-4 text-sm text-slate-500 mt-3">
                       <span><i className="fas fa-eye mr-1"></i> {moment.views || 0}</span>
-                      {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
+                      {moment.dateLabel && <span>{moment.dateLabel}</span>}
                     </div>
                   </div>
                   

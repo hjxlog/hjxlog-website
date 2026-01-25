@@ -1,10 +1,10 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useMemo } from 'react';
 import { Work, Blog, Moment } from '@/types';
+import type { User } from '@/contexts/authContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface OverviewTabProps {
-  user: any;
+  user: User;
   works: Work[];
   blogs: Blog[];
   moments: Moment[];
@@ -35,9 +35,7 @@ export default function OverviewTab({
   openMomentForm,
   onViewAllLogs
 }: OverviewTabProps) {
-  const navigate = useNavigate();
-
-  const handleExportAll = async () => {
+  const handleExportAll = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/api/admin/export/all`, {
@@ -62,37 +60,42 @@ export default function OverviewTab({
       console.error('导出失败:', error);
       toast.error('数据备份失败');
     }
-  };
+  }, []);
 
   // 1. 数据统计
-  const stats = [
+  const stats = useMemo(() => ([
     { label: '总浏览量', value: totalViews, icon: 'fas fa-eye', color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: '文章', value: blogs.length, icon: 'fas fa-blog', color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: '动态', value: moments.length, icon: 'fas fa-camera', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  ];
+  ]), [totalViews, blogs.length, moments.length]);
 
   // 2. 最近活动 (合并 Blogs, Works, Moments)
-  const allActivities = [
-    ...blogs.map(b => ({ type: 'blog', date: b.created_at, title: b.title, status: b.published ? '已发布' : '草稿' })),
-    ...works.map(w => ({ type: 'work', date: w.created_at || w.date, title: w.title, status: w.status })),
-    ...moments.map(m => ({ type: 'moment', date: m.created_at, title: m.content.substring(0, 30) + (m.content.length > 30 ? '...' : ''), status: m.visibility === 'public' ? '公开' : '私密' }))
-  ].sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
-   .slice(0, 5);
+  const allActivities = useMemo(() => (
+    [
+      ...blogs.map(b => ({ type: 'blog', date: b.created_at, title: b.title, status: b.published ? '已发布' : '草稿' })),
+      ...works.map(w => ({ type: 'work', date: w.created_at || w.date, title: w.title, status: w.status })),
+      ...moments.map(m => ({ type: 'moment', date: m.created_at, title: m.content.substring(0, 30) + (m.content.length > 30 ? '...' : ''), status: m.visibility === 'public' ? '公开' : '私密' }))
+    ]
+      .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
+      .slice(0, 5)
+  ), [blogs, works, moments]);
 
   // 3. 内容分布 (Recharts 数据)
-  const pieData = [
-    { name: '博客文章', value: blogs.length, color: '#10B981' }, // emerald-500
-    { name: '作品项目', value: works.length, color: '#3B82F6' }, // blue-500
-    { name: '生活动态', value: moments.length, color: '#6366F1' }, // indigo-500
-  ].filter(item => item.value > 0);
+  const pieData = useMemo(() => (
+    [
+      { name: '博客文章', value: blogs.length, color: '#10B981' }, // emerald-500
+      { name: '作品项目', value: works.length, color: '#3B82F6' }, // blue-500
+      { name: '生活动态', value: moments.length, color: '#6366F1' }, // indigo-500
+    ].filter(item => item.value > 0)
+  ), [blogs.length, works.length, moments.length]);
 
-  const getGreeting = () => {
+  const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return '早安';
     if (hour >= 12 && hour < 14) return '中午好';
     if (hour >= 14 && hour < 19) return '下午好';
     return '晚上好';
-  };
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
@@ -100,7 +103,7 @@ export default function OverviewTab({
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
         <div className="z-10">
           <h2 className="text-2xl font-bold text-slate-800 mb-2">
-            {getGreeting()}，{user.username} 👋
+            {greeting}，{user.username} 👋
           </h2>
           <p className="text-slate-500">
             准备好开始今天的创作了吗？您目前共有 <span className="font-bold text-slate-800">{works.length + blogs.length + moments.length}</span> 个内容条目。

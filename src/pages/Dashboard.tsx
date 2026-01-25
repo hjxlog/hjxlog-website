@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 import AdminNav from '@/components/AdminNav';
@@ -21,10 +21,10 @@ import KnowledgeBaseTab from '@/components/dashboard/KnowledgeBaseTab';
 import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
 import LogManagement from '@/pages/LogManagement';
 
-import { Work, Blog } from '@/types';
+import { Work, Blog, Moment } from '@/types';
 
 export default function Dashboard() {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [works, setWorks] = useState<Work[]>([]);
@@ -37,12 +37,11 @@ export default function Dashboard() {
   const [totalViews, setTotalViews] = useState(0);
 
   // 动态管理相关状态
-  const [moments, setMoments] = useState<any[]>([]);
+  const [moments, setMoments] = useState<Array<Moment & { views?: number }>>([]);
   const [isMomentFormOpen, setIsMomentFormOpen] = useState(false);
-  const [currentMoment, setCurrentMoment] = useState<any>(null);
+  const [currentMoment, setCurrentMoment] = useState<Moment | null>(null);
   
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // 确认对话框状态
   const [confirmDialog, setConfirmDialog] = useState({
@@ -73,7 +72,7 @@ export default function Dashboard() {
   // 表单数据状态
 
   // API调用函数
-  const fetchWorks = async () => {
+  const fetchWorks = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/works?limit=100`);
       const result = await response.json();
@@ -81,32 +80,27 @@ export default function Dashboard() {
         setWorks(result.data.works);
       } else {
         setWorks([]);
-        setError('获取作品数据失败');
       }
     } catch (error) {
       console.error('获取作品数据失败:', error);
       setWorks([]);
-      setError('获取作品数据失败');
     }
-  };
+  }, []);
 
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/blogs?limit=100`);
       const result = await response.json();
       if (result.success) {
         // 修复：服务器返回的数据结构是 {blogs: [...], total, page, limit}
         setBlogs(result.data.blogs || []);
-      } else {
-        setError('获取博客数据失败');
       }
     } catch (error) {
       console.error('获取博客数据失败:', error);
-      setError('获取博客数据失败');
     }
-  };
+  }, []);
 
-  const createWork = async (workData: Partial<Work>) => {
+  const createWork = useCallback(async (workData: Partial<Work>) => {
     try {
       const result = await apiRequest('/api/works', {
         method: 'POST',
@@ -125,9 +119,9 @@ export default function Dashboard() {
       toast.error('创建作品失败');
       return false;
     }
-  };
+  }, [fetchWorks]);
 
-  const updateWork = async (id: number, workData: Partial<Work>) => {
+  const updateWork = useCallback(async (id: number, workData: Partial<Work>) => {
     try {
       const result = await apiRequest(`/api/works/${id}`, {
         method: 'PUT',
@@ -146,9 +140,9 @@ export default function Dashboard() {
       toast.error('更新作品失败');
       return false;
     }
-  };
+  }, [fetchWorks]);
 
-  const deleteWork = async (id: number) => {
+  const deleteWork = useCallback(async (id: number) => {
     try {
       const result = await apiRequest(`/api/works/${id}`, {
         method: 'DELETE',
@@ -166,9 +160,9 @@ export default function Dashboard() {
       toast.error('删除作品失败');
       return false;
     }
-  };
+  }, [fetchWorks]);
 
-  const createBlog = async (blogData: Partial<Blog>) => {
+  const createBlog = useCallback(async (blogData: Partial<Blog>) => {
     try {
       const result = await apiRequest('/api/blogs', {
         method: 'POST',
@@ -187,9 +181,9 @@ export default function Dashboard() {
       toast.error('创建博客失败');
       return false;
     }
-  };
+  }, [fetchBlogs]);
 
-  const updateBlog = async (id: number, blogData: Partial<Blog>) => {
+  const updateBlog = useCallback(async (id: number, blogData: Partial<Blog>) => {
     try {
       const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'PUT',
@@ -208,9 +202,9 @@ export default function Dashboard() {
       toast.error('更新博客失败');
       return false;
     }
-  };
+  }, [fetchBlogs]);
 
-  const deleteBlog = async (id: number) => {
+  const deleteBlog = useCallback(async (id: number) => {
     try {
       const result = await apiRequest(`/api/blogs/${id}`, {
         method: 'DELETE',
@@ -228,7 +222,7 @@ export default function Dashboard() {
       toast.error('删除博客失败');
       return false;
     }
-  };
+  }, [fetchBlogs]);
 
   // 检查用户权限
   useEffect(() => {
@@ -238,7 +232,7 @@ export default function Dashboard() {
   }, [user, navigate]);
 
   // 动态管理相关函数
-  const fetchMoments = async () => {
+  const fetchMoments = useCallback(async () => {
     try {
       const data = await apiRequest('/api/moments?page=1&limit=50&include_private=true');
       if (data.success) {
@@ -247,9 +241,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error('获取动态列表失败:', error);
     }
-  };
+  }, []);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await apiRequest('/api/admin/stats');
       if (response.success && response.data) {
@@ -258,9 +252,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error('获取统计数据失败:', error);
     }
-  };
+  }, []);
 
-  const createMoment = async (momentData: any) => {
+  const createMoment = useCallback(async (momentData: { content: string; visibility: 'public' | 'private' }) => {
     try {
       const result = await apiRequest('/api/moments', {
         method: 'POST',
@@ -279,9 +273,9 @@ export default function Dashboard() {
       toast.error('发布动态失败');
       return false;
     }
-  };
+  }, [fetchMoments]);
 
-  const updateMoment = async (id: number, momentData: any) => {
+  const updateMoment = useCallback(async (id: number, momentData: { content: string; visibility: 'public' | 'private' }) => {
     try {
       const result = await apiRequest(`/api/moments/${id}`, {
         method: 'PUT',
@@ -300,7 +294,7 @@ export default function Dashboard() {
       toast.error('更新动态失败');
       return false;
     }
-  };
+  }, [fetchMoments]);
 
   const deleteMoment = async (id: number) => {
     return new Promise<void>((resolve) => {
@@ -330,7 +324,7 @@ export default function Dashboard() {
     });
   };
 
-  const handleWorkSave = async (workData: Partial<Work>) => {
+  const handleWorkSave = useCallback(async (workData: Partial<Work>) => {
     let success = false;
     if (currentWork) {
       success = await updateWork(currentWork.id, workData);
@@ -338,9 +332,9 @@ export default function Dashboard() {
       success = await createWork(workData);
     }
     return success;
-  };
+  }, [createWork, currentWork, updateWork]);
 
-  const handleBlogSave = async (blogData: Partial<Blog>) => {
+  const handleBlogSave = useCallback(async (blogData: Partial<Blog>) => {
     let success = false;
     if (currentBlog) {
       success = await updateBlog(currentBlog.id, blogData);
@@ -348,23 +342,23 @@ export default function Dashboard() {
       success = await createBlog(blogData);
     }
     return success;
-  };
+  }, [createBlog, currentBlog, updateBlog]);
 
-  const openMomentForm = (moment?: any) => {
+  const openMomentForm = useCallback((moment?: Moment) => {
     if (moment) {
       setCurrentMoment(moment);
     } else {
       setCurrentMoment(null);
     }
     setIsMomentFormOpen(true);
-  };
+  }, []);
 
-  const closeMomentForm = () => {
+  const closeMomentForm = useCallback(() => {
     setIsMomentFormOpen(false);
     setCurrentMoment(null);
-  };
+  }, []);
 
-  const handleMomentSave = async (momentData: any) => {
+  const handleMomentSave = useCallback(async (momentData: { content: string; visibility: 'public' | 'private' }) => {
     let success = false;
     if (currentMoment) {
       success = await updateMoment(currentMoment.id, momentData);
@@ -372,7 +366,7 @@ export default function Dashboard() {
       success = await createMoment(momentData);
     }
     return success;
-  };
+  }, [createMoment, currentMoment, updateMoment]);
 
   // 初始化数据
   useEffect(() => {
@@ -385,7 +379,7 @@ export default function Dashboard() {
     if (user) {
       initData();
     }
-  }, [user]);
+  }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats]);
 
   // URL参数处理
   useEffect(() => {
@@ -397,12 +391,7 @@ export default function Dashboard() {
   }, []);
 
   // 事件处理函数
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleDeleteWork = async (id: number) => {
+  const handleDeleteWork = useCallback(async (id: number) => {
     setConfirmDialog({
       isOpen: true,
       title: '删除作品',
@@ -412,9 +401,9 @@ export default function Dashboard() {
         setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
       }
     });
-  };
+  }, [deleteWork]);
 
-  const handleDeleteBlog = async (id: number) => {
+  const handleDeleteBlog = useCallback(async (id: number) => {
     setConfirmDialog({
       isOpen: true,
       title: '删除博客',
@@ -424,9 +413,9 @@ export default function Dashboard() {
         setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: () => {} });
       }
     });
-  };
+  }, [deleteBlog]);
 
-  const handleToggleWorkFeatured = async (id: number, currentFeatured: boolean) => {
+  const handleToggleWorkFeatured = useCallback(async (id: number, currentFeatured: boolean) => {
     try {
       const result = await apiRequest(`/api/works/${id}/featured`, {
         method: 'PUT',
@@ -446,111 +435,136 @@ export default function Dashboard() {
       console.error('Toggle work featured error:', error);
       toast.error('网络错误，请稍后重试');
     }
-  };
+  }, [fetchWorks]);
 
-  const openWorkForm = (work?: Work) => {
+  const openWorkForm = useCallback((work?: Work) => {
     if (work) {
       setCurrentWork(work);
     } else {
       setCurrentWork(null);
     }
     setIsWorkFormOpen(true);
-  };
+  }, []);
 
-  const openBlogForm = (blog?: Blog) => {
+  const openBlogForm = useCallback((blog?: Blog) => {
     if (blog) {
       setCurrentBlog(blog);
     } else {
       setCurrentBlog(null);
     }
     setIsBlogFormOpen(true);
-  };
+  }, []);
 
-  const closeWorkForm = () => {
+  const closeWorkForm = useCallback(() => {
     setIsWorkFormOpen(false);
     setCurrentWork(null);
-  };
+  }, []);
 
-  const closeBlogForm = () => {
+  const closeBlogForm = useCallback(() => {
     setIsBlogFormOpen(false);
     setCurrentBlog(null);
-  };
+  }, []);
 
   // 博客筛选和分页逻辑
-  const filteredBlogs = blogs.filter(blog => {
-    const matchesSearch = blog.title.toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-                         blog.excerpt.toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-                         blog.tags.some(tag => tag.toLowerCase().includes(blogSearchQuery.toLowerCase()));
-    const matchesCategory = !blogSelectedCategory || blog.category === blogSelectedCategory;
-    const matchesStatus = !blogSelectedStatus || 
-                         (blogSelectedStatus === '已发布' && blog.published) ||
-                         (blogSelectedStatus === '草稿' && !blog.published);
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const blogSearchLower = useMemo(() => blogSearchQuery.toLowerCase(), [blogSearchQuery]);
+  const filteredBlogs = useMemo(() => (
+    blogs.filter(blog => {
+      const matchesSearch = blog.title.toLowerCase().includes(blogSearchLower) ||
+                           blog.excerpt.toLowerCase().includes(blogSearchLower) ||
+                           blog.tags.some(tag => tag.toLowerCase().includes(blogSearchLower));
+      const matchesCategory = !blogSelectedCategory || blog.category === blogSelectedCategory;
+      const matchesStatus = !blogSelectedStatus || 
+                           (blogSelectedStatus === '已发布' && blog.published) ||
+                           (blogSelectedStatus === '草稿' && !blog.published);
+      
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+  ), [blogs, blogSearchLower, blogSelectedCategory, blogSelectedStatus]);
 
-  const totalBlogPages = Math.ceil(filteredBlogs.length / blogsPerPage);
-  const currentBlogs = filteredBlogs.slice(
-    (blogCurrentPage - 1) * blogsPerPage,
-    blogCurrentPage * blogsPerPage
+  const totalBlogPages = useMemo(
+    () => Math.ceil(filteredBlogs.length / blogsPerPage),
+    [filteredBlogs.length, blogsPerPage]
   );
+  const currentBlogs = useMemo(() => (
+    filteredBlogs.slice(
+      (blogCurrentPage - 1) * blogsPerPage,
+      blogCurrentPage * blogsPerPage
+    )
+  ), [filteredBlogs, blogCurrentPage, blogsPerPage]);
 
   // 获取所有博客分类
-  const blogCategories = [...new Set(blogs.map(blog => blog.category))];
+  const blogCategories = useMemo(
+    () => [...new Set(blogs.map(blog => blog.category))],
+    [blogs]
+  );
   const blogStatuses = ['草稿', '已发布'];
 
   // 重置分页当筛选条件改变时
-  const handleBlogSearch = (query: string) => {
+  const handleBlogSearch = useCallback((query: string) => {
     setBlogSearchQuery(query);
     setBlogCurrentPage(1);
-  };
+  }, []);
 
-  const handleBlogCategoryFilter = (category: string) => {
+  const handleBlogCategoryFilter = useCallback((category: string) => {
     setBlogSelectedCategory(category);
     setBlogCurrentPage(1);
-  };
+  }, []);
 
-  const handleBlogStatusFilter = (status: string) => {
+  const handleBlogStatusFilter = useCallback((status: string) => {
     setBlogSelectedStatus(status);
     setBlogCurrentPage(1);
-  };
+  }, []);
 
   // 作品筛选和分页逻辑
-  const filteredWorks = works.filter(work => {
-    const matchesSearch = work.title.toLowerCase().includes(workSearchQuery.toLowerCase()) ||
-                         work.description.toLowerCase().includes(workSearchQuery.toLowerCase()) ||
-                         work.tags.some(tag => tag.toLowerCase().includes(workSearchQuery.toLowerCase()));
-    const matchesCategory = !workSelectedCategory || work.category === workSelectedCategory;
-    const matchesStatus = !workSelectedStatus || work.status === workSelectedStatus;
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const workSearchLower = useMemo(() => workSearchQuery.toLowerCase(), [workSearchQuery]);
+  const filteredWorks = useMemo(() => (
+    works.filter(work => {
+      const matchesSearch = work.title.toLowerCase().includes(workSearchLower) ||
+                           work.description.toLowerCase().includes(workSearchLower) ||
+                           work.tags.some(tag => tag.toLowerCase().includes(workSearchLower));
+      const matchesCategory = !workSelectedCategory || work.category === workSelectedCategory;
+      const matchesStatus = !workSelectedStatus || work.status === workSelectedStatus;
+      
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+  ), [works, workSearchLower, workSelectedCategory, workSelectedStatus]);
 
-  const totalWorkPages = Math.ceil(filteredWorks.length / worksPerPage);
-  const currentWorks = filteredWorks.slice(
-    (workCurrentPage - 1) * worksPerPage,
-    workCurrentPage * worksPerPage
+  const totalWorkPages = useMemo(
+    () => Math.ceil(filteredWorks.length / worksPerPage),
+    [filteredWorks.length, worksPerPage]
   );
+  const currentWorks = useMemo(() => (
+    filteredWorks.slice(
+      (workCurrentPage - 1) * worksPerPage,
+      workCurrentPage * worksPerPage
+    )
+  ), [filteredWorks, workCurrentPage, worksPerPage]);
 
   // 获取所有作品分类和状态
-  const workCategories = [...new Set(works.map(work => work.category))];
-  const workStatuses = [...new Set(works.map(work => work.status))];
+  const workCategories = useMemo(
+    () => [...new Set(works.map(work => work.category))],
+    [works]
+  );
+  const workStatuses = useMemo(
+    () => [...new Set(works.map(work => work.status))],
+    [works]
+  );
 
   // 重置分页当筛选条件改变时
-  const handleWorkSearch = (query: string) => {
+  const handleWorkSearch = useCallback((query: string) => {
     setWorkSearchQuery(query);
     setWorkCurrentPage(1);
-  };
+  }, []);
 
-  const handleWorkCategoryFilter = (category: string) => {
+  const handleWorkCategoryFilter = useCallback((category: string) => {
     setWorkSelectedCategory(category);
     setWorkCurrentPage(1);
-  };
+  }, []);
 
-  const handleWorkStatusFilter = (status: string) => {
+  const handleWorkStatusFilter = useCallback((status: string) => {
     setWorkSelectedStatus(status);
     setWorkCurrentPage(1);
-  };
+  }, []);
 
   if (!user) {
     return null;
@@ -613,7 +627,6 @@ export default function Dashboard() {
             {activeTab === 'works' && (
               <div className="animate-fade-in">
                 <WorksTab 
-                  works={works}
                   filteredWorks={filteredWorks}
                   currentWorks={currentWorks}
                   workSearchQuery={workSearchQuery}
@@ -641,7 +654,6 @@ export default function Dashboard() {
             {activeTab === 'blogs' && (
               <div className="animate-fade-in">
                 <BlogsTab 
-                  blogs={blogs}
                   filteredBlogs={filteredBlogs}
                   currentBlogs={currentBlogs}
                   blogSearchQuery={blogSearchQuery}

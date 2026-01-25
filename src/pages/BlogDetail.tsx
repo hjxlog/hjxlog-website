@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, Calendar, Clock, Tag, ChevronUp, Share2, 
-  Copy, Check, Terminal, BookOpen, Hash, ExternalLink 
+  ArrowLeft, Calendar, Clock, ChevronUp
 } from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import ErrorMessage from '@/components/ErrorMessage';
 import TableOfContents from '@/components/TableOfContents';
 import { useBackToTop } from '@/hooks/useBackToTop';
 import { toast } from 'sonner';
@@ -40,13 +38,34 @@ interface RelatedPost {
   category: string;
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\//g, '-');
+};
+
+const formatDateTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+};
+
 const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hasToc, setHasToc] = useState(false);
 
   // 浏览追踪
@@ -55,38 +74,14 @@ const BlogDetail: React.FC = () => {
   // 使用回到顶部功能
   useBackToTop();
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\//g, '-');
-  };
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-  };
-
   useEffect(() => {
     // 获取博客详情
-    const fetchPost = async () => {
-      if (!id) return;
+    const fetchPost = async (postId: string) => {
       
       setLoading(true);
-      setError(null);
       
       try {
-        const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/blogs/${postId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -116,9 +111,8 @@ const BlogDetail: React.FC = () => {
           setHasToc(false);
         }
         
-      } catch (error: any) {
+      } catch (error) {
         console.error('❌ [BlogDetail] API获取失败:', error);
-        setError(`获取博客详情失败: ${error.message}`);
         
         toast.error('获取博客详情失败');
       } finally {
@@ -127,7 +121,7 @@ const BlogDetail: React.FC = () => {
     };
 
     // 获取相关博客
-    const fetchRelatedPosts = async () => {
+    const fetchRelatedPosts = async (postId: string) => {
       try {
         // 获取更多博客以便过滤后仍有足够的相关博客
         const response = await fetch(`${API_BASE_URL}/api/blogs?limit=6&published=true`);
@@ -141,7 +135,7 @@ const BlogDetail: React.FC = () => {
         
         if (result.success && result.data && result.data.blogs) {
           // 过滤掉当前博客，然后取前3篇
-          const filteredBlogs = result.data.blogs.filter((blog: any) => blog.id !== parseInt(id!));
+          const filteredBlogs = (result.data.blogs as RelatedPost[]).filter((blog) => blog.id !== parseInt(postId, 10));
           const relatedBlogs = filteredBlogs.slice(0, 3);
           setRelatedPosts(relatedBlogs);
 
@@ -155,10 +149,26 @@ const BlogDetail: React.FC = () => {
     };
 
     if (id) {
-      fetchPost();
-      fetchRelatedPosts();
+      fetchPost(id);
+      fetchRelatedPosts(id);
     }
   }, [id]);
+
+  const createdDateLabel = useMemo(
+    () => (post ? formatDate(post.created_at) : ''),
+    [post]
+  );
+  const updatedDateLabel = useMemo(
+    () => (post ? formatDateTime(post.updated_at || post.created_at) : ''),
+    [post]
+  );
+  const relatedPostCards = useMemo(
+    () => relatedPosts.map(related => ({
+      ...related,
+      dateLabel: formatDate(related.created_at),
+    })),
+    [relatedPosts]
+  );
 
 
 
@@ -270,7 +280,7 @@ const BlogDetail: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-1.5">
                            <Calendar size={16} />
-                           {formatDate(post.created_at)}
+                           {createdDateLabel}
                         </div>
                         <div className="flex items-center gap-1.5">
                            <Clock size={16} />
@@ -287,7 +297,7 @@ const BlogDetail: React.FC = () => {
 
               {/* Article Footer */}
               <div className="mt-16 pt-8 border-t border-slate-100 flex justify-between items-center text-sm text-slate-400">
-                 <p>最后更新于 {formatDateTime(post.updated_at || post.created_at)}</p>
+                 <p>最后更新于 {updatedDateLabel}</p>
               </div>
            </motion.div>
 
@@ -319,7 +329,7 @@ const BlogDetail: React.FC = () => {
                       相关阅读
                    </h3>
                    <div className="space-y-3">
-                      {relatedPosts.map(post => (
+                      {relatedPostCards.map(post => (
                          <a 
                            key={post.id}
                            href={`/blog/${post.id}`}
@@ -329,7 +339,7 @@ const BlogDetail: React.FC = () => {
                                {post.title}
                             </h4>
                             <span className="text-xs text-slate-400 block">
-                               {formatDate(post.created_at)}
+                               {post.dateLabel}
                             </span>
                          </a>
                       ))}
@@ -343,11 +353,11 @@ const BlogDetail: React.FC = () => {
         <div className="lg:hidden mt-8">
            <h3 className="text-lg font-bold text-slate-900 mb-4">相关阅读</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatedPosts.map(post => (
+              {relatedPostCards.map(post => (
                  <div key={post.id} onClick={() => navigate(`/blog/${post.id}`)} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
                     <h4 className="font-medium text-slate-800 mb-2">{post.title}</h4>
                     <div className="flex justify-between items-center text-xs text-slate-500">
-                       <span>{formatDate(post.created_at)}</span>
+                       <span>{post.dateLabel}</span>
                        <span className="text-blue-500">阅读</span>
                     </div>
                  </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { Blog } from '@/types';
 
@@ -63,17 +63,17 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
     }
   }, [initialData, isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const handleContentChange = (content: string) => {
+  const handleContentChange = useCallback((content: string) => {
     setFormData(prev => ({ ...prev, content }));
-  };
+  }, []);
 
   // 处理粘贴图片上传
-  const handlePaste = async (e: React.ClipboardEvent) => {
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
     let imageFile = null;
 
@@ -105,16 +105,17 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
       }
 
       setFormData(prev => ({ ...prev, cover_image: data.data.url }));
-    } catch (error: any) {
+    } catch (error) {
       console.error('图片上传失败:', error);
-      alert(`图片上传失败: ${error.message || '未知错误'}`);
+      const message = error instanceof Error ? error.message : '未知错误';
+      alert(`图片上传失败: ${message}`);
     } finally {
       setIsUploading(false);
     }
-  };
+  }, []);
 
   // AI 生成摘要
-  const handleAIGenerateExcerpt = async () => {
+  const handleAIGenerateExcerpt = useCallback(async () => {
     if (!formData.content) {
       alert('请先输入内容，AI 才能帮您生成摘要哦！');
       return;
@@ -144,10 +145,10 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [formData.content]);
 
   // AI 生成标签
-  const handleAIGenerateTags = async () => {
+  const handleAIGenerateTags = useCallback(async () => {
     if (!formData.content) {
       alert('请先输入内容，AI 才能帮您生成标签哦！');
       return;
@@ -178,10 +179,10 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
     } finally {
       setIsGeneratingTags(false);
     }
-  };
+  }, [formData.content]);
 
   // AI 生成分类
-  const handleAIGenerateCategory = async () => {
+  const handleAIGenerateCategory = useCallback(async () => {
     if (!formData.content) {
       alert('请先输入内容，AI 才能帮您生成分类哦！');
       return;
@@ -211,9 +212,9 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
     } finally {
       setIsGeneratingCategory(false);
     }
-  };
+  }, [formData.content]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -236,7 +237,7 @@ export default function BlogForm({ isOpen, onClose, initialData, onSave }: BlogF
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, onSave, onClose]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -24,9 +24,18 @@ interface KnowledgeItem {
   source_id: number;
   title: string;
   content_preview: string;
-  metadata: any;
+  metadata: unknown;
   created_at: string;
 }
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleString('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 const KnowledgeBase: React.FC = () => {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -37,46 +46,48 @@ const KnowledgeBase: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'list'>('overview');
 
   // 获取统计信息
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await apiRequest('/api/knowledge-base/stats');
       setStats(res.data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('获取知识库状态失败:', err);
-      setError(err.message || '获取知识库状态失败');
+      const message = err instanceof Error ? err.message : '获取知识库状态失败';
+      setError(message);
       toast.error('获取知识库状态失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 获取列表
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     setError(null);
     try {
       const res = await apiRequest('/api/knowledge-base/list?limit=50');
       setItems(res.data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('获取知识库列表失败:', err);
-      setError(err.message || '获取知识库列表失败');
+      const message = err instanceof Error ? err.message : '获取知识库列表失败';
+      setError(message);
       toast.error('获取知识库列表失败');
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   useEffect(() => {
     if (activeTab === 'list') {
       fetchList();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchList]);
 
   // 重建知识库
-  const handleRebuild = async () => {
+  const handleRebuild = useCallback(async () => {
     if (!confirm('确定要重建知识库吗？这将清空现有数据并重新生成所有向量。\n\n注意：重建过程可能需要较长时间，请耐心等待。')) {
       return;
     }
@@ -93,16 +104,17 @@ const KnowledgeBase: React.FC = () => {
 
       toast.success('知识库重建成功！');
       await fetchStats();
-    } catch (err: any) {
-      setError(err.message || '重建失败');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '重建失败';
+      setError(message);
       toast.error('重建失败');
     } finally {
       setRebuilding(false);
     }
-  };
+  }, [fetchStats]);
 
   // 删除单项
-  const handleDeleteItem = async (id: number) => {
+  const handleDeleteItem = useCallback(async (id: number) => {
     if (!confirm('确定要删除这个文档块吗？')) {
       return;
     }
@@ -120,20 +132,18 @@ const KnowledgeBase: React.FC = () => {
       toast.success('删除成功');
       fetchList();
       fetchStats();
-    } catch (err: any) {
+    } catch {
       toast.error('删除失败');
     }
-  };
+  }, [fetchList, fetchStats, items]);
 
-  // 格式化日期
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const itemsWithDate = useMemo(
+    () => items.map((item) => ({
+      ...item,
+      dateLabel: formatDate(item.created_at),
+    })),
+    [items]
+  );
 
   if (loading) {
     return (
@@ -339,7 +349,7 @@ const KnowledgeBase: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {items.map((item) => (
+                  {itemsWithDate.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -364,7 +374,7 @@ const KnowledgeBase: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(item.created_at)}
+                        {item.dateLabel}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button

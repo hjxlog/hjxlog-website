@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Photo {
@@ -27,6 +27,11 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const currentPhoto = photos[currentIndex];
+
+  const takenAtLabel = useMemo(() => {
+    if (!currentPhoto?.taken_at) return '';
+    return new Date(currentPhoto.taken_at).toLocaleDateString('zh-CN');
+  }, [currentPhoto?.taken_at]);
 
   // 键盘事件处理
   useEffect(() => {
@@ -66,25 +71,25 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
     setImageLoaded(false);
   }, [currentIndex]);
 
-  if (!isOpen || !currentPhoto) return null;
-
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       onNavigate(currentIndex - 1);
     }
-  };
+  }, [currentIndex, onNavigate]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndex < photos.length - 1) {
       onNavigate(currentIndex + 1);
     }
-  };
+  }, [currentIndex, onNavigate, photos.length]);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
-  };
+  }, [onClose]);
+
+  if (!isOpen || !currentPhoto) return null;
 
   return (
     <div 
@@ -152,8 +157,8 @@ export default function ImageModal({ isOpen, onClose, photos, currentIndex, onNa
             {currentPhoto.location && (
               <span>地点: {currentPhoto.location}</span>
             )}
-            {currentPhoto.taken_at && (
-              <span>拍摄时间: {new Date(currentPhoto.taken_at).toLocaleDateString('zh-CN')}</span>
+            {takenAtLabel && (
+              <span>拍摄时间: {takenAtLabel}</span>
             )}
           </div>
         </div>

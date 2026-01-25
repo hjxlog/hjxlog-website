@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function PublicNav() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 导航栏滚动效果
@@ -14,12 +13,12 @@ export default function PublicNav() {
       setIsScrolled(window.scrollY > 20);
     };
     
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // 处理导航点击
-  const handleNavClick = (path: string) => {
+  const handleNavClick = useCallback((path: string) => {
     navigate(path);
     setIsMenuOpen(false);
     
@@ -27,7 +26,15 @@ export default function PublicNav() {
     if (path === '/') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [navigate]);
+
+  const navItems = useMemo(() => ([
+    { label: '首页', path: '/' },
+    { label: '作品', path: '/works' },
+    { label: '博客', path: '/blogs' },
+    { label: '摄影', path: '/photos' },
+    { label: '动态', path: '/moments' },
+  ]), []);
 
   return (
     <nav 
@@ -47,37 +54,15 @@ export default function PublicNav() {
         
         {/* 右侧：导航菜单 */}
         <div className="hidden md:flex items-center space-x-8">
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('/')}
-          >
-            首页
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('/works')}
-          >
-            作品
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('/blogs')}
-          >
-            博客
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('/photos')}
-          >
-            摄影
-          </button>
-          <button 
-            className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
-            onClick={() => handleNavClick('/moments')}
-          >
-            动态
-          </button>
-
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium"
+              onClick={() => handleNavClick(item.path)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
         
         <button 
@@ -91,36 +76,15 @@ export default function PublicNav() {
       {isMenuOpen && (
         <div className="md:hidden mt-4 pb-4">
           <div className="flex flex-col space-y-4">
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => handleNavClick('/')}
-            >
-              首页
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => handleNavClick('/works')}
-            >
-              作品
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => handleNavClick('/blogs')}
-            >
-              博客
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => handleNavClick('/photos')}
-            >
-              摄影
-            </button>
-            <button 
-              className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
-              onClick={() => handleNavClick('/moments')}
-            >
-              动态
-            </button>
+            {navItems.map((item) => (
+              <button 
+                key={item.path}
+                className="text-slate-600 hover:text-[#165DFF] transition-colors font-medium text-left"
+                onClick={() => handleNavClick(item.path)}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       )}

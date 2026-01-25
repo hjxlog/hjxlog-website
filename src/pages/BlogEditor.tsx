@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 // 移除对lib/api的依赖，直接调用服务器API
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import ErrorMessage from '@/components/ErrorMessage';
 import { apiRequest } from '../config/api';
 import { 
   ArrowLeftIcon,
@@ -47,7 +46,6 @@ const BlogEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [tagInput, setTagInput] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   // 预定义的分类选项
   const categories = [

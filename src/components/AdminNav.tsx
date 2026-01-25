@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '@/contexts/authContext';
 
@@ -46,6 +46,36 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isDashboard = location.pathname === '/dashboard';
+  const allTabs = useMemo(
+    () => dashboardTabGroups.flatMap(group => group.tabs),
+    []
+  );
+
+  const handleToggleMenu = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleOpenHome = useCallback(() => {
+    window.open('/', '_blank');
+  }, []);
+
+  const handleGoOverview = useCallback(() => {
+    if (setActiveTab) {
+      setActiveTab('overview');
+    } else {
+      navigate('/dashboard?tab=overview');
+    }
+  }, [navigate, setActiveTab]);
+
+  const handleReturnToHome = useCallback(() => {
+    window.open('/', '_blank');
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    setIsMobileMenuOpen(false);
+  }, [logout]);
 
   // 移动端Dashboard页签
   const MobileDashboardTabs = () => {
@@ -54,7 +84,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
     return (
       <div className="lg:hidden border-t border-gray-200 bg-white">
         <div className="flex overflow-x-auto px-4 py-3 gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-          {dashboardTabGroups.flatMap(group => group.tabs).map((tab) => (
+          {allTabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
@@ -80,20 +110,14 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
           {/* Logo */}
           <div className="flex items-center">
             <button
-              onClick={() => window.open('/', '_blank')}
+              onClick={handleOpenHome}
               className="text-2xl font-bold text-[#165DFF] hover:text-[#0E4BA4] transition-colors"
             >
               HJXLOG
             </button>
             <span className="ml-3 text-gray-400">|</span>
             <button 
-              onClick={() => {
-                if (setActiveTab) {
-                  setActiveTab('overview');
-                } else {
-                  navigate('/dashboard?tab=overview');
-                }
-              }}
+              onClick={handleGoOverview}
               className="ml-3 text-gray-600 font-medium hidden sm:inline hover:text-[#165DFF] transition-colors cursor-pointer"
             >
               管理后台
@@ -113,7 +137,7 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={handleToggleMenu}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="切换菜单"
             >
@@ -143,20 +167,14 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
                 {/* Mobile Action Buttons */}
                 <div className="flex items-center justify-around px-3 py-2 bg-gray-50 rounded-md mx-3">
                   <button
-                    onClick={() => {
-                      window.open('/', '_blank');
-                      setIsMobileMenuOpen(false);
-                    }}
+                    onClick={handleReturnToHome}
                     className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-[#165DFF] transition-colors"
                   >
                     <i className="fas fa-home mr-2"></i>
                     返回前台
                   </button>
                   <button
-                    onClick={() => {
-                      logout();
-                      setIsMobileMenuOpen(false);
-                    }}
+                    onClick={handleLogout}
                     className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
                   >
                     <i className="fas fa-sign-out-alt mr-2"></i>

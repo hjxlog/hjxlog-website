@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ErrorMessageProps {
@@ -58,4 +58,4 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
   );
 };
 
-export default ErrorMessage;
+export default memo(ErrorMessage);

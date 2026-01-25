@@ -12,13 +12,17 @@ interface ViewItem {
 }
 
 // 全局待上报队列
-const pendingQueue: Set<string> = new Set();
+const pendingQueue: Map<string, ViewItem> = new Map();
 let reportTimer: ReturnType<typeof setTimeout> | null = null;
 
+const makeKey = (type: string, id: number, path: string) => `${type}:${id}:${path}`;
+
 const addToQueue = (type: string, id: number, path: string) => {
-  const key = JSON.stringify({ type, id, path });
-  pendingQueue.add(key);
-  
+  const key = makeKey(type, id, path);
+  if (!pendingQueue.has(key)) {
+    pendingQueue.set(key, { type, id, path });
+  }
+
   if (!reportTimer) {
     reportTimer = setTimeout(flushQueue, REPORT_INTERVAL);
   }
@@ -30,7 +34,7 @@ const flushQueue = async () => {
     return;
   }
 
-  const items = Array.from(pendingQueue).map(item => JSON.parse(item));
+  const items = Array.from(pendingQueue.values());
   pendingQueue.clear();
   reportTimer = null;
 

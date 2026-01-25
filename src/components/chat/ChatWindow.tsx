@@ -1,7 +1,7 @@
 /**
  * 聊天窗口组件
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MessageList, Message } from './MessageList';
 import { InputArea } from './InputArea';
 import { API_BASE_URL } from '@/config/api';
@@ -64,7 +64,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
     };
   }, []);
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = useCallback(async (message: string) => {
     // 检查配额
     if (quota.remaining <= 0 || quota.globalRemaining <= 0) {
       setError('今日提问次数已达上限，请明天再试');
@@ -140,7 +140,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
                 setError(data.error);
                 setIsTyping(false);
               }
-            } catch (e) {
+            } catch {
               // 忽略解析错误
             }
           }
@@ -151,14 +151,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
       setError(error instanceof Error ? error.message : '抱歉，我遇到了一些问题，请稍后再试。');
       setIsTyping(false);
     }
-  };
+  }, [quota]);
 
   // 快捷问题点击
-  const handleQuickQuestion = (question: string) => {
+  const handleQuickQuestion = useCallback((question: string) => {
     if (!isTyping && quota.remaining > 0 && quota.globalRemaining > 0) {
       sendMessage(question);
     }
-  };
+  }, [isTyping, quota, sendMessage]);
 
   return (
     <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 h-[80vh] sm:h-[600px] bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-[100] border border-white/20 overflow-hidden ring-1 ring-black/5 transition-all duration-300">

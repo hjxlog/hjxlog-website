@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Moment } from '@/types';
 import {
@@ -12,7 +12,7 @@ interface MomentFormProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: Moment | null;
-  onSave: (data: any) => Promise<boolean>;
+  onSave: (data: { content: string; visibility: 'public' | 'private' }) => Promise<boolean>;
 }
 
 interface MomentFormData {
@@ -43,7 +43,7 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
     }
   }, [initialData, isOpen]);
 
-  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     setDragOver(false);
     
@@ -104,7 +104,7 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
             } else {
                 throw new Error(uploadResult.error || '上传失败');
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('上传失败:', error);
             toast.error(`${file.name} 上传失败`);
             setFormData(prev => ({
@@ -113,9 +113,9 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
             }));
         }
     });
-  };
+  }, [formData.content]);
 
-  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
     let imageFile: File | null = null;
 
@@ -165,17 +165,18 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
       } else {
         throw new Error(uploadResult.error || '上传失败');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('图片粘贴上传失败:', error);
-      toast.error(`上传失败: ${error.message}`);
+      const message = error instanceof Error ? error.message : '上传失败';
+      toast.error(`上传失败: ${message}`);
       setFormData(prev => ({
         ...prev,
         content: prev.content.replace(placeholder, '')
       }));
     }
-  };
+  }, [formData.content]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -195,7 +196,15 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData.content, formData.visibility, onSave, onClose]);
+
+  const handleContentChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, content: value }));
+  }, []);
+
+  const handleVisibilityChange = useCallback((value: MomentFormData['visibility']) => {
+    setFormData(prev => ({ ...prev, visibility: value }));
+  }, []);
 
   if (!isOpen) return null;
 
@@ -223,7 +232,7 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
               <div className="relative">
                 <textarea
                   value={formData.content}
-                  onChange={(e) => setFormData(prev => ({...prev, content: e.target.value}))}
+                  onChange={(e) => handleContentChange(e.target.value)}
                   onPaste={handlePaste}
                   onDrop={handleDrop}
                   onDragOver={(e) => {
@@ -258,7 +267,7 @@ export default function MomentForm({ isOpen, onClose, initialData, onSave }: Mom
               </label>
               <select
                 value={formData.visibility}
-                onChange={(e) => setFormData(prev => ({...prev, visibility: e.target.value as 'public' | 'private'}))}
+                onChange={(e) => handleVisibilityChange(e.target.value as 'public' | 'private')}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF]"
               >
                 <option value="public">公开</option>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
@@ -24,6 +24,17 @@ interface BlogPost {
   featured?: boolean;
 }
 
+const BLOG_GRADIENTS = [
+  'from-blue-50 to-indigo-50',
+  'from-rose-50 to-orange-50',
+  'from-emerald-50 to-teal-50',
+  'from-violet-50 to-purple-50',
+  'from-amber-50 to-yellow-50',
+  'from-cyan-50 to-blue-50',
+];
+
+const getGradient = (id: number) => BLOG_GRADIENTS[id % BLOG_GRADIENTS.length];
+
 const Blog: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,7 +49,7 @@ const Blog: React.FC = () => {
   const blogsPerPage = 6;
 
   // 获取所有分类
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
 
       const response = await fetch(`${API_BASE_URL}/api/blogs/categories`);
@@ -57,16 +68,16 @@ const Blog: React.FC = () => {
       } else {
         throw new Error(result.message || '获取分类失败');
       }
-    } catch (err) {
+    } catch {
 
       // 如果API失败，尝试从当前博客数据中提取分类
       const fallbackCategories = ['全部'];
       setAllCategories(fallbackCategories);
     }
-  };
+  }, []);
 
   // 获取博客数据
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -112,7 +123,7 @@ const Blog: React.FC = () => {
         console.warn('⚠️ [Blog页面] 未获取到博客数据');
       }
       
-    } catch (err) {
+    } catch {
 
       setError('获取博客数据失败，请稍后重试');
       setBlogs([]);
@@ -121,20 +132,33 @@ const Blog: React.FC = () => {
       setLoading(false);
 
     }
-  };
+  }, [currentPage, searchQuery, selectedCategory, blogsPerPage]);
   
   // 分页计算
-  const totalPages = Math.ceil(totalBlogs / blogsPerPage);
+  const totalPages = useMemo(() => Math.ceil(totalBlogs / blogsPerPage), [totalBlogs, blogsPerPage]);
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalPages }, (_, i) => i + 1),
+    [totalPages]
+  );
+
+  const blogCards = useMemo(
+    () => blogs.map((blog) => ({
+      blog,
+      dateLabel: new Date(blog.created_at).toLocaleDateString('zh-CN'),
+      gradient: getGradient(blog.id),
+    })),
+    [blogs]
+  );
   
   // 初始化和数据获取
   useEffect(() => {
     fetchBlogs();
-  }, [currentPage, searchQuery, selectedCategory]);
+  }, [fetchBlogs]);
 
   // 初始化时获取分类数据
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
   
   // 重置页码当搜索或分类改变时
   useEffect(() => {
@@ -160,23 +184,10 @@ const Blog: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  // 随机渐变生成器
-  const getGradient = (id: number) => {
-    const gradients = [
-      'from-blue-50 to-indigo-50',
-      'from-rose-50 to-orange-50',
-      'from-emerald-50 to-teal-50',
-      'from-violet-50 to-purple-50',
-      'from-amber-50 to-yellow-50',
-      'from-cyan-50 to-blue-50',
-    ];
-    return gradients[id % gradients.length];
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] relative flex flex-col">
@@ -248,7 +259,7 @@ const Blog: React.FC = () => {
             </div>
           ) : blogs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-              {blogs.map((blog, index) => (
+              {blogCards.map(({ blog, dateLabel, gradient }, index) => (
                 <motion.article 
                   key={blog.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -262,7 +273,7 @@ const Blog: React.FC = () => {
                     {blog.cover_image ? (
                       <img src={blog.cover_image} alt={blog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${getGradient(blog.id)}`} />
+                      <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
                     )}
                     
                     {/* Category Badge overlay */}
@@ -279,7 +290,7 @@ const Blog: React.FC = () => {
                     <div className="flex items-center gap-3 text-xs font-medium text-slate-400 mb-3">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
-                        <time>{new Date(blog.created_at).toLocaleDateString('zh-CN')}</time>
+                        <time>{dateLabel}</time>
                       </div>
                     </div>
 
@@ -327,7 +338,7 @@ const Blog: React.FC = () => {
               </button>
               
               <div className="flex gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                {pageNumbers.map(page => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}

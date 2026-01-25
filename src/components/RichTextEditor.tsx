@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from 'react';
+import type { CSSProperties, ComponentType } from 'react';
 import '@uiw/react-md-editor/markdown-editor.css';
 
 // 动态导入 MDEditor
@@ -23,11 +24,20 @@ export default function RichTextEditor({
     setContent(value);
   }, [value]);
 
-  const handleChange = (val?: string) => {
+  const handleChange = useCallback((val?: string) => {
     const newValue = val || '';
     setContent(newValue);
     onChange?.(newValue);
-  };
+  }, [onChange]);
+
+  const textareaProps = useMemo(() => ({
+    placeholder,
+    style: {
+      fontSize: 14,
+      lineHeight: 1.6,
+      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
+    }
+  }), [placeholder]);
 
   return (
     <div className="rich-text-editor">
@@ -38,14 +48,7 @@ export default function RichTextEditor({
           preview="edit"
           hideToolbar={false}
           visibleDragbar={false}
-          textareaProps={{
-            placeholder,
-            style: {
-              fontSize: 14,
-              lineHeight: 1.6,
-              fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
-            }
-          }}
+          textareaProps={textareaProps}
           height={height}
           data-color-mode="light"
         />
@@ -55,8 +58,10 @@ export default function RichTextEditor({
 }
 
 // 预览组件
+type MarkdownComponentType = ComponentType<{ source?: string; style?: CSSProperties }>;
+
 export function MarkdownPreview({ content }: { content: string }) {
-  const [MarkdownComponent, setMarkdownComponent] = useState<any>(null);
+  const [MarkdownComponent, setMarkdownComponent] = useState<MarkdownComponentType | null>(null);
   
   useEffect(() => {
     import('@uiw/react-md-editor').then(module => {

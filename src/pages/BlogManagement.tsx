@@ -85,25 +85,6 @@ const BlogManagement: React.FC = () => {
     }
   };
 
-  // 切换发布状态
-  const togglePublishStatus = async (id: number, currentStatus: boolean) => {
-    try {
-      const result = await apiRequest(`/api/blogs/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ published: !currentStatus })
-      });
-      if (result.success) {
-        toast.success(`博客已${!currentStatus ? '发布' : '取消发布'}`);
-        fetchBlogs(); // 重新获取列表
-      } else {
-        throw new Error(result.message || '更新失败');
-      }
-    } catch (error) {
-      console.error('更新发布状态失败:', error);
-      toast.error('更新发布状态失败');
-    }
-  };
-
   // 处理发布状态切换
   const handleTogglePublish = async (id: number, newStatus: boolean) => {
     try {

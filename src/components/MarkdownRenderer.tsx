@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { ghcolors } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 
 // 代码块组件 - Typora 风格
-const CodeBlock = ({ language, children }: { language: string; children: string }) => {
+const CodeBlock = memo(({ language, children }: { language: string; children: string }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -61,11 +62,11 @@ const CodeBlock = ({ language, children }: { language: string; children: string 
       </div>
     </div>
   );
-};
+});
 
 
 // Markdown 包装组件
-export const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => {
+export const MarkdownRenderer = memo(({ content, className = "" }: { content: string; className?: string }) => {
   // 生成唯一ID用于标题锚点
   const idCounts: Record<string, number> = {};
   const getUniqueId = (text: string) => {
@@ -84,137 +85,135 @@ export const MarkdownRenderer = ({ content, className = "" }: { content: string;
     return id;
   };
 
-  const getNodeText = (node: any): string => {
+  const getNodeText = (node: unknown): string => {
     if (['string', 'number'].includes(typeof node)) return node.toString();
     if (node instanceof Array) return node.map(getNodeText).join('');
     if (typeof node === 'object' && node) {
-       if (node.props && node.props.children) return getNodeText(node.props.children);
+       if ('props' in node && (node as { props?: { children?: unknown } }).props?.children) {
+         return getNodeText((node as { props: { children: unknown } }).props.children);
+       }
     }
     return '';
   };
 
+  const markdownComponents: Components = useMemo(() => ({
+    // 移除 pre 的默认样式，让 code 接管
+    pre: ({ children }) => <>{children}</>,
+    // 代码块与行内代码处理
+    code: (props) => {
+      const { inline, className, children, ...rest } = props;
+      const match = /language-(\w+)/.exec(className || '');
+      const language = match ? match[1] : '';
+      const content = String(children ?? '').replace(/\n$/, '');
+      const isMultiLine = content.includes('\n');
+
+      // 智能判断：如果是块级代码，但只有单行且未指定特定语言（或是 text），
+      // 则降级为行内样式，避免"杀鸡用牛刀"的视觉负担（例如单独一行的文件名 `SKILL.md`）
+      const shouldRenderAsBlock = !inline && (isMultiLine || (language && language !== 'text'));
+
+      return shouldRenderAsBlock ? (
+        <CodeBlock language={language} children={content} />
+      ) : (
+        // Typora 风格行内代码
+        <code className="px-1.5 py-0.5 mx-0.5 rounded-[3px] bg-[#f3f4f4] text-[#444] text-[0.9em] font-mono border border-[#e7eaed] before:content-none after:content-none" {...rest}>
+          {children}
+        </code>
+      );
+    },
+    // GitHub 风格列表
+    ul: ({ children }) => (
+      <ul className="list-disc list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
+        {children}
+      </ul>
+    ),
+    ol: ({ children }) => (
+      <ol className="list-decimal list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
+        {children}
+      </ol>
+    ),
+    li: ({ children }) => (
+      <li className="pl-1 leading-7 text-[#24292f] my-2">
+        {children}
+      </li>
+    ),
+    // 图片
+    img: ({ src, alt, ...imgProps }) => (
+      <div className="my-6">
+        <div className="relative overflow-hidden group bg-transparent">
+          <img 
+            src={src} 
+            alt={alt} 
+            className="max-w-full h-auto object-contain border border-slate-100 rounded-sm"
+            {...imgProps}
+          />
+        </div>
+        {alt && (
+          <p className="text-center text-sm text-slate-500 mt-2">
+            {alt}
+          </p>
+        )}
+      </div>
+    ),
+    // 链接
+    a: ({ href, children, ...linkProps }) => {
+      const isInternal = href?.startsWith('/') || href?.includes(window.location.hostname);
+      return (
+        <a 
+          href={href} 
+          target={isInternal ? "_self" : "_blank"}
+          rel={isInternal ? "" : "noopener noreferrer"}
+          className="text-[#0969da] hover:underline decoration-auto underline-offset-4 break-words"
+          {...linkProps}
+        >
+          {children}
+          {!isInternal && <ExternalLink size={10} className="inline ml-0.5 opacity-70" />}
+        </a>
+      );
+    },
+    // 引用块
+    blockquote: ({ children }) => (
+      <blockquote className="border-l-4 border-[#d0d7de] pl-4 py-1 my-4 text-[#57606a] italic">
+        {children}
+      </blockquote>
+    ),
+    // 分割线
+    hr: () => <hr className="h-px my-4 bg-[#e7e7e7] border-0" />,
+    // 标题
+    h1: ({ children, ...props }) => {
+      const text = getNodeText(children);
+      const id = getUniqueId(text);
+      return <h1 id={id} className="text-3xl font-semibold mt-8 mb-4 pb-2 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h1>;
+    },
+    h2: ({ children, ...props }) => {
+      const text = getNodeText(children);
+      const id = getUniqueId(text);
+      return <h2 id={id} className="text-2xl font-semibold mt-6 mb-4 pb-1 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h2>;
+    },
+    h3: ({ children, ...props }) => {
+      const text = getNodeText(children);
+      const id = getUniqueId(text);
+      return <h3 id={id} className="text-xl font-semibold mt-6 mb-3 flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h3>;
+    },
+    p: ({ children }) => <p className="my-4 leading-7 text-[#24292f]">{children}</p>,
+    // 表格
+    table: ({ children }) => (
+      <div className="overflow-x-auto my-4">
+        <table className="min-w-full border-collapse block overflow-x-auto w-max">{children}</table>
+      </div>
+    ),
+    thead: ({ children }) => <thead className="bg-[#f6f8fa]">{children}</thead>,
+    th: ({ children }) => <th className="px-4 py-3 text-left font-semibold text-[#24292f] border border-[#d0d7de]">{children}</th>,
+    td: ({ children }) => <td className="px-4 py-3 text-[#24292f] border border-[#d0d7de]">{children}</td>,
+  }), [content]);
+
   return (
     <div className={`markdown-body ${className}`}>
-      <ReactMarkdown 
+      <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        components={{
-          // 移除 pre 的默认样式，让 code 接管
-          pre: ({ children }: any) => <>{children}</>,
-          
-          // 代码块与行内代码处理
-          code({ node, inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || '');
-            const language = match ? match[1] : '';
-            const content = String(children).replace(/\n$/, '');
-            const isMultiLine = content.includes('\n');
-            
-            // 智能判断：如果是块级代码，但只有单行且未指定特定语言（或是 text），
-            // 则降级为行内样式，避免"杀鸡用牛刀"的视觉负担（例如单独一行的文件名 `SKILL.md`）
-            const shouldRenderAsBlock = !inline && (isMultiLine || (language && language !== 'text'));
-            
-            return shouldRenderAsBlock ? (
-              <CodeBlock language={language} children={content} />
-            ) : (
-              // Typora 风格行内代码
-              <code className="px-1.5 py-0.5 mx-0.5 rounded-[3px] bg-[#f3f4f4] text-[#444] text-[0.9em] font-mono border border-[#e7eaed] before:content-none after:content-none" {...props}>
-                {children}
-              </code>
-            );
-          },
-
-          // GitHub 风格列表
-          ul: ({ children }: any) => (
-            <ul className="list-disc list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
-              {children}
-            </ul>
-          ),
-          ol: ({ children }: any) => (
-            <ol className="list-decimal list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
-              {children}
-            </ol>
-          ),
-          li: ({ children }: any) => (
-            <li className="pl-1 leading-7 text-[#24292f] my-2">
-              {children}
-            </li>
-          ),
-
-          // 图片
-          img({ src, alt, ...props }: any) {
-            return (
-              <div className="my-6">
-                <div className="relative overflow-hidden group bg-transparent">
-                  <img 
-                    src={src} 
-                    alt={alt} 
-                    className="max-w-full h-auto object-contain border border-slate-100 rounded-sm"
-                    {...props}
-                  />
-                </div>
-                {alt && (
-                  <p className="text-center text-sm text-slate-500 mt-2">
-                    {alt}
-                  </p>
-                )}
-              </div>
-            );
-          },
-          // 链接
-          a({ href, children, ...props }: any) {
-            const isInternal = href?.startsWith('/') || href?.includes(window.location.hostname);
-            return (
-              <a 
-                href={href} 
-                target={isInternal ? "_self" : "_blank"}
-                rel={isInternal ? "" : "noopener noreferrer"}
-                className="text-[#0969da] hover:underline decoration-auto underline-offset-4 break-words"
-                {...props}
-              >
-                {children}
-                {!isInternal && <ExternalLink size={10} className="inline ml-0.5 opacity-70" />}
-              </a>
-            );
-          },
-          // 引用块
-          blockquote({ children }: any) {
-            return (
-              <blockquote className="border-l-4 border-[#d0d7de] pl-4 py-1 my-4 text-[#57606a] italic">
-                {children}
-              </blockquote>
-            );
-          },
-          // 分割线
-          hr: () => <hr className="h-px my-4 bg-[#e7e7e7] border-0" />,
-          // 标题
-          h1: ({ children, ...props }: any) => {
-            const text = getNodeText(children);
-            const id = getUniqueId(text);
-            return <h1 id={id} className="text-3xl font-semibold mt-8 mb-4 pb-2 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h1>;
-          },
-          h2: ({ children, ...props }: any) => {
-            const text = getNodeText(children);
-            const id = getUniqueId(text);
-            return <h2 id={id} className="text-2xl font-semibold mt-6 mb-4 pb-1 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h2>;
-          },
-          h3: ({ children, ...props }: any) => {
-            const text = getNodeText(children);
-            const id = getUniqueId(text);
-            return <h3 id={id} className="text-xl font-semibold mt-6 mb-3 flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h3>;
-          },
-          p: ({ children }: any) => <p className="my-4 leading-7 text-[#24292f]">{children}</p>,
-          // 表格
-          table: ({ children }: any) => (
-            <div className="overflow-x-auto my-4">
-              <table className="min-w-full border-collapse block overflow-x-auto w-max">{children}</table>
-            </div>
-          ),
-          thead: ({ children }: any) => <thead className="bg-[#f6f8fa]">{children}</thead>,
-          th: ({ children }: any) => <th className="px-4 py-3 text-left font-semibold text-[#24292f] border border-[#d0d7de]">{children}</th>,
-          td: ({ children }: any) => <td className="px-4 py-3 text-[#24292f] border border-[#d0d7de]">{children}</td>,
-        }}
+        components={markdownComponents}
       >
         {content}
       </ReactMarkdown>
     </div>
   );
-};
+});

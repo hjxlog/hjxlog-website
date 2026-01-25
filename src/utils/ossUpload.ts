@@ -6,9 +6,9 @@ import { API_BASE_URL } from '@/config/api';
  * @param {string} action - 操作类型
  * @param {Error} error - 错误对象
  * @param {File} file - 文件对象
- * @param {any} additionalData - 额外数据
+ * @param {Record<string, unknown>} additionalData - 额外数据
  */
-const logErrorToBackend = async (action: string, error: Error, file: File, additionalData: any = {}) => {
+const logErrorToBackend = async (action: string, error: Error, file: File, additionalData: Record<string, unknown> = {}) => {
   try {
     const logData = {
       log_type: 'error',
@@ -100,7 +100,7 @@ export const validateImageSize = (file: File, maxSize: number = 15 * 1024 * 1024
  * @param {number} bytes - 字节数
  * @returns {string} 格式化后的文件大小
  */
-export const formatFileSize = (bytes) => {
+export const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -130,16 +130,6 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
     const formData = new FormData();
     formData.append('image', file);
     
-    console.log('🔍 [OSS上传] 准备上传文件:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
-        key,
-        value: value instanceof File ? `File: ${value.name}` : value
-      }))
-    });
-
     // 创建XMLHttpRequest以支持上传进度
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -158,13 +148,6 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
 
       // 监听请求完成
       xhr.addEventListener('load', () => {
-        console.log('📡 [OSS上传] 收到响应:', {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          responseText: xhr.responseText,
-          responseLength: xhr.responseText?.length || 0
-        });
-        
         // 检查HTTP状态码
         if (xhr.status < 200 || xhr.status >= 300) {
           const error = new Error(`HTTP错误: ${xhr.status} ${xhr.statusText}`);
@@ -210,8 +193,6 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
             return;
           }
           
-          console.log('📋 [OSS上传] 解析响应:', response);
-          
           // 检查响应结构
           if (typeof response !== 'object' || response === null) {
             const error = new Error('响应格式无效: 不是有效的对象');
@@ -229,7 +210,6 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
               return;
             }
             
-            console.log('✅ [OSS上传] 上传成功');
             resolve({
               success: true,
               url: response.data.url,
@@ -239,7 +219,6 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
               mimeType: response.data.mimeType
             });
           } else {
-            console.log('❌ [OSS上传] 上传失败:', response.message);
             const error = new Error(response.message || '上传失败');
             logErrorToBackend('OSS上传业务失败', error, file, response);
             reject(error);
@@ -265,12 +244,8 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
 
       // 发送请求
       const uploadUrl = `${API_BASE_URL}/api/upload/image`;
-      console.log('🚀 [OSS上传] 发送请求到:', uploadUrl);
-      
       xhr.open('POST', uploadUrl);
       xhr.send(formData);
-      
-      console.log('📤 [OSS上传] 请求已发送');
     });
 
   } catch (error) {
@@ -291,7 +266,17 @@ export const uploadImageToOSS = async (file: File, onProgress?: (progress: Uploa
  * @param {Function} onFileProgress - 单个文件上传进度回调函数
  * @returns {Promise<BatchUploadResult>} 批量上传结果
  */
-export const uploadMultipleImagesToOSS = async (files: File[], onProgress?: (progress: any) => void, onFileProgress?: (index: number, progress: UploadProgress) => void) => {
+export interface BatchProgress {
+  completed: number;
+  total: number;
+  percentage: number;
+}
+
+export const uploadMultipleImagesToOSS = async (
+  files: File[],
+  onProgress?: (progress: BatchProgress) => void,
+  onFileProgress?: (index: number, progress: UploadProgress) => void
+) => {
   try {
     const results = {
       successful: [],
@@ -321,7 +306,7 @@ export const uploadMultipleImagesToOSS = async (files: File[], onProgress?: (pro
       } catch (error) {
         results.failed.push({
           file: file.name,
-          error: error.message
+          error: error instanceof Error ? error.message : '上传失败'
         });
       } finally {
         completedCount++;

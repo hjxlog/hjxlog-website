@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, Calendar, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Blog {
@@ -18,6 +18,17 @@ interface AppleBlogListProps {
 
 const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
   const navigate = useNavigate();
+  const handleNavigate = useCallback((path: string) => {
+    navigate(path);
+  }, [navigate]);
+
+  const blogCards = useMemo(() => (
+    blogs.map((blog) => ({
+      ...blog,
+      dateLabel: blog.created_at ? new Date(blog.created_at).toLocaleDateString('zh-CN') : 'Recently',
+      summaryText: blog.summary || blog.excerpt || '暂无摘要...',
+    }))
+  ), [blogs]);
 
   return (
     <section className="w-full bg-[#f5f5f7] py-24">
@@ -30,14 +41,14 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
 
         <div className="grid gap-6">
           {blogs.length > 0 ? (
-            blogs.map((blog, index) => (
+            blogCards.map((blog, index) => (
               <motion.article
                 key={blog.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                onClick={() => navigate(`/blog/${blog.id}`)}
+                onClick={() => handleNavigate(`/blog/${blog.id}`)}
                 className="group bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-slate-200/60 relative overflow-hidden"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -45,13 +56,13 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
                     <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
                       <span className="text-blue-600">Article</span>
                       <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                      <span>{blog.created_at ? new Date(blog.created_at).toLocaleDateString('zh-CN') : 'Recently'}</span>
+                      <span>{blog.dateLabel}</span>
                     </div>
                     <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors leading-tight">
                       {blog.title}
                     </h3>
                     <p className="text-slate-500 text-base leading-relaxed line-clamp-2 md:line-clamp-3 mb-4">
-                      {blog.summary || blog.excerpt || '暂无摘要...'}
+                      {blog.summaryText}
                     </p>
                     
                     {/* Tags */}
@@ -82,7 +93,7 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
         {/* Footer Link */}
         <div className="mt-12 text-center">
            <button
-             onClick={() => navigate('/blogs')}
+             onClick={() => handleNavigate('/blogs')}
              className="inline-flex items-center justify-center px-8 py-3 rounded-full bg-slate-900 text-white font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
            >
              进入博客专栏

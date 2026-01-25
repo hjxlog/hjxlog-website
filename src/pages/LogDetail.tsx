@@ -3,8 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
 import AdminNav from '@/components/AdminNav';
-import { toast } from 'sonner';
-import { API_BASE_URL, apiRequest } from '@/config/api';
+import { apiRequest } from '@/config/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 
@@ -13,7 +12,7 @@ interface SystemLog {
   log_type: 'info' | 'warning' | 'error' | 'debug';
   module_name: string;
   operation: string;
-  details?: any;
+  details?: unknown;
   user_id?: number;
   ip_address?: string;
   user_agent?: string;
@@ -115,7 +114,7 @@ export default function LogDetail() {
   };
 
   // 格式化详情数据
-  const formatDetails = (details: any) => {
+  const formatDetails = (details: unknown) => {
     if (!details) return null;
     
     if (typeof details === 'string') {

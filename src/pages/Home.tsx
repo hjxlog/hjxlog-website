@@ -1,5 +1,4 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import HeroApple from '@/components/home/HeroApple';
@@ -11,22 +10,34 @@ const AppleBlogList = lazy(() => import('@/components/home/AppleBlogList'));
 
 // 主页面组件
 export default function Home() {
-  const navigate = useNavigate();
-  
+  type FeaturedWork = {
+    id: number | string;
+    title: string;
+    description?: string;
+    cover_image?: string;
+    category?: string;
+  };
+  type FeaturedBlog = {
+    id: number | string;
+    title: string;
+    summary?: string;
+    excerpt?: string;
+    created_at?: string;
+    tags?: string[];
+  };
+
   // 状态管理
   const [featuredData, setFeaturedData] = useState<{
-    works: any[];
-    blogs: any[];
+    works: FeaturedWork[];
+    blogs: FeaturedBlog[];
   }>({
     works: [],
     blogs: []
   });
-  const [loading, setLoading] = useState(true);
   
   // 获取推荐内容
   const fetchFeaturedContent = async () => {
     try {
-      setLoading(true);
       const result = await apiRequest('/api/featured');
       if (result.success) {
         setFeaturedData(result.data);
@@ -34,8 +45,6 @@ export default function Home() {
     } catch (err) {
       console.error('获取推荐内容失败:', err);
       // Keep empty if failed
-    } finally {
-      setLoading(false);
     }
   };
 

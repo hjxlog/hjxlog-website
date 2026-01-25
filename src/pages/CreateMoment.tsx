@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import PublicNav from '@/components/PublicNav';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
-import { API_BASE_URL, apiRequest } from '@/config/api';
+import { apiRequest } from '@/config/api';
 
 interface ImageFile {
   id: string;
@@ -138,7 +138,7 @@ export default function CreateMoment() {
       setSubmitting(true);
       
       // 处理图片数据（移除文件上传功能）
-      const uploadedImages: any[] = [];
+      const uploadedImages: Array<{ url: string; alt_text?: string }> = [];
       // 注意：由于移除了文件上传功能，这里不再处理本地文件
       // 如果需要图片功能，请使用外部图片URL
 

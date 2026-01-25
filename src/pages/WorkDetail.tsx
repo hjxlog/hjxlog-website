@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
@@ -37,7 +37,7 @@ export default function WorkDetail() {
   useBackToTop();
 
   // 获取作品详情
-  const fetchWorkDetail = async () => {
+  const fetchWorkDetail = useCallback(async () => {
     if (!id) {
       setError('作品ID不存在');
       setLoading(false);
@@ -63,10 +63,10 @@ export default function WorkDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, fetchRelatedWorks]);
 
   // 获取相关作品
-  const fetchRelatedWorks = async (category: string, currentId: number) => {
+  const fetchRelatedWorks = useCallback(async (category: string, currentId: number) => {
     try {
       const result = await apiRequest(`/api/works?category=${encodeURIComponent(category)}&limit=6`);
       
@@ -81,11 +81,15 @@ export default function WorkDetail() {
       console.error('获取相关作品失败:', error);
       setRelatedWorks([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchWorkDetail();
-  }, [id]);
+  }, [fetchWorkDetail]);
+
+  const createdDateLabel = useMemo(() => (
+    work ? new Date(work.created_at).toLocaleDateString('zh-CN') : ''
+  ), [work]);
 
   if (loading) {
     return (
@@ -159,7 +163,7 @@ export default function WorkDetail() {
                   </span>
                   <span className="text-slate-500">
                     <i className="fas fa-calendar mr-2"></i>
-                    {new Date(work.created_at).toLocaleDateString('zh-CN')}
+                    {createdDateLabel}
                   </span>
                 </div>
 

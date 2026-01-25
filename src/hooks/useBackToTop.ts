@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 
 export const useBackToTop = () => {
   const location = useLocation();
-  const isInitializedRef = useRef(false);
   const cleanupRef = useRef<(() => void) | null>(null);
   
   useEffect(() => {

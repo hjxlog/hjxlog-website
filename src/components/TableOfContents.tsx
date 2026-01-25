@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 interface TocItem {
   id: string;
   text: string;
   level: number;
+  displayLevel?: number;
 }
 
 interface TableOfContentsProps {
@@ -41,7 +42,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = 
       if (headings.length > 0) {
         const minLevel = Math.min(...headings.map(h => h.level));
         headings.forEach(h => {
-          (h as any).displayLevel = h.level - minLevel;
+          h.displayLevel = h.level - minLevel;
         });
       }
 
@@ -64,32 +65,35 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = 
     return () => observer.disconnect();
   }, [content]); // 当 content 变化时也会重新触发（作为兜底）
 
+  const headingElements = useMemo(() => (
+    toc
+      .map(item => document.getElementById(item.id))
+      .filter(Boolean) as HTMLElement[]
+  ), [toc]);
+
+  const handleScroll = useCallback(() => {
+    if (headingElements.length === 0) {
+      setActiveId('');
+      return;
+    }
+
+    let currentActiveId = '';
+    const scrollPosition = window.scrollY;
+
+    for (let i = headingElements.length - 1; i >= 0; i--) {
+      const element = headingElements[i];
+      if (element && element.offsetTop <= scrollPosition + 100) {
+        currentActiveId = element.id;
+        break;
+      }
+    }
+
+    setActiveId(currentActiveId);
+  }, [headingElements]);
+
   useEffect(() => {
     // 监听滚动，高亮当前标题
-    const handleScroll = () => {
-      const headingElements = toc.map(item => 
-        document.getElementById(item.id)
-      ).filter(Boolean);
-
-      let currentActiveId = '';
-      
-      // 只有当页面发生滚动（超过一定阈值）或者确实有元素在视口上方时才激活
-      const scrollPosition = window.scrollY;
-      
-      for (let i = headingElements.length - 1; i >= 0; i--) {
-          const element = headingElements[i];
-          // 调整判定逻辑：元素顶部位置 <= 当前滚动位置 + 偏移量
-          // 100px 的偏移量表示当标题滚动到距离视口顶部 100px 以内时才激活
-          if (element && element.offsetTop <= scrollPosition + 100) {
-            currentActiveId = element.id;
-            break;
-          }
-      }
-
-      setActiveId(currentActiveId);
-    };
-
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // 延迟初始调用，等待DOM完全渲染
     const timer = setTimeout(handleScroll, 100);
@@ -98,9 +102,9 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = 
         window.removeEventListener('scroll', handleScroll);
         clearTimeout(timer);
     };
-  }, [toc]);
+  }, [handleScroll]);
 
-  const scrollToHeading = (id: string) => {
+  const scrollToHeading = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (element) {
       const offsetTop = element.offsetTop - 100;
@@ -109,7 +113,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = 
         behavior: 'smooth'
       });
     }
-  };
+  }, []);
 
   if (toc.length === 0) {
     return null;
@@ -136,7 +140,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ content, className = 
                 : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
             }`}
             style={{
-              paddingLeft: `${((item as any).displayLevel || 0) * 1 + 1}rem`
+              paddingLeft: `${(item.displayLevel || 0) * 1 + 1}rem`
             }}
           >
             {item.text}

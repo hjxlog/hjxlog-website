@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/config/api';
 
@@ -22,6 +22,13 @@ interface ScenarioStats {
   count: number;
   active_count: number;
 }
+
+const SCENARIOS = [
+  { value: 'location', label: '地点/行程查询', color: 'bg-blue-100 text-blue-800' },
+  { value: 'tech', label: '技能/技术查询', color: 'bg-green-100 text-green-800' },
+  { value: 'content', label: '内容/文章查询', color: 'bg-purple-100 text-purple-800' },
+  { value: 'general', label: '通用查询', color: 'bg-gray-100 text-gray-800' },
+];
 
 export default function PromptManagementTab() {
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
@@ -50,15 +57,14 @@ export default function PromptManagementTab() {
     question: '',
   });
 
-  const scenarios = [
-    { value: 'location', label: '地点/行程查询', color: 'bg-blue-100 text-blue-800' },
-    { value: 'tech', label: '技能/技术查询', color: 'bg-green-100 text-green-800' },
-    { value: 'content', label: '内容/文章查询', color: 'bg-purple-100 text-purple-800' },
-    { value: 'general', label: '通用查询', color: 'bg-gray-100 text-gray-800' },
-  ];
+  const scenarios = SCENARIOS;
+  const scenarioMap = useMemo(
+    () => new Map(scenarios.map((s) => [s.value, s])),
+    [scenarios]
+  );
 
   // 获取所有模板
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const result = await apiRequest('/api/prompts/templates');
       if (result.success) {
@@ -68,10 +74,10 @@ export default function PromptManagementTab() {
       console.error('获取模板失败:', error);
       toast.error('获取模板失败');
     }
-  };
+  }, []);
 
   // 获取统计信息
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const result = await apiRequest('/api/prompts/stats');
       if (result.success) {
@@ -80,7 +86,7 @@ export default function PromptManagementTab() {
     } catch (error) {
       console.error('获取统计失败:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const initData = async () => {
@@ -89,10 +95,10 @@ export default function PromptManagementTab() {
       setLoading(false);
     };
     initData();
-  }, []);
+  }, [fetchTemplates, fetchStats]);
 
   // 打开新建表单
-  const openCreateForm = () => {
+  const openCreateForm = useCallback(() => {
     setCurrentTemplate(null);
     setFormData({
       name: '',
@@ -113,10 +119,10 @@ export default function PromptManagementTab() {
       is_active: true,
     });
     setIsFormOpen(true);
-  };
+  }, []);
 
   // 打开编辑表单
-  const openEditForm = (template: PromptTemplate) => {
+  const openEditForm = useCallback((template: PromptTemplate) => {
     setCurrentTemplate(template);
     setFormData({
       name: template.name,
@@ -128,16 +134,16 @@ export default function PromptManagementTab() {
       is_active: template.is_active,
     });
     setIsFormOpen(true);
-  };
+  }, []);
 
   // 关闭表单
-  const closeForm = () => {
+  const closeForm = useCallback(() => {
     setIsFormOpen(false);
     setCurrentTemplate(null);
-  };
+  }, []);
 
   // 保存模板
-  const saveTemplate = async (e: React.FormEvent) => {
+  const saveTemplate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     const data = {
@@ -167,14 +173,15 @@ export default function PromptManagementTab() {
       } else {
         toast.error(result.message || '保存失败');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('保存模板失败:', error);
-      toast.error(error.message || '保存失败');
+      const message = error instanceof Error ? error.message : '保存失败';
+      toast.error(message);
     }
-  };
+  }, [currentTemplate, formData, fetchStats, fetchTemplates, closeForm]);
 
   // 删除模板
-  const deleteTemplate = async (name: string) => {
+  const deleteTemplate = useCallback(async (name: string) => {
     if (!confirm('确定要删除这个模板吗？此操作不可撤销。')) {
       return;
     }
@@ -191,14 +198,15 @@ export default function PromptManagementTab() {
       } else {
         toast.error(result.message || '删除失败');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('删除模板失败:', error);
-      toast.error(error.message || '删除失败');
+      const message = error instanceof Error ? error.message : '删除失败';
+      toast.error(message);
     }
-  };
+  }, [fetchStats, fetchTemplates]);
 
   // 打开测试面板
-  const openTestPanel = (template: PromptTemplate) => {
+  const openTestPanel = useCallback((template: PromptTemplate) => {
     setTestData({
       templateName: template.name,
       context: '来源1 摄影作品《深圳湾》\n在[广东省深圳市]拍摄的照片，拍摄时间：2025年1月...',
@@ -206,10 +214,10 @@ export default function PromptManagementTab() {
     });
     setTestResult(null);
     setIsTestOpen(true);
-  };
+  }, []);
 
   // 测试提示词
-  const testPrompt = async (e: React.FormEvent) => {
+  const testPrompt = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -224,18 +232,19 @@ export default function PromptManagementTab() {
       } else {
         toast.error(result.message || '测试失败');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('测试失败:', error);
-      toast.error(error.message || '测试失败');
+      const message = error instanceof Error ? error.message : '测试失败';
+      toast.error(message);
     }
-  };
+  }, [testData]);
 
   const getScenarioLabel = (scenario: string) => {
-    return scenarios.find(s => s.value === scenario)?.label || scenario;
+    return scenarioMap.get(scenario)?.label || scenario;
   };
 
   const getScenarioColor = (scenario: string) => {
-    return scenarios.find(s => s.value === scenario)?.color || 'bg-gray-100 text-gray-800';
+    return scenarioMap.get(scenario)?.color || 'bg-gray-100 text-gray-800';
   };
 
   if (loading) {

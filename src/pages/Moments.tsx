@@ -1,18 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronDown, Image as ImageIcon, MessageCircle, Eye } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import type { MouseEvent } from 'react';
+import { ChevronDown, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import PublicNav from '../components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
-
-interface MomentImage {
-  id: number;
-  image_url: string;
-  thumbnail_url?: string;
-  alt_text?: string;
-  sort_order: number;
-}
 
 interface Moment {
   id: number;
@@ -36,6 +29,28 @@ interface MomentsResponse {
   message?: string;
 }
 
+const formatExactTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+const getTimelineDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const month = date.toLocaleString('en-US', { month: 'short' });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return { month, day, year };
+};
+
+const renderContentHtml = (content: string) => (
+  content
+    .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[500px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
+    .replace(/\n/g, '<br>')
+);
+
 export default function Moments() {
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +67,7 @@ export default function Moments() {
   const reportTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 上报浏览记录
-  const reportViews = async () => {
+  const reportViews = useCallback(async () => {
     if (pendingIds.current.size === 0) return;
 
     const idsToReport = Array.from(pendingIds.current);
@@ -74,7 +89,15 @@ export default function Moments() {
       
       // 更新本地视图计数 (使用后端返回的最新数据)
       if (res.success && Array.isArray(res.data)) {
-        const updatedViewsMap = new Map(res.data.map((item: any) => [item.id, item.views]));
+        const updates = res.data.filter((item): item is { id: number; views: number } => (
+          typeof item === 'object' &&
+          item !== null &&
+          'id' in item &&
+          'views' in item &&
+          typeof (item as { id: unknown }).id === 'number' &&
+          typeof (item as { views: unknown }).views === 'number'
+        ));
+        const updatedViewsMap = new Map(updates.map(item => [item.id, item.views]));
         
         setMoments(prev => prev.map(m => {
           if (updatedViewsMap.has(m.id)) {
@@ -86,7 +109,7 @@ export default function Moments() {
     } catch (error) {
       console.error('上报浏览记录失败:', error);
     }
-  };
+  }, []);
 
   // 初始化观察器
   useEffect(() => {
@@ -114,7 +137,7 @@ export default function Moments() {
       if (reportTimer.current) clearInterval(reportTimer.current);
       reportViews(); // 卸载前最后一次上报
     };
-  }, []);
+  }, [reportViews]);
 
   // 监听列表变化，绑定新元素
   useEffect(() => {
@@ -134,7 +157,7 @@ export default function Moments() {
   }, [moments]);
 
   // 获取动态列表
-  const fetchMoments = async (pageNum: number = 1, append: boolean = false) => {
+  const fetchMoments = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     try {
       setLoading(true);
       const data: MomentsResponse = await apiRequest(`/api/moments?page=${pageNum}&limit=${limit}&sort=created_at`);
@@ -155,61 +178,52 @@ export default function Moments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
 
   // 加载更多
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     if (!loading && hasMore) {
       const nextPage = page + 1;
       setPage(nextPage);
       fetchMoments(nextPage, true);
     }
-  };
+  }, [loading, hasMore, page, fetchMoments]);
 
   // 处理图片点击放大
-  const handleImageClick = (imageUrls: string[], index: number) => {
+  const handleImageClick = useCallback((imageUrls: string[], index: number) => {
     setSelectedMomentImages(imageUrls);
     setSelectedImageIndex(index);
-  };
+  }, []);
 
 
 
-  // 格式化精确时间 (HH:mm)
-  const formatExactTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-  };
+  const handleContentClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      const img = target as HTMLImageElement;
+      handleImageClick([img.src], 0);
+    }
+  }, [handleImageClick]);
 
-  // 渲染动态内容（支持简单的Markdown）
-  const renderContent = (content: string) => {
-    // 简单的Markdown渲染：链接、粗体、斜体、图片
-    let rendered = content
-      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[500px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
-      .replace(/\n/g, '<br>');
-    
-    return <div dangerouslySetInnerHTML={{ __html: rendered }} onClick={(e) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'IMG') {
-        const img = target as HTMLImageElement;
-        handleImageClick([img.src], 0);
-      }
-    }} />;
-  };
-
-  const getTimelineDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.toLocaleString('en-US', { month: 'short' });
-    const day = date.getDate();
-    const year = date.getFullYear();
-    return { month, day, year };
-  };
+  const momentViewModels = useMemo(() => (
+    moments.map((moment, index, list) => {
+      const { month, day, year } = getTimelineDate(moment.created_at);
+      const isNewYear = index === 0 || new Date(list[index - 1].created_at).getFullYear() !== year;
+      return {
+        moment,
+        month,
+        day,
+        year,
+        exactTime: formatExactTime(moment.created_at),
+        isNewYear,
+        contentHtml: renderContentHtml(moment.content),
+      };
+    })
+  ), [moments]);
 
   useEffect(() => {
     fetchMoments();
-  }, []);
+  }, [fetchMoments]);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] relative flex flex-col">
@@ -266,11 +280,7 @@ export default function Moments() {
               </div>
             ) : (
               <AnimatePresence mode='popLayout'>
-                {moments.map((moment, index) => {
-                  const { month, day, year } = getTimelineDate(moment.created_at);
-                  const isNewYear = index === 0 || new Date(moments[index - 1].created_at).getFullYear() !== year;
-
-                  return (
+                {momentViewModels.map(({ moment, month, day, year, exactTime, isNewYear, contentHtml }, index) => (
                     <motion.div
                       key={moment.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -291,11 +301,11 @@ export default function Moments() {
                         <div className="w-full md:w-[80px] flex md:flex-col items-center md:items-end gap-3 md:gap-0 md:text-right pt-0 md:pt-1 flex-shrink-0">
                           <div className="text-2xl font-bold text-slate-900 leading-none">{day}</div>
                           <div className="text-sm font-medium text-slate-400 uppercase tracking-wide">{month}</div>
-                          <div className="text-xs font-medium text-slate-300 mt-1 hidden md:block">{formatExactTime(moment.created_at)}</div>
+                          <div className="text-xs font-medium text-slate-300 mt-1 hidden md:block">{exactTime}</div>
                           {/* 移动端显示的年份和分隔符 */}
                           <div className="md:hidden text-sm font-medium text-slate-300">/</div>
                           <div className="md:hidden text-sm font-bold text-slate-500">{year}</div>
-                          <div className="md:hidden text-xs font-medium text-slate-300 ml-2">{formatExactTime(moment.created_at)}</div>
+                          <div className="md:hidden text-xs font-medium text-slate-300 ml-2">{exactTime}</div>
                         </div>
 
                         {/* Timeline Node & Content (Right) */}
@@ -308,7 +318,7 @@ export default function Moments() {
                             <div className="p-8">
                               {/* Content */}
                               <div className="prose prose-slate max-w-none mb-4">
-                                {renderContent(moment.content)}
+                                <div dangerouslySetInnerHTML={{ __html: contentHtml }} onClick={handleContentClick} />
                               </div>
 
                               {/* Action Bar / Meta Info */}
@@ -324,8 +334,7 @@ export default function Moments() {
                         </div>
                       </div>
                     </motion.div>
-                  );
-                })}
+                ))}
               </AnimatePresence>
             )}
           </div>

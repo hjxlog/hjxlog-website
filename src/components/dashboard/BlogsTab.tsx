@@ -1,10 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Blog } from '@/types';
-import { API_BASE_URL } from '@/config/api';
-import { toast } from 'sonner';
 
 interface BlogsTabProps {
-  blogs: Blog[];
   filteredBlogs: Blog[];
   currentBlogs: Blog[];
   blogSearchQuery: string;
@@ -26,7 +23,6 @@ interface BlogsTabProps {
 }
 
 export default function BlogsTab({
-  blogs,
   filteredBlogs,
   currentBlogs,
   blogSearchQuery,
@@ -46,6 +42,18 @@ export default function BlogsTab({
   openBlogForm,
   handleDeleteBlog
 }: BlogsTabProps) {
+  const blogCards = useMemo(() => (
+    currentBlogs.map((blog) => ({
+      ...blog,
+      dateLabel: blog.created_at ? new Date(blog.created_at).toLocaleDateString() : '',
+    }))
+  ), [currentBlogs]);
+
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalBlogPages }, (_, i) => i + 1),
+    [totalBlogPages]
+  );
+
   const renderBlogStatusBadge = (published: boolean) => {
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -145,7 +153,7 @@ export default function BlogsTab({
       {/* 博客列表 */}
       <div className="space-y-4">
         {currentBlogs.length > 0 ? (
-          currentBlogs.map(blog => (
+          blogCards.map(blog => (
           <div key={blog.id} className="bg-white rounded-xl p-6 shadow-sm">
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -159,7 +167,7 @@ export default function BlogsTab({
                 <div className="flex items-center space-x-4 text-sm text-slate-500">
                   <span>{blog.category}</span>
                   <span><i className="fas fa-eye mr-1"></i> {blog.views || 0}</span>
-                  {blog.created_at && <span>{new Date(blog.created_at).toLocaleDateString()}</span>}
+                  {blog.dateLabel && <span>{blog.dateLabel}</span>}
                 </div>
                 
                 <div className="flex flex-wrap gap-1 mt-3">
@@ -229,7 +237,7 @@ export default function BlogsTab({
           </button>
           
           <div className="flex space-x-1">
-            {Array.from({ length: totalBlogPages }, (_, i) => i + 1).map(page => (
+            {pageNumbers.map(page => (
               <button
                 key={page}
                 onClick={() => setBlogCurrentPage(page)}

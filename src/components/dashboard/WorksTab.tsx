@@ -1,10 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Work } from '@/types';
-import { API_BASE_URL } from '@/config/api';
-import { toast } from 'sonner';
 
 interface WorksTabProps {
-  works: Work[];
   filteredWorks: Work[];
   currentWorks: Work[];
   workSearchQuery: string;
@@ -26,8 +23,14 @@ interface WorksTabProps {
   handleToggleWorkFeatured: (id: number, featured: boolean) => Promise<void>;
 }
 
+const STATUS_STYLES: Record<string, { className: string; label: string }> = {
+  active: { className: 'bg-green-100 text-green-600', label: '进行中' },
+  completed: { className: 'bg-blue-100 text-blue-600', label: '已完成' },
+  archived: { className: 'bg-gray-100 text-gray-600', label: '已归档' },
+  planning: { className: 'bg-gray-100 text-gray-600', label: '计划中' },
+};
+
 export default function WorksTab({
-  works,
   filteredWorks,
   currentWorks,
   workSearchQuery,
@@ -48,6 +51,11 @@ export default function WorksTab({
   handleDeleteWork,
   handleToggleWorkFeatured
 }: WorksTabProps) {
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalWorkPages }, (_, i) => i + 1),
+    [totalWorkPages]
+  );
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -174,15 +182,8 @@ export default function WorksTab({
               
               <div className="flex items-center justify-between text-sm text-slate-500 mb-3">
                  <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded">{work.category}</span>
-                 <span className={`px-2 py-1 rounded ${
-                   work.status === 'active' ? 'bg-green-100 text-green-600' :
-                   work.status === 'completed' ? 'bg-blue-100 text-blue-600' :
-                   'bg-gray-100 text-gray-600'
-                 }`}>
-                   {work.status === 'active' ? '进行中' : 
-                    work.status === 'completed' ? '已完成' : 
-                    work.status === 'archived' ? '已归档' : 
-                    work.status === 'planning' ? '计划中' : work.status}
+                 <span className={`px-2 py-1 rounded ${STATUS_STYLES[work.status]?.className || 'bg-gray-100 text-gray-600'}`}>
+                   {STATUS_STYLES[work.status]?.label || work.status}
                  </span>
                </div>
               
@@ -236,7 +237,7 @@ export default function WorksTab({
           </button>
           
           <div className="flex space-x-1">
-            {Array.from({ length: totalWorkPages }, (_, i) => i + 1).map(page => (
+            {pageNumbers.map(page => (
               <button
                 key={page}
                 onClick={() => setWorkCurrentPage(page)}

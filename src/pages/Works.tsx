@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Github, Globe, ExternalLink, FolderOpen, Calendar, ArrowRight, Layers } from 'lucide-react';
+import { Github, ExternalLink, FolderOpen, ArrowRight, Layers } from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '../config/api';
@@ -28,7 +28,7 @@ export default function Works() {
   const [error, setError] = useState<string | null>(null);
 
   // 获取作品分类列表
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const result = await apiRequest('/api/works/categories');
       
@@ -41,10 +41,10 @@ export default function Works() {
       console.error('获取作品分类失败:', error);
       setError('获取分类失败');
     }
-  };
+  }, []);
 
   // 获取作品列表
-  const fetchWorks = async (category?: string) => {
+  const fetchWorks = useCallback(async (category?: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -67,24 +67,31 @@ export default function Works() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 初始化数据
   useEffect(() => {
     fetchCategories();
     fetchWorks();
-  }, []);
+  }, [fetchCategories, fetchWorks]);
 
   // 分类切换
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category);
     fetchWorks(category);
-  };
+  }, [fetchWorks]);
 
   // 根据分类筛选作品
-  const filteredWorks = selectedCategory === "全部" 
-    ? works 
-    : works.filter(work => work.category === selectedCategory);
+  const filteredWorks = useMemo(() => (
+    selectedCategory === "全部"
+      ? works
+      : works.filter(work => work.category === selectedCategory)
+  ), [selectedCategory, works]);
+
+  const categoryOptions = useMemo(
+    () => ["全部", ...categories.filter(cat => cat !== "全部")],
+    [categories]
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] relative flex flex-col">
@@ -113,7 +120,7 @@ export default function Works() {
             transition={{ delay: 0.1 }}
             className="flex flex-wrap gap-2"
           >
-            {["全部", ...categories.filter(cat => cat !== "全部")].map((category) => (
+            {categoryOptions.map((category) => (
               <button
                 key={category}
                 onClick={() => handleCategoryChange(category)}

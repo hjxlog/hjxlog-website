@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
 
 interface Work {
@@ -105,20 +105,20 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const handleDescriptionChange = (value: string) => {
+  const handleDescriptionChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, description: value }));
-  };
+  }, []);
 
-  const handleContentChange = (value: string) => {
+  const handleContentChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, content: value }));
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -147,7 +147,7 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, onSave, onClose]);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">

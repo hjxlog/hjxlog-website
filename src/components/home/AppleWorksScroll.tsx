@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,6 +18,9 @@ interface AppleWorksScrollProps {
 const AppleWorksScroll = ({ works }: AppleWorksScrollProps) => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const handleNavigate = useCallback((path: string) => {
+    navigate(path);
+  }, [navigate]);
   
   return (
     <section className="w-full bg-white py-24 overflow-hidden">
@@ -31,7 +34,7 @@ const AppleWorksScroll = ({ works }: AppleWorksScrollProps) => {
           </p>
         </div>
         <button 
-          onClick={() => navigate('/works')}
+          onClick={() => handleNavigate('/works')}
           className="hidden md:flex items-center gap-1 text-[#0066cc] hover:underline underline-offset-4 text-lg font-medium"
         >
           浏览所有作品 <ChevronRight className="w-5 h-5" />
@@ -50,7 +53,7 @@ const AppleWorksScroll = ({ works }: AppleWorksScrollProps) => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              onClick={() => navigate(`/works/${work.id}`)}
+              onClick={() => handleNavigate(`/works/${work.id}`)}
               className="flex-none w-[85vw] md:w-[600px] h-[500px] snap-center group cursor-pointer relative rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
             >
               {work.cover_image ? (

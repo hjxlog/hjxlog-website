@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/config/api';
 import {
   ArrowPathIcon,
-  TrashIcon,
   DocumentTextIcon,
   BeakerIcon,
   CubeIcon,
   ClockIcon,
   XMarkIcon,
-  ChevronRightIcon,
   PhotoIcon,
 } from '@heroicons/react/24/outline';
 
@@ -33,13 +31,22 @@ interface Chunk {
   id: number;
   title: string;
   content: string;
-  metadata: any;
+  metadata: unknown;
   created_at: string;
 }
 
 interface KnowledgeBaseTabProps {
   className?: string;
 }
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleString('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) => {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -54,40 +61,38 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
   const [modalChunks, setModalChunks] = useState<Chunk[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const res = await apiRequest('/api/knowledge-base/stats');
       setStats(res.data);
-    } catch (err: any) {
-      console.error('获取知识库状态失败:', err);
+    } catch (error) {
+      console.error('获取知识库状态失败:', error);
       toast.error('获取知识库状态失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     try {
-      console.log('开始获取知识库列表...');
       const res = await apiRequest('/api/knowledge-base/list?limit=50');
-      console.log('获取知识库列表结果:', res);
       setItems(res.data || []);
-    } catch (err: any) {
-      console.error('获取知识库列表失败:', err);
+    } catch (error) {
+      console.error('获取知识库列表失败:', error);
       toast.error('获取知识库列表失败');
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   useEffect(() => {
     if (activeSubTab === 'list') {
       fetchList();
     }
-  }, [activeSubTab]);
+  }, [activeSubTab, fetchList]);
 
   // 防止弹窗打开时背景滚动
   useEffect(() => {
@@ -101,7 +106,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
     };
   }, [modalOpen]);
 
-  const handleRebuild = async () => {
+  const handleRebuild = useCallback(async () => {
     if (!confirm('确定要重建知识库吗？这将清空现有数据并重新生成所有向量。\n\n注意：重建过程可能需要较长时间，特别是照片分析，请耐心等待。')) {
       return;
     }
@@ -120,14 +125,14 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
       if (activeSubTab === 'list') {
         fetchList();
       }
-    } catch (err: any) {
+    } catch {
       toast.error('重建失败');
     } finally {
       setRebuilding(false);
     }
-  };
+  }, [activeSubTab, fetchList, fetchStats]);
 
-  const handleDeleteItem = async (sourceType: string, sourceId: number) => {
+  const handleDeleteItem = useCallback(async (sourceType: string, sourceId: number) => {
     if (!confirm('确定要删除这个文档的所有向量数据吗？')) {
       return;
     }
@@ -144,12 +149,12 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
       toast.success('删除成功');
       fetchList();
       fetchStats();
-    } catch (err: any) {
+    } catch {
       toast.error('删除失败');
     }
-  };
+  }, [fetchList, fetchStats]);
 
-  const openModal = async (item: GroupedItem) => {
+  const openModal = useCallback(async (item: GroupedItem) => {
     setModalItem(item);
     setModalOpen(true);
     setModalLoading(true);
@@ -157,28 +162,26 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
     try {
       const res = await apiRequest(`/api/knowledge-base/chunks/${item.source_type}/${item.source_id}`);
       setModalChunks(res.data || []);
-    } catch (err: any) {
-      console.error('获取 chunks 失败:', err);
+    } catch (error) {
+      console.error('获取 chunks 失败:', error);
       toast.error('获取详情失败');
     } finally {
       setModalLoading(false);
     }
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalOpen(false);
     setModalItem(null);
     setModalChunks([]);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const itemsWithDate = useMemo(() => (
+    items.map((item) => ({
+      ...item,
+      dateLabel: formatDate(item.created_at),
+    }))
+  ), [items]);
 
   if (loading) {
     return (
@@ -392,7 +395,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {items.map((item) => (
+                {itemsWithDate.map((item) => (
                   <tr key={`${item.source_type}-${item.source_id}`} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
@@ -421,7 +424,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(item.created_at)}
+                      {item.dateLabel}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button

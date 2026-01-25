@@ -1,7 +1,7 @@
 /**
  * 消息列表组件
  */
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Bot, Laptop, FileText, Palette } from 'lucide-react';
 
@@ -28,6 +28,26 @@ export const MessageList: React.FC<MessageListProps> = ({
   disabled = false,
 }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const quickQuestions = useMemo(() => ([
+    {
+      id: 'tech',
+      text: '博主主要擅长哪些技术领域？',
+      Icon: Laptop,
+      iconClassName: 'mr-2 text-blue-500',
+    },
+    {
+      id: 'articles',
+      text: '推荐几篇精选的技术文章',
+      Icon: FileText,
+      iconClassName: 'mr-2 text-green-500',
+    },
+    {
+      id: 'works',
+      text: '介绍一下博主的代表作品',
+      Icon: Palette,
+      iconClassName: 'mr-2 text-purple-500',
+    },
+  ]), []);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,52 +71,23 @@ export const MessageList: React.FC<MessageListProps> = ({
             你可以问我关于这个网站、项目或技术栈的任何问题。
           </p>
           <div className="w-full px-4 sm:px-6 space-y-2">
-            {onQuickQuestion && (
-              <>
-                <button
-                  onClick={() => onQuickQuestion('博主主要擅长哪些技术领域？')}
-                  disabled={disabled}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
-                    disabled
-                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <Laptop size={14} className="mr-2 text-blue-500" /> 
-                    博主主要擅长哪些技术领域？
-                  </span>
-                </button>
-                <button
-                  onClick={() => onQuickQuestion('推荐几篇精选的技术文章')}
-                  disabled={disabled}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
-                    disabled
-                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <FileText size={14} className="mr-2 text-green-500" /> 
-                    推荐几篇精选的技术文章
-                  </span>
-                </button>
-                <button
-                  onClick={() => onQuickQuestion('介绍一下博主的代表作品')}
-                  disabled={disabled}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
-                    disabled
-                      ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
-                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <Palette size={14} className="mr-2 text-purple-500" /> 
-                    介绍一下博主的代表作品
-                  </span>
-                </button>
-              </>
-            )}
+            {onQuickQuestion && quickQuestions.map((question) => (
+              <button
+                key={question.id}
+                onClick={() => onQuickQuestion(question.text)}
+                disabled={disabled}
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all duration-300 border ${
+                  disabled
+                    ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/60 shadow-sm hover:shadow-md'
+                }`}
+              >
+                <span className="flex items-center">
+                  <question.Icon size={14} className={question.iconClassName} />
+                  {question.text}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 /**
  * 输入框组件
  */
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useCallback } from 'react';
 
 interface InputAreaProps {
   onSendMessage: (message: string) => void;
@@ -11,13 +11,13 @@ interface InputAreaProps {
 export const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, disabled }) => {
   const [input, setInput] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = useCallback((e: FormEvent) => {
     e.preventDefault();
     if (input.trim() && !disabled) {
       onSendMessage(input.trim());
       setInput('');
     }
-  };
+  }, [disabled, input, onSendMessage]);
 
   return (
     <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-slate-100 bg-white/50 backdrop-blur-md">

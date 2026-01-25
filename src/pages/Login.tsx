@@ -71,7 +71,7 @@ export default function Login() {
       } else {
         toast.error(data.message || '登录失败');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('登录失败:', error);
       toast.error('网络连接失败，请检查服务器是否正常运行');
     } finally {

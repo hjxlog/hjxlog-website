@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Github, Twitter, Mail, Terminal, Zap, ArrowRight, Folder, BookOpen, Search, PenLine, List, Smartphone, Globe, Cpu, HardDrive, Monitor, Award, Briefcase, X, Minus, Maximize2 } from 'lucide-react';
+import { Github, Twitter, Mail, Terminal, Zap, ArrowRight, BookOpen, Globe, Monitor, X, Minus, Maximize2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AppleSection = ({ 
@@ -21,7 +21,38 @@ const AppleSection = ({
   </section>
 );
 
-const AboutModal = ({ onClose }: { onClose: () => void }) => {
+const SKILL_BARS = [
+  { label: "Frontend (React/Next.js)", color: "bg-blue-500", width: "90%" },
+  { label: "Backend (Node/Go)", color: "bg-purple-500", width: "85%" },
+  { label: "AI Engineering (LLM)", color: "bg-green-500", width: "80%" },
+  { label: "UI/UX Design", color: "bg-yellow-500", width: "75%" },
+];
+
+const TERMINAL_COMMANDS = [
+  { text: "user@hjxlog:~$ neofetch", delay: 500 },
+  { text: "Fetching system info...", delay: 800 },
+  { text: "-----------------------", delay: 1000 },
+  { text: "OS: macOS / Web", delay: 1100 },
+  { text: "Host: hjxlog.com", delay: 1200 },
+  { text: "Kernel: React 18.2.0", delay: 1300 },
+  { text: "Uptime: Since 2019", delay: 1400 },
+  { text: "Shell: zsh 5.9", delay: 1500 },
+  { text: "Display: Retina", delay: 1600 },
+  { text: "DE: Tailwind CSS", delay: 1700 },
+  { text: "WM: Framer Motion", delay: 1800 },
+  { text: "CPU: Neural Engine", delay: 1900 },
+  { text: "Memory: Infinite Learning", delay: 2000 },
+  { text: "", delay: 2100 },
+  { text: "user@hjxlog:~$ cat skills.txt", delay: 2500 },
+  { text: "Languages: TypeScript, Python, Rust, Go", delay: 2800 },
+  { text: "Frontend:  React, Next.js, Vue, Tailwind", delay: 2900 },
+  { text: "Backend:   Node.js, PostgreSQL, Redis, Docker", delay: 3000 },
+  { text: "AI/ML:     LangChain, OpenAI API, PyTorch", delay: 3100 },
+  { text: "", delay: 3200 },
+  { text: "user@hjxlog:~$ _", delay: 3500 },
+];
+
+const AboutModal = memo(({ onClose }: { onClose: () => void }) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -98,12 +129,7 @@ const AboutModal = ({ onClose }: { onClose: () => void }) => {
                        <h3 className="font-bold text-slate-900">核心技术栈</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-4">
-                       {[
-                         { label: "Frontend (React/Next.js)", color: "bg-blue-500", width: "90%" },
-                         { label: "Backend (Node/Go)", color: "bg-purple-500", width: "85%" },
-                         { label: "AI Engineering (LLM)", color: "bg-green-500", width: "80%" },
-                         { label: "UI/UX Design", color: "bg-yellow-500", width: "75%" },
-                       ].map((skill, i) => (
+                       {SKILL_BARS.map((skill, i) => (
                          <div key={i} className="space-y-1.5">
                             <div className="flex justify-between text-xs font-medium text-slate-600">
                                <span>{skill.label}</span>
@@ -149,40 +175,16 @@ const AboutModal = ({ onClose }: { onClose: () => void }) => {
       </div>
     </motion.div>
   );
-};
+});
 
-const TerminalModal = ({ onClose }: { onClose: () => void }) => {
+const TerminalModal = memo(({ onClose }: { onClose: () => void }) => {
   const [lines, setLines] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(true);
 
   useEffect(() => {
-    const commands = [
-      { text: "user@hjxlog:~$ neofetch", delay: 500 },
-      { text: "Fetching system info...", delay: 800 },
-      { text: "-----------------------", delay: 1000 },
-      { text: "OS: macOS / Web", delay: 1100 },
-      { text: "Host: hjxlog.com", delay: 1200 },
-      { text: "Kernel: React 18.2.0", delay: 1300 },
-      { text: "Uptime: Since 2019", delay: 1400 },
-      { text: "Shell: zsh 5.9", delay: 1500 },
-      { text: "Display: Retina", delay: 1600 },
-      { text: "DE: Tailwind CSS", delay: 1700 },
-      { text: "WM: Framer Motion", delay: 1800 },
-      { text: "CPU: Neural Engine", delay: 1900 },
-      { text: "Memory: Infinite Learning", delay: 2000 },
-      { text: "", delay: 2100 },
-      { text: "user@hjxlog:~$ cat skills.txt", delay: 2500 },
-      { text: "Languages: TypeScript, Python, Rust, Go", delay: 2800 },
-      { text: "Frontend:  React, Next.js, Vue, Tailwind", delay: 2900 },
-      { text: "Backend:   Node.js, PostgreSQL, Redis, Docker", delay: 3000 },
-      { text: "AI/ML:     LangChain, OpenAI API, PyTorch", delay: 3100 },
-      { text: "", delay: 3200 },
-      { text: "user@hjxlog:~$ _", delay: 3500 },
-    ];
-
     let timeouts: ReturnType<typeof setTimeout>[] = [];
 
-    commands.forEach(({ text, delay }) => {
+    TERMINAL_COMMANDS.forEach(({ text, delay }) => {
       const timeout = setTimeout(() => {
         setLines(prev => {
           // If the last line is a cursor line (ends with _), replace it or append new
@@ -250,13 +252,13 @@ const TerminalModal = ({ onClose }: { onClose: () => void }) => {
       </div>
     </motion.div>
   );
-};
+});
 
 
 
 
 
-const CodeWindow = () => (
+const CodeWindow = memo(() => (
   <div className="rounded-xl overflow-hidden bg-[#1e1e1e] shadow-2xl border border-slate-700/50 font-mono text-sm w-full max-w-lg mx-auto transform transition-transform hover:scale-[1.02] duration-500">
     <div className="flex items-center px-4 py-3 bg-[#252526] border-b border-slate-700/50">
       <div className="flex space-x-2 group">
@@ -299,20 +301,26 @@ const CodeWindow = () => (
       </div>
     </div>
   </div>
-);
+));
 
 const HeroApple = () => {
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const handleOpenAbout = useCallback(() => setActiveModal('about'), []);
+  const handleOpenTerminal = useCallback(() => setActiveModal('terminal'), []);
+  const handleCloseModal = useCallback(() => setActiveModal(null), []);
+  const handleNavigateWorks = useCallback(() => {
+    navigate('/works');
+  }, [navigate]);
 
   return (
     <AppleSection className="min-h-[90vh] flex items-center justify-center relative">
       <AnimatePresence>
         {activeModal === 'terminal' && (
-          <TerminalModal onClose={() => setActiveModal(null)} />
+          <TerminalModal onClose={handleCloseModal} />
         )}
         {activeModal === 'about' && (
-          <AboutModal onClose={() => setActiveModal(null)} />
+          <AboutModal onClose={handleCloseModal} />
         )}
       </AnimatePresence>
       
@@ -364,14 +372,14 @@ const HeroApple = () => {
 
           <div className="flex flex-wrap gap-4 mb-10">
              <button 
-               onClick={() => navigate('/works')}
+               onClick={handleNavigateWorks}
                className="group bg-slate-900 text-white px-8 py-4 rounded-full font-medium hover:bg-slate-800 transition-all flex items-center gap-2 shadow-xl shadow-slate-900/20"
              >
                查看精选作品
                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
              </button>
              <button 
-               onClick={() => setActiveModal('about')}
+               onClick={handleOpenAbout}
                className="px-8 py-4 rounded-full font-medium text-slate-600 hover:bg-slate-100 transition-all border border-slate-200"
              >
                关于我
@@ -385,7 +393,7 @@ const HeroApple = () => {
             <div className="w-px h-6 bg-slate-300 mx-2"></div>
             <div className="flex gap-4">
               <button 
-                onClick={() => setActiveModal('terminal')}
+                onClick={handleOpenTerminal}
                 title="Full Stack Developer" 
                 className="text-slate-400 hover:text-slate-900 transition-colors cursor-pointer hover:scale-110 transform duration-200"
               >

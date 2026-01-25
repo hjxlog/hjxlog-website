@@ -1,5 +1,5 @@
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react";
 import { AuthContext, User } from '@/contexts/authContext';
 import { Toaster } from 'sonner';
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -20,7 +20,21 @@ const BlogEditor = lazy(() => import("@/pages/BlogEditor"));
 const Moments = lazy(() => import("@/pages/Moments"));
 const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
 const Photos = lazy(() => import("@/pages/Photos"));
-const KnowledgeBase = lazy(() => import("@/pages/KnowledgeBase"));
+
+const DEFAULT_USER: User = {
+  id: '1',
+  username: 'Admin',
+  email: 'admin@example.com'
+};
+
+const parseJSON = <T,>(raw: string, errorMessage: string): T | null => {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    console.error(errorMessage, error);
+    return null;
+  }
+};
 
 // 计算7天后的过期时间
 const getExpirationDate = () => {
@@ -43,93 +57,52 @@ export default function App() {
   useEffect(() => {
     const savedAuth = localStorage.getItem('auth');
     if (savedAuth) {
-      try {
-        const authData = JSON.parse(savedAuth);
-        if (authData.token && authData.expiration && isTokenValid(authData.expiration)) {
-          setIsAuthenticated(true);
-          setUser(authData.user || {
-            id: '1',
-            username: 'Admin',
-            email: 'admin@example.com'
-          });
-        } else {
-          // Token过期，清除存储
-          localStorage.removeItem('auth');
-        }
-      } catch (error) {
-        console.error('Failed to parse auth data', error);
+      const authData = parseJSON<{ token?: string; expiration?: string; user?: User }>(
+        savedAuth,
+        'Failed to parse auth data'
+      );
+
+      if (authData?.token && authData.expiration && isTokenValid(authData.expiration)) {
+        setIsAuthenticated(true);
+        setUser(authData.user || DEFAULT_USER);
+      } else {
+        // Token过期或格式错误，清除存储
         localStorage.removeItem('auth');
-      }
-    }
-    
-    // 加载作品数据
-    const savedWorks = localStorage.getItem('works');
-    if (savedWorks) {
-      try {
-        const works = JSON.parse(savedWorks);
-        // 可以在这里将数据保存到全局状态
-      } catch (error) {
-        console.error('Failed to parse works data', error);
-      }
-    }
-    
-    // 加载博客数据
-    const savedBlogs = localStorage.getItem('blogs');
-    if (savedBlogs) {
-      try {
-        const blogs = JSON.parse(savedBlogs);
-        // 可以在这里将数据保存到全局状态
-      } catch (error) {
-        console.error('Failed to parse blogs data', error);
       }
     }
   }, []);
   
-  const login = (remember: boolean = false) => {
+  const login = useCallback((remember: boolean = false) => {
     setIsAuthenticated(true);
     
     // 从localStorage获取用户数据
     const savedUser = localStorage.getItem('user');
-    let userData = null;
-    
-    if (savedUser) {
-      try {
-        userData = JSON.parse(savedUser);
-      } catch (error) {
-        console.error('Failed to parse user data', error);
-      }
-    }
+    const userData = savedUser
+      ? parseJSON<User>(savedUser, 'Failed to parse user data')
+      : null;
     
     // 如果没有用户数据，使用默认数据
-    if (!userData) {
-      userData = {
-        id: '1',
-        username: 'Admin',
-        email: 'admin@example.com'
-      };
-    }
-    
-    setUser(userData);
+    setUser(userData || DEFAULT_USER);
     
     // 如果勾选"记住我"，保存到localStorage
     if (remember) {
       const authData = {
         token: 'token-' + Date.now(),
         expiration: getExpirationDate(),
-        user: userData
+        user: userData || DEFAULT_USER
       };
       localStorage.setItem('auth', JSON.stringify(authData));
     }
-  };
+  }, []);
   
-  const logout = () => {
+  const logout = useCallback(() => {
     setIsAuthenticated(false);
     setUser(null);
     localStorage.removeItem('auth');
     navigate('/login');
-  };
+  }, [navigate]);
   
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = useCallback((userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
@@ -137,20 +110,27 @@ export default function App() {
       // 更新localStorage中的用户数据
       const savedAuth = localStorage.getItem('auth');
       if (savedAuth) {
-        try {
-          const authData = JSON.parse(savedAuth);
+        const authData = parseJSON<{ user?: User }>(
+          savedAuth,
+          'Failed to update user data'
+        );
+
+        if (authData) {
           authData.user = updatedUser;
           localStorage.setItem('auth', JSON.stringify(authData));
-        } catch (error) {
-          console.error('Failed to update user data', error);
         }
       }
     }
-  };
+  }, [user]);
+
+  const authContextValue = useMemo(
+    () => ({ isAuthenticated, login, logout, user, updateUser }),
+    [isAuthenticated, login, logout, user, updateUser]
+  );
   
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, login, logout, user, updateUser }}
+      value={authContextValue}
     >
       <Toaster position="top-right" richColors />
       <AIAssistant />

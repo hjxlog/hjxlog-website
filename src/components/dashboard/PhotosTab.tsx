@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { API_BASE_URL, apiRequest } from '@/config/api';
-import { uploadImageToOSS, deleteImageFromOSS, extractFileNameFromUrl } from '@/utils/ossUpload';
+import { uploadImageToOSS } from '@/utils/ossUpload';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 interface Photo {
@@ -18,11 +18,7 @@ interface Photo {
   updated_at: string;
 }
 
-interface PhotosTabProps {
-  // 可以添加需要的props
-}
-
-export default function PhotosTab({}: PhotosTabProps) {
+export default function PhotosTab() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -58,7 +54,7 @@ export default function PhotosTab({}: PhotosTabProps) {
   });
 
   // 获取照片列表
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       setLoading(true);
       // 获取所有照片（包括未发布的）
@@ -75,10 +71,10 @@ export default function PhotosTab({}: PhotosTabProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 删除照片
-  const deletePhoto = async (id: number) => {
+  const deletePhoto = useCallback(async (id: number) => {
     try {
       const result = await apiRequest(`/api/photos/${id}`, {
         method: 'DELETE',
@@ -97,10 +93,10 @@ export default function PhotosTab({}: PhotosTabProps) {
       console.error('删除照片失败:', error);
       toast.error('网络错误，请稍后重试');
     }
-  };
+  }, [fetchPhotos]);
 
   // 批量删除照片
-  const batchDeletePhotos = async (ids: number[]) => {
+  const batchDeletePhotos = useCallback(async (ids: number[]) => {
     try {
       const result = await apiRequest('/api/photos', {
         method: 'DELETE',
@@ -121,24 +117,20 @@ export default function PhotosTab({}: PhotosTabProps) {
       console.error('批量删除失败:', error);
       toast.error('网络错误，请稍后重试');
     }
-  };
+  }, [fetchPhotos]);
 
   // 处理图片上传
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File) => {
     try {
       setIsUploading(true);
-      console.log('🔍 [前端] 开始上传图片:', file.name);
       const result = await uploadImageToOSS(file);
-      console.log('🔍 [前端] 上传结果:', result);
       if (result.success) {
-        console.log('🔍 [前端] 设置图片URL:', result.url);
         setFormData(prev => {
           const newFormData = {
             ...prev,
             image_url: result.url,
             thumbnail_url: result.url // 可以后续优化为缩略图
           };
-          console.log('🔍 [前端] 更新后的formData:', newFormData);
           return newFormData;
         });
         toast.success('图片上传成功！请填写标题后提交');
@@ -156,58 +148,10 @@ export default function PhotosTab({}: PhotosTabProps) {
     } finally {
       setIsUploading(false);
     }
-  };
-
-  // 提交表单
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log('🔍 [前端] 提交表单，当前formData:', formData);
-    console.log('🔍 [前端] 标题:', formData.title.trim());
-    console.log('🔍 [前端] 图片URL:', formData.image_url);
-    
-    if (!formData.title.trim() || !formData.image_url) {
-      console.error('🔍 [前端] 验证失败: 标题或图片URL为空');
-      toast.error('请填写标题并上传图片');
-      return;
-    }
-
-    try {
-      const photoData = {
-        ...formData,
-        taken_at: formData.taken_at || null
-      };
-      
-      console.log('🔍 [前端] 准备发送的数据:', photoData);
-
-      const url = currentPhoto ? `/api/photos/${currentPhoto.id}` : '/api/photos';
-      const method = currentPhoto ? 'PUT' : 'POST';
-      
-      console.log('🔍 [前端] 请求URL:', url, '方法:', method);
-
-      const result = await apiRequest(url, {
-        method,
-        body: JSON.stringify(photoData)
-      });
-      
-      console.log('🔍 [前端] 服务器响应:', result);
-
-      if (result.success) {
-        toast.success(currentPhoto ? '照片更新成功' : '照片创建成功');
-        closeForm();
-        fetchPhotos();
-      } else {
-        console.error('🔍 [前端] 服务器返回错误:', result.message);
-        toast.error(result.message || '操作失败，请稍后重试');
-      }
-    } catch (error) {
-      console.error('🔍 [前端] 提交异常:', error);
-      toast.error('网络错误，请稍后重试');
-    }
-  };
+  }, []);
 
   // 打开表单
-  const openForm = (photo?: Photo) => {
+  const openForm = useCallback((photo?: Photo) => {
     if (photo) {
       setCurrentPhoto(photo);
       setFormData({
@@ -234,66 +178,115 @@ export default function PhotosTab({}: PhotosTabProps) {
       });
     }
     setIsFormOpen(true);
-  };
+  }, []);
 
   // 关闭表单
-  const closeForm = () => {
+  const closeForm = useCallback(() => {
     setIsFormOpen(false);
     setCurrentPhoto(null);
-  };
+  }, []);
+
+  // 提交表单
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.image_url) {
+      toast.error('请填写标题并上传图片');
+      return;
+    }
+
+    try {
+      const photoData = {
+        ...formData,
+        taken_at: formData.taken_at || null
+      };
+
+      const url = currentPhoto ? `/api/photos/${currentPhoto.id}` : '/api/photos';
+      const method = currentPhoto ? 'PUT' : 'POST';
+
+      const result = await apiRequest(url, {
+        method,
+        body: JSON.stringify(photoData)
+      });
+
+      if (result.success) {
+        toast.success(currentPhoto ? '照片更新成功' : '照片创建成功');
+        closeForm();
+        fetchPhotos();
+      } else {
+        toast.error(result.message || '操作失败，请稍后重试');
+      }
+    } catch (error) {
+      toast.error('网络错误，请稍后重试');
+    }
+  }, [formData, currentPhoto, closeForm, fetchPhotos]);
 
   // 筛选和搜索
-  const filteredPhotos = photos.filter(photo => {
-    const matchesSearch = photo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         photo.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || photo.category === selectedCategory;
-    const matchesStatus = !selectedStatus || 
-                         (selectedStatus === 'published' && photo.published) ||
-                         (selectedStatus === 'draft' && !photo.published);
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const searchLower = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
+  const filteredPhotos = useMemo(() => (
+    photos.filter(photo => {
+      const matchesSearch = photo.title.toLowerCase().includes(searchLower) ||
+                           photo.description?.toLowerCase().includes(searchLower);
+      const matchesCategory = !selectedCategory || photo.category === selectedCategory;
+      const matchesStatus = !selectedStatus || 
+                           (selectedStatus === 'published' && photo.published) ||
+                           (selectedStatus === 'draft' && !photo.published);
+      
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+  ), [photos, searchLower, selectedCategory, selectedStatus]);
 
   // 分页
-  const totalPages = Math.ceil(filteredPhotos.length / photosPerPage);
-  const currentPhotos = filteredPhotos.slice(
-    (currentPage - 1) * photosPerPage,
-    currentPage * photosPerPage
+  const totalPages = useMemo(
+    () => Math.ceil(filteredPhotos.length / photosPerPage),
+    [filteredPhotos.length, photosPerPage]
   );
+  const currentPhotos = useMemo(() => (
+    filteredPhotos.slice(
+      (currentPage - 1) * photosPerPage,
+      currentPage * photosPerPage
+    )
+  ), [filteredPhotos, currentPage, photosPerPage]);
 
   // 获取分类列表
-  const categories = Array.from(new Set(photos.map(photo => photo.category).filter(Boolean)));
+  const categories = useMemo(
+    () => Array.from(new Set(photos.map(photo => photo.category).filter(Boolean))),
+    [photos]
+  );
 
   // 批量选择状态
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const isAllSelected = useMemo(
+    () => currentPhotos.length > 0 && selectedPhotos.length === currentPhotos.length,
+    [currentPhotos.length, selectedPhotos.length]
+  );
 
   // 处理全选
-  const handleSelectAll = () => {
-    if (selectAll) {
+  const handleSelectAll = useCallback(() => {
+    if (isAllSelected) {
       setSelectedPhotos([]);
     } else {
       setSelectedPhotos(currentPhotos.map(photo => photo.id));
     }
-    setSelectAll(!selectAll);
-  };
+  }, [isAllSelected, currentPhotos]);
 
   // 处理单选
-  const handleSelectPhoto = (id: number) => {
+  const handleSelectPhoto = useCallback((id: number) => {
     setSelectedPhotos(prev => 
       prev.includes(id) 
         ? prev.filter(photoId => photoId !== id)
         : [...prev, id]
     );
-  };
+  }, []);
+
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalPages }, (_, i) => i + 1),
+    [totalPages]
+  );
 
   useEffect(() => {
     fetchPhotos();
-  }, []);
-
-  useEffect(() => {
-    setSelectAll(selectedPhotos.length === currentPhotos.length && currentPhotos.length > 0);
-  }, [selectedPhotos, currentPhotos]);
+  }, [fetchPhotos]);
 
   if (loading) {
     return (
@@ -379,7 +372,7 @@ export default function PhotosTab({}: PhotosTabProps) {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={selectAll}
+                checked={isAllSelected}
                 onChange={handleSelectAll}
                 className="mr-2"
               />
@@ -474,7 +467,7 @@ export default function PhotosTab({}: PhotosTabProps) {
           </button>
           
           <div className="flex items-center space-x-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            {pageNumbers.map(page => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
