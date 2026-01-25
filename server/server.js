@@ -1826,12 +1826,7 @@ app.get('/api/moments', async (req, res) => {
         m.visibility,
         m.created_at,
         m.updated_at,
-        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views,
-        CASE 
-          WHEN m.images IS NOT NULL AND m.images != '' 
-          THEN string_to_array(m.images, ',')
-          ELSE ARRAY[]::text[]
-        END as images
+        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views
       FROM moments m
       ${whereClause}
       ORDER BY m.${sort} DESC
@@ -1884,12 +1879,7 @@ app.get('/api/moments/:id', async (req, res) => {
         m.visibility,
         m.created_at,
         m.updated_at,
-        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views,
-        CASE 
-          WHEN m.images IS NOT NULL AND m.images != '' 
-          THEN string_to_array(m.images, ',')
-          ELSE ARRAY[]::text[]
-        END as images
+        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views
       FROM moments m
       WHERE m.id = $1`,
       [id]
@@ -1924,8 +1914,8 @@ app.post('/api/moments', async (req, res) => {
       throw new Error('数据库未连接');
     }
 
-    const { content, images = [], visibility = 'public' } = req.body;
-    console.log('📱 [API] 创建动态请求:', { content: content?.substring(0, 50) + '...', images_count: images.length });
+    const { content, visibility = 'public' } = req.body;
+    console.log('📱 [API] 创建动态请求:', { content: content?.substring(0, 50) + '...' });
 
     if (!content) {
       return res.status(400).json({
@@ -1934,37 +1924,16 @@ app.post('/api/moments', async (req, res) => {
       });
     }
 
-    // 处理图片数组，转换为逗号分隔的字符串
-    let imageUrls = '';
-    if (images.length > 0) {
-      // 提取图片URL
-      const urls = images.map(img => {
-        if (typeof img === 'string') {
-          return img;
-        } else if (img.image_url) {
-          return img.image_url;
-        } else if (img.url) {
-          return img.url;
-        }
-        return null;
-      }).filter(url => url !== null);
-      
-      imageUrls = urls.join(',');
-    }
-
     // 创建动态
     const momentResult = await dbClient.query(
-      'INSERT INTO moments (content, images, visibility) VALUES ($1, $2, $3) RETURNING *',
-      [content, imageUrls, visibility]
+      'INSERT INTO moments (content, visibility) VALUES ($1, $2) RETURNING *',
+      [content, visibility]
     );
 
     console.log('✅ [API] 动态创建成功，ID:', momentResult.rows[0].id);
     res.status(201).json({
       success: true,
-      data: {
-        ...momentResult.rows[0],
-        images: imageUrls ? imageUrls.split(',') : []
-      },
+      data: momentResult.rows[0],
       message: '动态创建成功'
     });
 
@@ -1985,7 +1954,7 @@ app.put('/api/moments/:id', async (req, res) => {
     }
 
     const { id } = req.params;
-    const { content, images = [], visibility } = req.body;
+    const { content, visibility } = req.body;
     console.log('📱 [API] 更新动态请求:', { id, content: content?.substring(0, 50) + '...' });
 
     if (!content) {
@@ -1995,28 +1964,10 @@ app.put('/api/moments/:id', async (req, res) => {
       });
     }
 
-    // 处理图片数组，转换为逗号分隔的字符串
-    let imageUrls = '';
-    if (images.length > 0) {
-      // 提取图片URL
-      const urls = images.map(img => {
-        if (typeof img === 'string') {
-          return img;
-        } else if (img.image_url) {
-          return img.image_url;
-        } else if (img.url) {
-          return img.url;
-        }
-        return null;
-      }).filter(url => url !== null);
-      
-      imageUrls = urls.join(',');
-    }
-
     // 更新动态
-    const updateFields = ['content = $1', 'images = $2'];
-    const updateValues = [content, imageUrls];
-    let paramIndex = 3;
+    const updateFields = ['content = $1'];
+    const updateValues = [content];
+    let paramIndex = 2;
 
     if (visibility !== undefined) {
       updateFields.push(`visibility = $${paramIndex++}`);
@@ -2038,10 +1989,7 @@ app.put('/api/moments/:id', async (req, res) => {
     console.log('✅ [API] 动态更新成功');
     res.json({
       success: true,
-      data: {
-        ...result.rows[0],
-        images: imageUrls ? imageUrls.split(',') : []
-      },
+      data: result.rows[0],
       message: '动态更新成功'
     });
 

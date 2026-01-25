@@ -45,7 +45,6 @@ export interface Moment {
   id: number;
   content: string;
   visibility: 'public' | 'private';
-  images: MomentImage[];
   user_id?: number;
   created_at?: string;
   updated_at?: string;

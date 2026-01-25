@@ -13,6 +13,60 @@ export default function MomentsTab({
   openMomentForm,
   deleteMoment
 }: MomentsTabProps) {
+  const extractImagesAndText = (content: string) => {
+    const images: { url: string; alt: string }[] = [];
+    const text = content
+      .replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+        images.push({ url, alt });
+        return '';
+      })
+      .trim();
+    return { text, images };
+  };
+
+  const ImageGrid = ({ images }: { images: { url: string; alt: string }[] }) => {
+    if (images.length === 0) return null;
+
+    // 单张图片
+    if (images.length === 1) {
+      return (
+        <div className="mt-3">
+          <img
+            src={images[0].url}
+            alt={images[0].alt}
+            className="max-h-[300px] max-w-full rounded-lg border border-gray-100 object-cover"
+            onClick={() => window.open(images[0].url, '_blank')}
+            style={{ cursor: 'zoom-in' }}
+          />
+        </div>
+      );
+    }
+
+    // 2张或4张图片使用2列布局
+    const isTwoColumns = images.length === 2 || images.length === 4;
+    const gridClass = isTwoColumns 
+      ? 'grid-cols-2 max-w-[80%] sm:max-w-[60%]' // 限制宽度以保持图片尺寸适中
+      : 'grid-cols-3'; // 3张及其他数量使用3列布局
+
+    return (
+      <div className={`grid gap-2 mt-3 ${gridClass}`}>
+        {images.map((img, index) => (
+          <div 
+            key={index} 
+            className="relative aspect-square overflow-hidden rounded-lg cursor-zoom-in bg-gray-100"
+            onClick={() => window.open(img.url, '_blank')}
+          >
+            <img 
+              src={img.url} 
+              alt={img.alt} 
+              className="w-full h-full object-cover hover:opacity-90 transition-opacity" 
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -30,68 +84,60 @@ export default function MomentsTab({
       {/* 动态列表 */}
       <div className="space-y-4">
         {moments.length > 0 ? (
-          moments.map(moment => (
-            <div key={moment.id} className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      moment.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {moment.visibility === 'public' ? '公开' : '私密'}
-                    </span>
-                  </div>
-                  
-                  <div className="prose prose-gray max-w-none mb-3">
-                    <div dangerouslySetInnerHTML={{ 
-                      __html: moment.content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
-                        .replace(/\n/g, '<br>')
-                    }} />
-                  </div>
-                  
-                  {/* 图片展示 */}
-                  {moment.images && moment.images.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                      {moment.images.map((image: any, index: number) => (
-                        <img
-                          key={index}
-                          src={image}
-                          className="w-full h-24 object-cover rounded-lg"
-                          alt={`动态图片 ${index + 1}`}
-                          loading="lazy"
-                        />
-                      ))}
+          moments.map(moment => {
+            const { text, images } = extractImagesAndText(moment.content);
+            return (
+              <div key={moment.id} className="bg-white rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        moment.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {moment.visibility === 'public' ? '公开' : '私密'}
+                      </span>
                     </div>
-                  )}
-                  
-                  <div className="flex items-center space-x-4 text-sm text-slate-500">
-                    <span><i className="fas fa-eye mr-1"></i> {moment.views || 0}</span>
-                    {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
+                    
+                    {text && (
+                      <div className="prose prose-gray max-w-none mb-3">
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
+                            .replace(/\n/g, '<br>')
+                        }} />
+                      </div>
+                    )}
+
+                    <ImageGrid images={images} />
+                    
+                    <div className="flex items-center space-x-4 text-sm text-slate-500 mt-3">
+                      <span><i className="fas fa-eye mr-1"></i> {moment.views || 0}</span>
+                      {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => openMomentForm(moment)}
-                    className="text-gray-400 hover:text-blue-500 transition-colors p-2"
-                    title="编辑"
-                  >
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button
-                    onClick={() => deleteMoment(moment.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-2"
-                    title="删除"
-                  >
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
+                  
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => openMomentForm(moment)}
+                      className="text-gray-400 hover:text-blue-500 transition-colors p-2"
+                      title="编辑"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      onClick={() => deleteMoment(moment.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                      title="删除"
+                    >
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="bg-white rounded-xl p-12 shadow-sm text-center">
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">

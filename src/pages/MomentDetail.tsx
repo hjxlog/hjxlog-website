@@ -28,7 +28,7 @@ export default function MomentDetail() {
   const navigate = useNavigate();
   const [moment, setMoment] = useState<Moment | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
 
   // 获取动态详情
   const fetchMoment = async () => {
@@ -72,13 +72,19 @@ export default function MomentDetail() {
   // 渲染动态内容（支持简单的Markdown）
   const renderContent = (content: string) => {
     let rendered = content
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-2" />')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[300px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
       .replace(/\n/g, '<br>');
     
-    return <div dangerouslySetInnerHTML={{ __html: rendered }} />;
+    return <div dangerouslySetInnerHTML={{ __html: rendered }} onClick={(e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        setSelectedImageUrl(img.src);
+      }
+    }} />;
   };
 
   useEffect(() => {
@@ -152,56 +158,6 @@ export default function MomentDetail() {
                 {renderContent(moment.content)}
               </div>
 
-              {/* 图片网格 */}
-              {moment.images && (
-                (() => {
-                  // 处理图片数据：如果是字符串则分割，如果是数组则直接使用
-                  const imagesData = moment.images as any;
-                  const imageUrls = typeof imagesData === 'string' 
-                    ? imagesData.split(',').filter((url: string) => url.trim()) 
-                    : Array.isArray(imagesData) 
-                      ? imagesData.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
-                      : [];
-                  
-                  if (imageUrls.length === 0) return null;
-                  
-                  return (
-                    <div className={`grid gap-3 mb-6 ${
-                      imageUrls.length === 1 ? 'grid-cols-1 max-w-2xl' :
-                      imageUrls.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-                      imageUrls.length === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-                      'grid-cols-2 sm:grid-cols-3'
-                    }`}>
-                      {imageUrls.map((imageUrl, index) => (
-                        <div key={index} className="relative group cursor-pointer overflow-hidden rounded-lg">
-                          <img
-                            src={imageUrl}
-                            alt={`动态图片 ${index + 1}`}
-                            className={`w-full object-cover group-hover:opacity-90 transition-all duration-300 group-hover:scale-105 ${
-                              imageUrls.length === 1 ? 'h-80 sm:h-96' :
-                              imageUrls.length === 2 ? 'h-56 sm:h-64' :
-                              'h-48 sm:h-56'
-                            }`}
-                            loading="lazy"
-                            onClick={() => setSelectedImageIndex(index)}
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                          {/* 点击放大提示 */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="bg-black/50 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                              </svg>
-                              点击放大
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()
-              )}
-
               {/* 动态信息栏 */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-6 text-sm text-gray-600">
@@ -224,82 +180,29 @@ export default function MomentDetail() {
       </div>
 
       {/* 图片预览模态框 */}
-      {selectedImageIndex !== null && moment.images && (
-        (() => {
-          const imagesData = moment.images as any;
-          const imageUrls = typeof imagesData === 'string' 
-            ? imagesData.split(',').filter((url: string) => url.trim()) 
-            : Array.isArray(imagesData) 
-              ? imagesData.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
-              : [];
-          
-          if (selectedImageIndex >= imageUrls.length) return null;
-          
-          return (
-            <div 
-              className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-              onClick={() => setSelectedImageIndex(null)}
+      {selectedImageUrl && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImageUrl(null)}
+        >
+          <div className="relative max-w-[95vw] max-h-[95vh] flex flex-col items-center justify-center">
+            <img
+              src={selectedImageUrl}
+              alt="Preview"
+              className="max-w-full max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            <button
+              onClick={() => setSelectedImageUrl(null)}
+              className="absolute top-4 right-4 text-white bg-white/10 backdrop-blur-md rounded-full p-2 hover:bg-white/20 transition-colors"
             >
-              <div className="relative max-w-[95vw] max-h-[95vh] flex flex-col">
-                {/* 图片 */}
-                <div className="flex-1 flex items-center justify-center">
-                  <img
-                    src={imageUrls[selectedImageIndex]}
-                    alt={`动态图片 ${selectedImageIndex + 1}`}
-                    className="max-w-full max-h-full object-contain"
-                    loading="lazy"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-                
-                {/* 控制按钮 */}
-                <div className="absolute top-4 right-4 flex gap-2">
-                  {imageUrls.length > 1 && (
-                    <div className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                      {selectedImageIndex + 1} / {imageUrls.length}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setSelectedImageIndex(null)}
-                    className="text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {/* 导航按钮 */}
-                {imageUrls.length > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : imageUrls.length - 1);
-                      }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition-colors"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedImageIndex(selectedImageIndex < imageUrls.length - 1 ? selectedImageIndex + 1 : 0);
-                      }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition-colors"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })()
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

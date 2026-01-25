@@ -182,15 +182,21 @@ export default function Moments() {
 
   // 渲染动态内容（支持简单的Markdown）
   const renderContent = (content: string) => {
-    // 简单的Markdown渲染：链接、粗体、斜体
+    // 简单的Markdown渲染：链接、粗体、斜体、图片
     let rendered = content
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded-lg my-2" />')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[300px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
       .replace(/\n/g, '<br>');
     
-    return <div dangerouslySetInnerHTML={{ __html: rendered }} />;
+    return <div dangerouslySetInnerHTML={{ __html: rendered }} onClick={(e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        handleImageClick([img.src], 0);
+      }
+    }} />;
   };
 
   const getTimelineDate = (dateString: string) => {
@@ -304,45 +310,6 @@ export default function Moments() {
                               <div className="prose prose-slate max-w-none mb-4">
                                 {renderContent(moment.content)}
                               </div>
-
-                              {/* Image Grid */}
-                              {moment.images && (
-                                (() => {
-                                  const imageUrls = typeof moment.images === 'string' 
-                                    ? (moment.images as string).split(',').filter(url => url.trim()) 
-                                    : Array.isArray(moment.images) 
-                                      ? moment.images.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
-                                      : [];
-                                  
-                                  if (imageUrls.length === 0) return null;
-                                  
-                                  return (
-                                    <div className={`grid gap-3 mb-4 ${
-                                      imageUrls.length === 1 ? 'grid-cols-1 max-w-2xl' :
-                                      imageUrls.length === 2 ? 'grid-cols-2' :
-                                      'grid-cols-2 md:grid-cols-3'
-                                    }`}>
-                                      {imageUrls.map((imageUrl, idx) => (
-                                        <div 
-                                          key={idx} 
-                                          className={`relative group/img cursor-pointer overflow-hidden rounded-xl bg-slate-100 ${
-                                            imageUrls.length === 1 ? 'aspect-video' : 'aspect-square'
-                                          }`}
-                                          onClick={() => handleImageClick(imageUrls, idx)}
-                                        >
-                                          <img
-                                            src={imageUrl}
-                                            alt={`动态图片 ${idx + 1}`}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
-                                            loading="lazy"
-                                          />
-                                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-300" />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  );
-                                })()
-                              )}
 
                               {/* Action Bar / Meta Info */}
                               <div className="mt-4 flex justify-end items-center">
