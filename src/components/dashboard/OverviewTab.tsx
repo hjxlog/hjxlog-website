@@ -8,6 +8,7 @@ interface OverviewTabProps {
   works: Work[];
   blogs: Blog[];
   moments: Moment[];
+  totalViews: number;
   openWorkForm: () => void;
   openBlogForm: () => void;
   openMomentForm: () => void;
@@ -25,6 +26,7 @@ export default function OverviewTab({
   works,
   blogs,
   moments,
+  totalViews,
   openWorkForm,
   openBlogForm,
   openMomentForm,
@@ -34,7 +36,7 @@ export default function OverviewTab({
 
   // 1. 数据统计
   const stats = [
-    { label: '总浏览量', value: blogs.reduce((total, blog) => total + blog.views, 0), icon: 'fas fa-eye', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: '总浏览量', value: totalViews, icon: 'fas fa-eye', color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: '文章', value: blogs.length, icon: 'fas fa-blog', color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: '动态', value: moments.length, icon: 'fas fa-camera', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];

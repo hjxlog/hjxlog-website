@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronDown, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronDown, Image as ImageIcon, MessageCircle, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import PublicNav from '../components/PublicNav';
@@ -17,11 +17,12 @@ interface MomentImage {
 interface Moment {
   id: number;
   content: string;
+  images: string[];
+  author_id: number;
   visibility: 'public' | 'private';
-  views_count: number;
   created_at: string;
   updated_at: string;
-  images: MomentImage[];
+  views?: number;
 }
 
 interface MomentsResponse {
@@ -43,6 +44,94 @@ export default function Moments() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [selectedMomentImages, setSelectedMomentImages] = useState<string[]>([]);
   const limit = 10;
+
+  // 浏览追踪逻辑
+  const observer = useRef<IntersectionObserver | null>(null);
+  const viewedIds = useRef<Set<number>>(new Set()); // 会话级去重
+  const pendingIds = useRef<Set<number>>(new Set()); // 待上报队列
+  const reportTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 上报浏览记录
+  const reportViews = async () => {
+    if (pendingIds.current.size === 0) return;
+
+    const idsToReport = Array.from(pendingIds.current);
+    pendingIds.current.clear();
+
+    try {
+      // 使用新的统一接口
+      const items = idsToReport.map(id => ({
+        type: 'moment',
+        id,
+        path: window.location.pathname
+      }));
+
+      const res = await apiRequest('/api/view/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+      
+      // 更新本地视图计数 (使用后端返回的最新数据)
+      if (res.success && Array.isArray(res.data)) {
+        const updatedViewsMap = new Map(res.data.map((item: any) => [item.id, item.views]));
+        
+        setMoments(prev => prev.map(m => {
+          if (updatedViewsMap.has(m.id)) {
+            return { ...m, views: Number(updatedViewsMap.get(m.id)) };
+          }
+          return m;
+        }));
+      }
+    } catch (error) {
+      console.error('上报浏览记录失败:', error);
+    }
+  };
+
+  // 初始化观察器
+  useEffect(() => {
+    observer.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = Number(entry.target.getAttribute('data-moment-id'));
+          if (id && !viewedIds.current.has(id)) {
+            // 标记为已看
+            viewedIds.current.add(id);
+            pendingIds.current.add(id);
+          }
+        }
+      });
+    }, {
+      threshold: 0.3, // 30% 可见时触发
+      rootMargin: '0px' 
+    });
+
+    // 定时上报
+    reportTimer.current = setInterval(reportViews, 3000); // 每3秒上报一次
+
+    return () => {
+      if (observer.current) observer.current.disconnect();
+      if (reportTimer.current) clearInterval(reportTimer.current);
+      reportViews(); // 卸载前最后一次上报
+    };
+  }, []);
+
+  // 监听列表变化，绑定新元素
+  useEffect(() => {
+    if (!observer.current) return;
+    
+    // 简单的做法：每次列表更新重新观察所有（Observer会自动去重吗？connect会重复吗？
+    // observe 同一个 element 多次没事，但为了性能，最好只 observe 新的。
+    // 这里简单处理：disconnect all and re-observe all，对于无限滚动来说开销尚可接受。
+    observer.current.disconnect();
+    
+    // 延迟一点确保DOM已渲染
+    setTimeout(() => {
+      const cards = document.querySelectorAll('.moment-card');
+      cards.forEach(card => observer.current?.observe(card));
+    }, 100);
+    
+  }, [moments]);
 
   // 获取动态列表
   const fetchMoments = async (pageNum: number = 1, append: boolean = false) => {
@@ -181,7 +270,8 @@ export default function Moments() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className={`relative group ${isNewYear && index !== 0 ? 'md:mt-16' : ''}`}
+                      className={`relative group ${isNewYear && index !== 0 ? 'md:mt-16' : ''} moment-card`}
+                      data-moment-id={moment.id}
                     >
                       {/* Year Marker */}
                       {isNewYear && (
@@ -221,7 +311,7 @@ export default function Moments() {
                                   const imageUrls = typeof moment.images === 'string' 
                                     ? (moment.images as string).split(',').filter(url => url.trim()) 
                                     : Array.isArray(moment.images) 
-                                      ? moment.images.map(img => typeof img === 'string' ? img : img.image_url || (img as any).url).filter(Boolean)
+                                      ? moment.images.map((img: any) => typeof img === 'string' ? img : img.image_url || img.url).filter(Boolean)
                                       : [];
                                   
                                   if (imageUrls.length === 0) return null;
@@ -254,12 +344,12 @@ export default function Moments() {
                                 })()
                               )}
 
-                              {/* Action Bar (Removed) */}
-                              {moment.visibility === 'private' && (
-                                <div className="mt-2 flex justify-end">
+                              {/* Action Bar / Meta Info */}
+                              <div className="mt-4 flex justify-end items-center">
+                                {moment.visibility === 'private' && (
                                   <span className="px-1.5 py-0.5 bg-slate-100 rounded text-xs text-slate-500">仅自己可见</span>
-                                </div>
-                              )}
+                                )}
+                              </div>
 
 
                             </div>

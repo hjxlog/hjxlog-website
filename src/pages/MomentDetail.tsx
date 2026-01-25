@@ -17,7 +17,7 @@ interface Moment {
   id: number;
   content: string;
   visibility: 'public' | 'private';
-  views_count: number;
+  views: number;
   created_at: string;
   updated_at: string;
   images: MomentImage[];
@@ -207,7 +207,7 @@ export default function MomentDetail() {
                 <div className="flex items-center gap-6 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <Eye className="w-4 h-4" />
-                    <span>{moment.views_count}</span>
+                    <span>{moment.views}</span>
                   </div>
                 </div>
                 

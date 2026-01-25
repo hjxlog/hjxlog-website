@@ -303,5 +303,35 @@ COMMENT ON COLUMN photos.location IS '拍摄地点';
 COMMENT ON COLUMN photos.taken_at IS '拍摄日期';
 COMMENT ON COLUMN photos.published IS '是否发布';
 
+-- ================================================
+-- 通用浏览记录模块表结构
+-- ================================================
+
+-- 创建通用浏览记录表
+CREATE TABLE view_logs (
+    id SERIAL PRIMARY KEY,
+    target_type VARCHAR(20) NOT NULL, -- 'blog', 'moment', 'work', 'page'
+    target_id INTEGER NOT NULL DEFAULT 0,
+    ip_address INET NOT NULL,
+    ip_location VARCHAR(100), -- IP所属地区
+    user_agent TEXT,
+    path TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建索引
+CREATE INDEX idx_view_logs_target ON view_logs(target_type, target_id);
+CREATE INDEX idx_view_logs_ip ON view_logs(ip_address);
+CREATE INDEX idx_view_logs_created_at ON view_logs(created_at DESC);
+
+-- 添加注释
+COMMENT ON TABLE view_logs IS '通用浏览记录日志表';
+COMMENT ON COLUMN view_logs.target_type IS '目标类型(blog/moment/work/page)';
+COMMENT ON COLUMN view_logs.target_id IS '目标ID';
+COMMENT ON COLUMN view_logs.ip_address IS '访客IP';
+COMMENT ON COLUMN view_logs.ip_location IS 'IP所属地区';
+COMMENT ON COLUMN view_logs.path IS '访问路径';
+COMMENT ON COLUMN view_logs.created_at IS '访问时间';
+
 -- 显示创建结果
 SELECT 'Tables created successfully!' as result;

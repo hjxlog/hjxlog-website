@@ -14,6 +14,7 @@ import { useBackToTop } from '@/hooks/useBackToTop';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 interface BlogPost {
   id: number;
@@ -47,6 +48,9 @@ const BlogDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasToc, setHasToc] = useState(false);
+
+  // 浏览追踪
+  useViewTracker('blog', Number(id), !!id);
 
   // 使用回到顶部功能
   useBackToTop();
@@ -153,28 +157,8 @@ const BlogDetail: React.FC = () => {
     if (id) {
       fetchPost();
       fetchRelatedPosts();
-      incrementViews();
     }
   }, [id]);
-
-  // 增加浏览量
-  const incrementViews = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/blogs/${id}/view`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-
-      }
-    } catch (error: any) {
-      console.error('❌ [BlogDetail] 增加浏览量失败:', error);
-    }
-  };
 
 
 

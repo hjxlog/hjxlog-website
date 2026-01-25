@@ -61,6 +61,80 @@ const upload = multer({
   }
 });
 
+// 获取IP归属地
+async function getIpLocation(ip) {
+  if (!ip || ip === '::1' || ip === '127.0.0.1') return '本地内网';
+  try {
+    // 设置2秒超时，避免阻塞
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const response = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`, { 
+      signal: controller.signal 
+    });
+    clearTimeout(timeoutId);
+    
+    const data = await response.json();
+    if (data.status === 'success') {
+      // 组装地址: 国家 省份 城市
+      return [data.country, data.regionName, data.city].filter(Boolean).join(' ');
+    }
+    return '未知位置';
+  } catch (error) {
+    // console.error('IP定位失败:', error.message);
+    return '未知位置';
+  }
+}
+
+// 通用浏览记录处理函数
+async function recordView(targetType, targetId, ip, userAgent, path, ipLocation) {
+  const VIEW_COOLDOWN_HOURS = 1;
+  
+  try {
+    // 1. 检查最近是否已记录
+    const checkResult = await dbClient.query(
+      `SELECT id FROM view_logs 
+       WHERE target_type = $1 AND target_id = $2 AND ip_address = $3 
+       AND created_at > NOW() - INTERVAL '${VIEW_COOLDOWN_HOURS} hour'`,
+      [targetType, targetId || 0, ip]
+    );
+
+    if (checkResult.rows.length === 0) {
+      // 2. 插入浏览记录 (包含 ip_location)
+      await dbClient.query(
+        'INSERT INTO view_logs (target_type, target_id, ip_address, ip_location, user_agent, path) VALUES ($1, $2, $3, $4, $5, $6)',
+        [targetType, targetId || 0, ip, ipLocation, userAgent, path]
+      );
+
+      // 3. 更新对应资源表的 views 计数 (如果是资源类型)
+      let tableName = '';
+      if (targetType === 'blog') tableName = 'blogs';
+      // else if (targetType === 'moment') tableName = 'moments'; // moment 表不再维护 views 字段，完全依赖 view_logs
+      else if (targetType === 'work') tableName = 'works';
+      // else if (targetType === 'photo') tableName = 'photos'; // 如果photo表有views字段
+
+      if (tableName) {
+        // 检查表是否有 views 字段 (简单起见假设都有，或者用 try-catch 包裹)
+        try {
+          const updateResult = await dbClient.query(
+            `UPDATE ${tableName} SET views = COALESCE(views, 0) + 1 WHERE id = $1 RETURNING views`,
+            [targetId]
+          );
+          return updateResult.rows[0]?.views;
+        } catch (updateErr) {
+          // 忽略字段不存在的错误，但记录日志
+          // console.warn(`更新 ${tableName} views 失败:`, updateErr.message);
+        }
+      }
+      return true; // 记录成功但没有计数返回
+    }
+    return false; // 已存在，不重复记录
+  } catch (error) {
+    console.error(`记录浏览失败 [${targetType}:${targetId}]:`, error.message);
+    throw error;
+  }
+}
+
 // 添加multer错误处理中间件
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -131,6 +205,85 @@ app.use((error, req, res, next) => {
     errorLogMiddleware(dbClient)(error, req, res, next);
   } else {
     next(error);
+  }
+});
+
+// 统一浏览上报接口
+app.post('/api/view/report', async (req, res) => {
+  try {
+    if (!dbClient) throw new Error('数据库未连接');
+
+    const { items } = req.body; // items: [{ type, id, path }]
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.json({ success: true, message: '无有效数据' });
+    }
+
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    
+    // 获取IP归属地 (一次请求，批量使用)
+    const ipLocation = await getIpLocation(ip);
+
+    console.log('👀 [API] 批量上报浏览:', { count: items.length, ip, location: ipLocation });
+
+    const results = [];
+    await Promise.all(items.map(async (item) => {
+      try {
+        const { type, id, path } = item;
+        if (!type) return;
+
+        const views = await recordView(type, id, ip, userAgent, path, ipLocation);
+        if (views !== false && views !== true) {
+          // 如果返回了具体的 views 数值
+          results.push({ type, id, views });
+        }
+      } catch (err) {
+        console.error('单条记录处理失败:', err.message);
+      }
+    }));
+
+    res.json({ success: true, data: results });
+  } catch (error) {
+    console.error('❌ [API] 上报浏览失败:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// 管理员获取浏览记录列表
+app.get('/api/admin/view-logs', async (req, res) => {
+  try {
+    if (!dbClient) throw new Error('数据库未连接');
+
+    const { page = 1, limit = 20, type } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = 'SELECT * FROM view_logs';
+    let countQuery = 'SELECT COUNT(*) FROM view_logs';
+    const params = [];
+
+    if (type) {
+      query += ' WHERE target_type = $1';
+      countQuery += ' WHERE target_type = $1';
+      params.push(type);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    
+    const logs = await dbClient.query(query, [...params, limit, offset]);
+    const totalResult = await dbClient.query(countQuery, params);
+    
+    res.json({
+      success: true,
+      data: {
+        list: logs.rows,
+        total: parseInt(totalResult.rows[0].count),
+        page: parseInt(page),
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('❌ [API] 获取浏览记录失败:', error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -1664,23 +1817,24 @@ app.get('/api/moments', async (req, res) => {
     const whereClause = includePrivate ? '' : "WHERE visibility = 'public'";
     const countWhereClause = includePrivate ? '' : "WHERE visibility = 'public'";
 
-    // 获取动态列表（包含图片）
+    // 获取动态列表（包含图片和浏览量，浏览量从 view_logs 表统计）
     const result = await dbClient.query(
       `SELECT 
-        id,
-        content,
-        author_id,
-        visibility,
-        created_at,
-        updated_at,
+        m.id,
+        m.content,
+        m.author_id,
+        m.visibility,
+        m.created_at,
+        m.updated_at,
+        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views,
         CASE 
-          WHEN images IS NOT NULL AND images != '' 
-          THEN string_to_array(images, ',')
+          WHEN m.images IS NOT NULL AND m.images != '' 
+          THEN string_to_array(m.images, ',')
           ELSE ARRAY[]::text[]
         END as images
-      FROM moments
+      FROM moments m
       ${whereClause}
-      ORDER BY ${sort} DESC
+      ORDER BY m.${sort} DESC
       LIMIT $1 OFFSET $2`,
       [parseInt(limit), offset]
     );
@@ -1721,22 +1875,23 @@ app.get('/api/moments/:id', async (req, res) => {
     const { id } = req.params;
     console.log('📱 [API] 获取动态详情请求:', id);
 
-    // 获取动态详情（包含图片）
+    // 获取动态详情（包含图片和浏览量，浏览量从 view_logs 表统计）
     const result = await dbClient.query(
       `SELECT 
-        id,
-        content,
-        author_id,
-        visibility,
-        created_at,
-        updated_at,
+        m.id,
+        m.content,
+        m.author_id,
+        m.visibility,
+        m.created_at,
+        m.updated_at,
+        (SELECT COUNT(*) FROM view_logs vl WHERE vl.target_type = 'moment' AND vl.target_id = m.id) as views,
         CASE 
-          WHEN images IS NOT NULL AND images != '' 
-          THEN string_to_array(images, ',')
+          WHEN m.images IS NOT NULL AND m.images != '' 
+          THEN string_to_array(m.images, ',')
           ELSE ARRAY[]::text[]
         END as images
-      FROM moments
-      WHERE id = $1`,
+      FROM moments m
+      WHERE m.id = $1`,
       [id]
     );
 
@@ -2294,6 +2449,40 @@ app.delete('/api/photos', async (req, res) => {
 
   } catch (error) {
     console.error('❌ [API] 批量删除照片失败:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+// 获取管理后台统计数据
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    console.log('📊 [API] 获取后台统计数据请求');
+
+    // 获取总浏览量 (view_logs 总数)
+    const viewsResult = await dbClient.query('SELECT COUNT(*) as total FROM view_logs');
+    const totalViews = parseInt(viewsResult.rows[0].total || 0);
+
+    // 获取其他统计数据 (可选，如果以后需要可以添加)
+    // const blogsCount = ...
+    
+    console.log('✅ [API] 统计数据获取成功:', { totalViews });
+
+    res.json({
+      success: true,
+      data: {
+        totalViews
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [API] 获取统计数据失败:', error.message);
     res.status(500).json({
       success: false,
       message: error.message

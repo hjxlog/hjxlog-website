@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
   const [currentWork, setCurrentWork] = useState<Work | null>(null);
   const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
+  const [totalViews, setTotalViews] = useState(0);
 
   // 动态管理相关状态
   const [moments, setMoments] = useState<any[]>([]);
@@ -248,6 +249,17 @@ export default function Dashboard() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const response = await apiRequest('/api/admin/stats');
+      if (response.success && response.data) {
+        setTotalViews(response.data.totalViews || 0);
+      }
+    } catch (error) {
+      console.error('获取统计数据失败:', error);
+    }
+  };
+
   const createMoment = async (momentData: any) => {
     try {
       const result = await apiRequest('/api/moments', {
@@ -366,7 +378,7 @@ export default function Dashboard() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments()]);
+      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments(), fetchStats()]);
       setLoading(false);
     };
     
@@ -578,6 +590,7 @@ export default function Dashboard() {
                 works={works}
                 blogs={blogs}
                 moments={moments}
+                totalViews={totalViews}
                 openWorkForm={openWorkForm}
                 openBlogForm={openBlogForm}
                 openMomentForm={openMomentForm}

@@ -66,7 +66,7 @@ export default function MomentsTab({
                   )}
                   
                   <div className="flex items-center space-x-4 text-sm text-slate-500">
-                    <span><i className="fas fa-eye mr-1"></i> {moment.views_count || 0}</span>
+                    <span><i className="fas fa-eye mr-1"></i> {moment.views || 0}</span>
                     {moment.created_at && <span>{new Date(moment.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
