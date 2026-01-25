@@ -21,6 +21,9 @@ const formatDate = (dateString?: string) => {
   return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 };
 
+import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+
 export default function OverviewTab({
   user,
   works,
@@ -33,6 +36,33 @@ export default function OverviewTab({
   onViewAllLogs
 }: OverviewTabProps) {
   const navigate = useNavigate();
+
+  const handleExportAll = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/admin/export/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('导出失败');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `full_backup_${new Date().toISOString().split('T')[0]}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('数据备份下载成功');
+    } catch (error) {
+      console.error('导出失败:', error);
+      toast.error('数据备份失败');
+    }
+  };
 
   // 1. 数据统计
   const stats = [
@@ -86,6 +116,9 @@ export default function OverviewTab({
           </button>
           <button onClick={() => openWorkForm()} className="flex-1 md:flex-none justify-center px-3 md:px-4 py-2.5 md:py-2 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-lg hover:bg-slate-50 transition-all text-sm font-medium flex items-center whitespace-nowrap shadow-sm md:shadow-none">
             <i className="fas fa-plus mr-1.5 md:mr-2"></i> 加作品
+          </button>
+          <button onClick={handleExportAll} className="flex-1 md:flex-none justify-center px-3 md:px-4 py-2.5 md:py-2 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-lg hover:bg-slate-50 transition-all text-sm font-medium flex items-center whitespace-nowrap shadow-sm md:shadow-none">
+            <i className="fas fa-database mr-1.5 md:mr-2"></i> 数据备份
           </button>
         </div>
         {/* 装饰背景 */}

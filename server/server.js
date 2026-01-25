@@ -2490,6 +2490,118 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// 数据导出 API
+app.get('/api/admin/export/:type', async (req, res) => {
+  const { type } = req.params;
+  const validTypes = ['works', 'blogs', 'photos', 'moments', 'all'];
+  
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({ success: false, message: '无效的导出类型' });
+  }
+
+  try {
+    if (!dbClient) {
+      throw new Error('数据库未连接');
+    }
+
+    if (type === 'all') {
+      console.log(`📦 [API] 导出所有数据请求`);
+      let sql = `-- Full Database Export\n`;
+      sql += `-- Generated at: ${new Date().toISOString()}\n\n`;
+
+      for (const t of validTypes) {
+        if (t === 'all') continue;
+        
+        sql += `-- Export of table: ${t}\n`;
+        const result = await dbClient.query(`SELECT * FROM ${t}`);
+        const rows = result.rows;
+        sql += `-- Record count: ${rows.length}\n\n`;
+
+        if (rows.length > 0) {
+          const columns = Object.keys(rows[0]);
+          for (const row of rows) {
+            const values = columns.map(col => {
+              const val = row[col];
+              if (val === null || val === undefined) return 'NULL';
+              if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+              if (typeof val === 'number') return val;
+              if (val instanceof Date) return `'${val.toISOString()}'`;
+              if (Array.isArray(val)) {
+                if (val.length === 0) return "'{}'";
+                const content = val.map(v => `'${String(v).replace(/'/g, "''")}'`).join(',');
+                return `ARRAY[${content}]`;
+              }
+              if (typeof val === 'object') {
+                return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+              }
+              return `'${String(val).replace(/'/g, "''")}'`;
+            });
+            sql += `INSERT INTO ${t} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
+          }
+        }
+        sql += `\n`;
+      }
+
+      res.setHeader('Content-Type', 'application/sql');
+      res.setHeader('Content-Disposition', `attachment; filename=full_backup_${new Date().toISOString().slice(0, 10)}.sql`);
+      return res.send(sql);
+    }
+
+    console.log(`📦 [API] 导出数据请求: ${type}`);
+    const result = await dbClient.query(`SELECT * FROM ${type}`);
+    const rows = result.rows;
+
+    let sql = `-- Export of table: ${type}\n`;
+    sql += `-- Generated at: ${new Date().toISOString()}\n`;
+    sql += `-- Record count: ${rows.length}\n\n`;
+
+    if (rows.length > 0) {
+      const columns = Object.keys(rows[0]);
+      
+      for (const row of rows) {
+        const values = columns.map(col => {
+          const val = row[col];
+          
+          if (val === null || val === undefined) return 'NULL';
+          if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+          if (typeof val === 'number') return val;
+          if (val instanceof Date) return `'${val.toISOString()}'`;
+          
+          if (Array.isArray(val)) {
+            // PostgreSQL 数组格式
+            if (val.length === 0) return "'{}'";
+            const content = val.map(v => `'${String(v).replace(/'/g, "''")}'`).join(',');
+            return `ARRAY[${content}]`;
+          }
+          
+          if (typeof val === 'object') {
+            // JSON 对象
+            return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+          }
+          
+          // 字符串处理 (转义单引号)
+          return `'${String(val).replace(/'/g, "''")}'`;
+        });
+        
+        sql += `INSERT INTO ${type} (${columns.join(', ')}) VALUES (${values.join(', ')});\n`;
+      }
+    } else {
+      sql += `-- No records found in table ${type}\n`;
+    }
+
+    res.setHeader('Content-Type', 'application/sql');
+    res.setHeader('Content-Disposition', `attachment; filename=${type}_backup_${new Date().toISOString().slice(0, 10)}.sql`);
+    res.send(sql);
+
+  } catch (error) {
+    console.error(`❌ [API] 导出 ${type} 失败:`, error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // 前端日志记录API
 app.post('/api/logs/frontend', async (req, res) => {
   try {

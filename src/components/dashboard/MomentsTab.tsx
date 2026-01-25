@@ -1,5 +1,5 @@
 import React from 'react';
-import { apiRequest } from '@/config/api';
+import { apiRequest, API_BASE_URL } from '@/config/api';
 import { toast } from 'sonner';
 
 interface MomentsTabProps {
@@ -17,12 +17,14 @@ export default function MomentsTab({
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">动态管理</h2>
-        <button
-          onClick={() => openMomentForm()}
-          className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
-        >
-          <i className="fas fa-plus mr-2"></i> 发布动态
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => openMomentForm()}
+            className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
+          >
+            <i className="fas fa-plus mr-2"></i> 发布动态
+          </button>
+        </div>
       </div>
 
       {/* 动态列表 */}

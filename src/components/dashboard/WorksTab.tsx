@@ -1,5 +1,7 @@
 import React from 'react';
 import { Work } from '@/types';
+import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
 
 interface WorksTabProps {
   works: Work[];
@@ -50,12 +52,14 @@ export default function WorksTab({
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">作品管理</h2>
-        <button
-          onClick={() => openWorkForm()}
-          className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors"
-        >
-          <i className="fas fa-plus mr-2"></i>添加作品
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => openWorkForm()}
+            className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors"
+          >
+            <i className="fas fa-plus mr-2"></i>添加作品
+          </button>
+        </div>
       </div>
 
       {/* 搜索和筛选区域 */}

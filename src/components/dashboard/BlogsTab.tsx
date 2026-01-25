@@ -1,5 +1,7 @@
 import React from 'react';
 import { Blog } from '@/types';
+import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
 
 interface BlogsTabProps {
   blogs: Blog[];
@@ -58,12 +60,14 @@ export default function BlogsTab({
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">博客管理</h2>
-        <button
-          onClick={() => openBlogForm()}
-          className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
-        >
-          <i className="fas fa-plus mr-2"></i> 写博客
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => openBlogForm()}
+            className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
+          >
+            <i className="fas fa-plus mr-2"></i> 写博客
+          </button>
+        </div>
       </div>
 
       {/* 搜索和筛选区域 */}
