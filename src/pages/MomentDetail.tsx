@@ -72,7 +72,7 @@ export default function MomentDetail() {
   // 渲染动态内容（支持简单的Markdown）
   const renderContent = (content: string) => {
     let rendered = content
-      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[300px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[500px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')

@@ -184,7 +184,7 @@ export default function Moments() {
   const renderContent = (content: string) => {
     // 简单的Markdown渲染：链接、粗体、斜体、图片
     let rendered = content
-      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[300px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="!inline-block !my-1 max-h-[500px] w-auto rounded-lg border border-gray-100 object-cover cursor-zoom-in" loading="lazy" />')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline underline-offset-4">$1</a>')
