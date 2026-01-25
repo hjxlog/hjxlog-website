@@ -1,5 +1,5 @@
 # 构建阶段
-FROM node:20-alpine AS build
+FROM node:20-bullseye-slim AS build
 WORKDIR /app
 
 # 先复制依赖文件
