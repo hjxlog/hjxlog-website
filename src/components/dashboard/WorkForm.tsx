@@ -103,8 +103,6 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
     }
   }, [initialData, isOpen]);
 
-  if (!isOpen) return null;
-
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -149,6 +147,8 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
     }
   }, [formData, onSave, onClose]);
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
@@ -174,7 +174,7 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
             {/* 基本信息 */}
             <div className="space-y-6">
               <h4 className="text-lg font-semibold text-slate-800 border-l-4 border-blue-500 pl-3">基本信息</h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700">标题 <span className="text-red-500">*</span></label>
@@ -237,7 +237,7 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
             {/* 技术细节 */}
             <div className="space-y-6">
               <h4 className="text-lg font-semibold text-slate-800 border-l-4 border-purple-500 pl-3">技术细节</h4>
-              
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700">标签</label>
                 <input
@@ -266,7 +266,7 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
             {/* 链接与资源 */}
             <div className="space-y-6">
               <h4 className="text-lg font-semibold text-slate-800 border-l-4 border-green-500 pl-3">链接与资源</h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700">项目链接</label>
@@ -315,7 +315,7 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
             {/* 详细内容 */}
             <div className="space-y-6">
               <h4 className="text-lg font-semibold text-slate-800 border-l-4 border-orange-500 pl-3">详细内容</h4>
-              
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700">简短描述</label>
                 <RichTextEditor

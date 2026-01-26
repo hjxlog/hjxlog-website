@@ -60,7 +60,7 @@ export default function Photos() {
     try {
       const response = await fetch(`${API_BASE_URL}/api/photos/categories`);
       const data: CategoriesResponse = await response.json();
-      
+
       if (data.success) {
         setCategories(data.data);
       } else {
@@ -98,7 +98,7 @@ export default function Photos() {
 
       if (data.success) {
         const newPhotos = data.data.photos;
-        
+
         if (reset || pageNum === 1) {
           setPhotos(newPhotos);
         } else {
@@ -199,18 +199,18 @@ export default function Photos() {
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
             </div>
-            
+
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                 {photo.title}
               </h3>
-              
+
               {photo.description && (
                 <p className="text-gray-600 text-sm mb-3 line-clamp-3">
                   {photo.description}
                 </p>
               )}
-              
+
               <div className="space-y-2">
                 {photo.category && (
                   <div className="flex items-center text-xs text-gray-500">
@@ -218,21 +218,21 @@ export default function Photos() {
                     <span>{photo.category}</span>
                   </div>
                 )}
-                
+
                 {photo.location && (
                   <div className="flex items-center text-xs text-gray-500">
                     <MapPin className="w-3 h-3 mr-1" />
                     <span>{photo.location}</span>
                   </div>
                 )}
-                
+
                 {photo.taken_at && (
                   <div className="flex items-center text-xs text-gray-500">
                     <Calendar className="w-3 h-3 mr-1" />
                     <span>{formatDate(photo.taken_at)}</span>
                   </div>
                 )}
-                
+
 
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function Photos() {
   return (
     <div className="min-h-screen bg-gray-50">
       <PublicNav />
-      
+
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* 页面标题 */}
         <div className="text-center mb-16">
@@ -263,11 +263,10 @@ export default function Photos() {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-3 rounded-full transition-all duration-300 ${
-                selectedCategory === category
+              className={`px-6 py-3 rounded-full transition-all duration-300 ${selectedCategory === category
                   ? 'bg-[#165DFF] text-white shadow-lg'
                   : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-              }`}
+                }`}
             >
               {category}
             </button>
@@ -284,22 +283,18 @@ export default function Photos() {
         ) : error ? (
           <ErrorMessage message={error} onRetry={() => fetchPhotos(1, true)} />
         ) : photos.length === 0 ? (
-          <Empty
-            icon={Camera}
-            title="暂无照片"
-            description="还没有发布任何照片，请稍后再来查看"
-          />
+          <Empty message="暂无照片，请稍后再来查看" />
         ) : (
           <>
             <PhotoGrid photos={photos} />
-            
+
             {/* 加载更多 */}
             {loadingMore && (
               <div className="flex justify-center py-8">
                 <LoadingSpinner />
               </div>
             )}
-            
+
             {!hasMore && photos.length > 0 && (
               <div className="text-center py-8 text-gray-500">
                 已显示全部照片
@@ -308,7 +303,7 @@ export default function Photos() {
           </>
         )}
       </main>
-      
+
       <Footer />
 
       {/* 图片预览模态框 */}

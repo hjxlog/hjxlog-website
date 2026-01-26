@@ -15,7 +15,7 @@ class KnowledgeBaseService {
     this.zhipuClient = new ZhipuAI({
       apiKey: process.env.ZHIPU_API_KEY,
     });
-    this.imageAnalysisService = new ImageAnalysisService();
+    this.imageAnalysisService = new ImageAnalysisService(dbClient);
   }
 
   /**

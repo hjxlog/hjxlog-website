@@ -3,12 +3,14 @@
  * 使用智谱AI视觉模型分析图片内容，提取地点、场景等信息
  */
 import { ZhipuAI } from 'zhipuai';
+import PromptService from './PromptService.js';
 
 class ImageAnalysisService {
-  constructor() {
+  constructor(dbClient) {
     this.zhipuClient = new ZhipuAI({
       apiKey: process.env.ZHIPU_API_KEY,
     });
+    this.promptService = new PromptService(dbClient);
   }
 
   /**
@@ -22,28 +24,32 @@ class ImageAnalysisService {
       console.log(`[ImageAnalysis] 开始分析图片: ${imageUrl}`);
 
       // 构建分析提示词
-      const prompt = this.buildAnalysisPrompt(metadata);
+      const { systemPrompt, userPrompt } = await this.buildAnalysisPrompt(metadata);
 
       // 调用智谱AI视觉模型，直接使用URL
-      const response = await this.zhipuClient.chat.completions.create({
-        model: 'glm-4v',
-        messages: [
+      const messages = [];
+      if (systemPrompt && systemPrompt.trim()) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      messages.push({
+        role: 'user',
+        content: [
           {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl,
-                },
-              },
-              {
-                type: 'text',
-                text: prompt,
-              },
-            ],
+            type: 'image_url',
+            image_url: {
+              url: imageUrl,
+            },
+          },
+          {
+            type: 'text',
+            text: userPrompt,
           },
         ],
+      });
+
+      const response = await this.zhipuClient.chat.completions.create({
+        model: 'glm-4v',
+        messages,
         temperature: 0.7,
         max_tokens: 500,
       });
@@ -70,43 +76,31 @@ class ImageAnalysisService {
    * @param {Object} metadata - 图片元数据
    * @returns {string}
    */
-  buildAnalysisPrompt(metadata) {
+  async buildAnalysisPrompt(metadata) {
+    const templateResult = await this.promptService.getTemplate('image_analysis');
+    if (!templateResult.success || !templateResult.data) {
+      throw new Error('提示词模板 image_analysis 缺失，请先初始化 prompt_templates 数据。');
+    }
+
     const { title, description, location, category, taken_at } = metadata;
+    const template = templateResult.data;
+    const replacements = {
+      '{location}': location || '',
+      '{title}': title || '',
+      '{description}': description || '',
+      '{category}': category || '',
+      '{taken_at}': taken_at || '',
+    };
 
-    let prompt = '你是一个专业的摄影作品分析师。请仔细观察这张图片，提取关键信息用于后续的智能检索。\n\n';
-
-    prompt += '**重点要求**：\n';
-    prompt += '1. 如果能识别出具体的地理位置（城市、景点、地标），请明确指出，这是最重要的信息\n';
-    prompt += '2. 描述画面的主要场景和内容\n';
-    prompt += '3. 提取关键元素和特征\n\n';
-
-    prompt += '请按以下格式回答（简洁明了，200字以内）：\n\n';
-    prompt += '**拍摄地点**：如果能识别，请给出具体位置（如"日本京都清水寺"、"中国上海外滩"等）\n';
-    prompt += '**场景类型**：自然风光、城市建筑、人像、街拍、夜景等\n';
-    prompt += '**画面内容**：主要物体、人物、建筑、景色等\n';
-    prompt += '**视觉特征**：颜色、光影、构图等\n';
-
-    if (location) {
-      prompt += `\n[已知拍摄地点：${location}，请结合图片内容确认或补充]`;
+    let userPrompt = template.user_prompt_template;
+    for (const [placeholder, value] of Object.entries(replacements)) {
+      userPrompt = userPrompt.replaceAll(placeholder, value);
     }
 
-    if (title) {
-      prompt += `\n作品标题：${title}`;
-    }
-
-    if (description) {
-      prompt += `\n作品描述：${description}`;
-    }
-
-    if (category) {
-      prompt += `\n作品分类：${category}`;
-    }
-
-    if (taken_at) {
-      prompt += `\n拍摄时间：${taken_at}`;
-    }
-
-    return prompt;
+    return {
+      systemPrompt: template.system_prompt || '',
+      userPrompt,
+    };
   }
 
   /**

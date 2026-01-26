@@ -282,6 +282,84 @@ INSERT INTO prompt_templates (name, display_name, scenario, keywords, system_pro
 
 用户问题：{question}',
     ARRAY['{context}', '{question}']
+),
+(
+    'blog_summary',
+    '博客摘要生成',
+    'content_generation',
+    ARRAY['summary', 'blog', 'abstract'],
+    '你是一个专业的博客编辑，擅长总结文章摘要。',
+    '请阅读以下博客内容，并生成一段约200字的摘要。摘要应简洁明了，概括文章的核心观点和主要内容。不要使用Markdown格式，直接输出纯文本。
+
+博客内容：
+{content}',
+    ARRAY['{content}']
+),
+(
+    'blog_tags',
+    '博客标签生成',
+    'content_generation',
+    ARRAY['tags', 'blog', 'classification'],
+    '你是一个专业的博客编辑，擅长对文章进行分类和打标签。',
+    '请阅读以下博客内容，并生成2-5个最相关的标签。
+请遵循以下规则：
+1. 优先使用【现有标签列表】中已有的标签，如果它们适用的话。
+2. 只有在现有标签都不适用时，才创建新的标签。
+3. 标签数量控制在2-5个之间，最好是2-3个。
+4. 输出格式必须是严格的JSON字符串数组，例如：["React", "JavaScript"]。不要包含任何Markdown标记或其他文字。
+
+现有标签列表：
+{existing_tags}
+
+博客内容：
+{content}',
+    ARRAY['{existing_tags}', '{content}']
+),
+(
+    'blog_category',
+    '博客分类生成',
+    'content_generation',
+    ARRAY['category', 'blog', 'classification'],
+    '你是一个专业的博客编辑，擅长对文章进行分类。',
+    '请阅读以下博客内容，并为其选择一个最合适的分类。
+请遵循以下规则：
+1. 优先从【现有分类列表】中选择一个最匹配的分类。
+2. 如果现有分类都不合适，请根据文章内容创建一个新的、简洁的分类名称（不超过6个字）。
+3. 只输出一个分类名称，不要包含任何其他文字或标点符号。
+
+现有分类列表：
+{existing_categories}
+
+博客内容：
+{content}',
+    ARRAY['{existing_categories}', '{content}']
+),
+(
+    'image_analysis',
+    '图片内容分析',
+    'image_analysis',
+    ARRAY['image', 'photo', 'analysis'],
+    '你是一个专业的摄影作品分析师。请仔细观察图片，提取关键信息用于后续的智能检索。',
+    '请按以下要求回答（简洁明了，200字以内）：
+
+**重点要求**：
+1. 如果能识别出具体的地理位置（城市、景点、地标），请明确指出，这是最重要的信息
+2. 描述画面的主要场景和内容
+3. 提取关键元素和特征
+
+**输出格式**：
+**拍摄地点**：如果能识别，请给出具体位置（如"日本京都清水寺"、"中国上海外滩"等）
+**场景类型**：自然风光、城市建筑、人像、街拍、夜景等
+**画面内容**：主要物体、人物、建筑、景色等
+**视觉特征**：颜色、光影、构图等
+
+已知信息（如有）：
+拍摄地点：{location}
+作品标题：{title}
+作品描述：{description}
+作品分类：{category}
+拍摄时间：{taken_at}',
+    ARRAY['{location}', '{title}', '{description}', '{category}', '{taken_at}']
 )
 ON CONFLICT (name) DO NOTHING;
 

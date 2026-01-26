@@ -19,10 +19,11 @@ class LLMService {
    */
   async *streamChat(prompt) {
     try {
-      const messages = [
-        { role: 'system', content: prompt.system || '你是一个AI助手。' },
-        ...prompt.messages,
-      ];
+      const messages = [];
+      if (prompt.system && prompt.system.trim()) {
+        messages.push({ role: 'system', content: prompt.system });
+      }
+      messages.push(...prompt.messages);
 
       const response = await this.client.chat.completions.create({
         model: this.model,
@@ -48,10 +49,11 @@ class LLMService {
    */
   async chat(prompt) {
     try {
-      const messages = [
-        { role: 'system', content: prompt.system || '你是一个AI助手。' },
-        ...prompt.messages,
-      ];
+      const messages = [];
+      if (prompt.system && prompt.system.trim()) {
+        messages.push({ role: 'system', content: prompt.system });
+      }
+      messages.push(...prompt.messages);
 
       const response = await this.client.chat.completions.create({
         model: this.model,

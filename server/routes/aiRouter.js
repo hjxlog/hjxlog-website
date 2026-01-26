@@ -24,34 +24,15 @@ export function createAIRouter(getDbClient) {
       const dbClient = getDbClient();
       const promptService = new PromptService(dbClient);
 
-      // 1. 获取或创建提示词模板
-      let templateResult = await promptService.getTemplate('blog_summary');
-      let template;
-
+      // 1. 获取提示词模板
+      const templateResult = await promptService.getTemplate('blog_summary');
       if (!templateResult.success || !templateResult.data) {
-        console.log('[AIRouter] 模板 blog_summary 不存在，正在创建默认模板...');
-        // 创建默认模板
-        const defaultTemplate = {
-          name: 'blog_summary',
-          display_name: '博客摘要生成',
-          scenario: 'content_generation',
-          keywords: ['summary', 'blog', 'abstract'],
-          system_prompt: '你是一个专业的博客编辑，擅长总结文章摘要。',
-          user_prompt_template: `请阅读以下博客内容，并生成一段约200字的摘要。摘要应简洁明了，概括文章的核心观点和主要内容。不要使用Markdown格式，直接输出纯文本。
-
-博客内容：
-{content}`,
-          variables: ['{content}'],
-        };
-
-        const createResult = await promptService.createTemplate(defaultTemplate);
-        if (!createResult.success) {
-          throw new Error(`创建默认模板失败: ${createResult.error}`);
-        }
-        template = createResult.data;
-      } else {
-        template = templateResult.data;
+        return res.status(500).json({
+          success: false,
+          error: '提示词模板 blog_summary 缺失，请先初始化 prompt_templates 数据。',
+        });
       }
+      const template = templateResult.data;
 
       // 2. 构建 Prompt
       const userPrompt = template.user_prompt_template.replace('{content}', content);
@@ -111,42 +92,15 @@ export function createAIRouter(getDbClient) {
         // 不中断流程，只是没有参考标签
       }
 
-      // 2. 获取或创建提示词模板
-      let templateResult = await promptService.getTemplate('blog_tags');
-      let template;
-
+      // 2. 获取提示词模板
+      const templateResult = await promptService.getTemplate('blog_tags');
       if (!templateResult.success || !templateResult.data) {
-        console.log('[AIRouter] 模板 blog_tags 不存在，正在创建默认模板...');
-        // 创建默认模板
-        const defaultTemplate = {
-          name: 'blog_tags',
-          display_name: '博客标签生成',
-          scenario: 'content_generation',
-          keywords: ['tags', 'blog', 'classification'],
-          system_prompt: '你是一个专业的博客编辑，擅长对文章进行分类和打标签。',
-          user_prompt_template: `请阅读以下博客内容，并生成2-5个最相关的标签。
-请遵循以下规则：
-1. 优先使用【现有标签列表】中已有的标签，如果它们适用的话。
-2. 只有在现有标签都不适用时，才创建新的标签。
-3. 标签数量控制在2-5个之间，最好是2-3个。
-4. 输出格式必须是严格的JSON字符串数组，例如：["React", "JavaScript"]。不要包含任何Markdown标记或其他文字。
-
-现有标签列表：
-{existing_tags}
-
-博客内容：
-{content}`,
-          variables: ['{existing_tags}', '{content}'],
-        };
-
-        const createResult = await promptService.createTemplate(defaultTemplate);
-        if (!createResult.success) {
-          throw new Error(`创建默认模板失败: ${createResult.error}`);
-        }
-        template = createResult.data;
-      } else {
-        template = templateResult.data;
+        return res.status(500).json({
+          success: false,
+          error: '提示词模板 blog_tags 缺失，请先初始化 prompt_templates 数据。',
+        });
       }
+      const template = templateResult.data;
 
       // 3. 构建 Prompt
       const userPrompt = template.user_prompt_template
@@ -227,41 +181,15 @@ export function createAIRouter(getDbClient) {
         console.warn('[AIRouter] 获取现有分类失败:', err);
       }
 
-      // 2. 获取或创建提示词模板
-      let templateResult = await promptService.getTemplate('blog_category');
-      let template;
-
+      // 2. 获取提示词模板
+      const templateResult = await promptService.getTemplate('blog_category');
       if (!templateResult.success || !templateResult.data) {
-        console.log('[AIRouter] 模板 blog_category 不存在，正在创建默认模板...');
-        // 创建默认模板
-        const defaultTemplate = {
-          name: 'blog_category',
-          display_name: '博客分类生成',
-          scenario: 'content_generation',
-          keywords: ['category', 'blog', 'classification'],
-          system_prompt: '你是一个专业的博客编辑，擅长对文章进行分类。',
-          user_prompt_template: `请阅读以下博客内容，并为其选择一个最合适的分类。
-请遵循以下规则：
-1. 优先从【现有分类列表】中选择一个最匹配的分类。
-2. 如果现有分类都不合适，请根据文章内容创建一个新的、简洁的分类名称（不超过6个字）。
-3. 只输出一个分类名称，不要包含任何其他文字或标点符号。
-
-现有分类列表：
-{existing_categories}
-
-博客内容：
-{content}`,
-          variables: ['{existing_categories}', '{content}'],
-        };
-
-        const createResult = await promptService.createTemplate(defaultTemplate);
-        if (!createResult.success) {
-          throw new Error(`创建默认模板失败: ${createResult.error}`);
-        }
-        template = createResult.data;
-      } else {
-        template = templateResult.data;
+        return res.status(500).json({
+          success: false,
+          error: '提示词模板 blog_category 缺失，请先初始化 prompt_templates 数据。',
+        });
       }
+      const template = templateResult.data;
 
       // 3. 构建 Prompt
       const userPrompt = template.user_prompt_template

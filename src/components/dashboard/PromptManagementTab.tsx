@@ -27,6 +27,8 @@ const SCENARIOS = [
   { value: 'location', label: '地点/行程查询', color: 'bg-blue-100 text-blue-800' },
   { value: 'tech', label: '技能/技术查询', color: 'bg-green-100 text-green-800' },
   { value: 'content', label: '内容/文章查询', color: 'bg-purple-100 text-purple-800' },
+  { value: 'content_generation', label: '内容生成', color: 'bg-amber-100 text-amber-800' },
+  { value: 'image_analysis', label: '图片分析', color: 'bg-rose-100 text-rose-800' },
   { value: 'general', label: '通用查询', color: 'bg-gray-100 text-gray-800' },
 ];
 
@@ -104,17 +106,8 @@ export default function PromptManagementTab() {
       name: '',
       display_name: '',
       scenario: 'general',
-      system_prompt: '你是一个AI助手，帮助访客了解这个人的信息。',
-      user_prompt_template: `**重要要求**：
-1. 基于参考信息回答，不要编造
-2. 避免重复相同的信息
-3. 保持回答简洁准确
-
-参考信息：
-
-{context}
-
-用户问题：{question}`,
+      system_prompt: '',
+      user_prompt_template: '',
       variables: '{context}, {question}',
       is_active: true,
     });
@@ -433,7 +426,7 @@ export default function PromptManagementTab() {
                     onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] resize-none"
-                    placeholder="你是一个AI助手，帮助访客了解这个人的信息。"
+                    placeholder="请输入系统提示词"
                   />
                 </div>
 
@@ -444,15 +437,7 @@ export default function PromptManagementTab() {
                     onChange={(e) => setFormData({ ...formData, user_prompt_template: e.target.value })}
                     rows={8}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#165DFF]/20 focus:border-[#165DFF] resize-none font-mono text-sm"
-                    placeholder={`**重要要求**：
-1. 基于参考信息回答，不要编造
-2. 避免重复相同的信息
-
-参考信息：
-
-{context}
-
-用户问题：{question}`}
+                    placeholder="请输入用户提示词模板，支持 {context}、{question} 等变量"
                     required
                   />
                   <p className="text-xs text-slate-500 mt-1">

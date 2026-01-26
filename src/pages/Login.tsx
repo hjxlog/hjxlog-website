@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/authContext';
 import { toast } from 'sonner';
 import { apiRequest } from '../config/api';
 import { motion } from 'framer-motion';
@@ -14,40 +14,40 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   // 页面加载时检查是否有保存的登录信息
   useEffect(() => {
     const savedUsername = localStorage.getItem('savedUsername');
     const savedRememberMe = localStorage.getItem('rememberMe') === 'true';
-    
+
     if (savedUsername && savedRememberMe) {
       setUsername(savedUsername);
       setRememberMe(true);
     }
   }, []);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // 简单验证
     if (!username || !password) {
       toast.error('请输入用户名和密码');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       // 使用真实API登录
       const data = await apiRequest('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password })
       });
-      
+
       if (data.success) {
         // 保存用户信息
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+
         // 处理记住我功能
         if (rememberMe) {
           localStorage.setItem('savedUsername', username);
@@ -60,7 +60,7 @@ export default function Login() {
           localStorage.removeItem('rememberMe');
           localStorage.removeItem('loginExpiry');
         }
-        
+
         // 调用AuthContext中的login方法
         login(rememberMe);
         toast.success('登录成功！');
@@ -78,7 +78,7 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center w-full bg-[#F8FAFC] relative overflow-hidden">
       {/* 极简背景装饰 */}
@@ -88,7 +88,7 @@ export default function Login() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.015]"></div>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -97,7 +97,7 @@ export default function Login() {
         <div className="bg-white/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-white/50 ring-1 ring-slate-100">
           {/* 品牌头部 */}
           <div className="flex flex-col items-center mb-10">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 5, scale: 1.05 }}
               className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-5 text-white"
             >
@@ -108,7 +108,7 @@ export default function Login() {
               登录 HJXLOG 管理您的数字空间
             </p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-5">
               <div>
@@ -132,7 +132,7 @@ export default function Login() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
                   密码
@@ -162,7 +162,7 @@ export default function Login() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -177,14 +177,14 @@ export default function Login() {
                   记住我 (7天)
                 </label>
               </div>
-              
+
               <div className="text-sm">
                 <a href="#" className="font-medium text-[#165DFF] hover:text-[#165DFF]/80 transition-colors">
                   忘记密码?
                 </a>
               </div>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -204,7 +204,7 @@ export default function Login() {
                 </div>
               )}
             </motion.button>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-slate-500">
                 还没有账户?{' '}

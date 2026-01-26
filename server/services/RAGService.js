@@ -6,17 +6,6 @@ import EmbeddingService from './EmbeddingService.js';
 import LLMService from './LLMService.js';
 import PromptService from './PromptService.js';
 
-/**
- * 系统提示词
- */
-const SYSTEM_PROMPT = `你是一个AI助手，帮助访客了解这个人的信息。
-
-规则：
-- 只基于以下参考信息回答，不要编造内容
-- 如果参考信息不足以回答问题，如实说明
-- 回答简洁友好，适当使用emoji增加亲和力
-- 突出技术能力和项目经验`;
-
 class RAGService {
   constructor(dbClient) {
     this.db = dbClient;
@@ -329,21 +318,13 @@ class RAGService {
     // 根据检索结果类型自动选择提示词模板
     const templateResult = await this.promptService.selectTemplateByDocuments(uniqueDocs);
 
-    let systemPrompt = SYSTEM_PROMPT;
-    let userPromptTemplate = '';
-
-    if (templateResult.success && templateResult.data) {
-      const template = templateResult.data;
-      // 使用模板的system_prompt和user_prompt_template
-      systemPrompt = template.system_prompt || SYSTEM_PROMPT;
-      userPromptTemplate = template.user_prompt_template;
-    } else {
-      // 降级到默认策略
-      userPromptTemplate = `**重要要求**：
-1. 基于参考信息回答，不要编造
-2. 避免重复相同的信息
-3. 保持回答简洁准确`;
+    if (!templateResult.success || !templateResult.data) {
+      throw new Error('提示词模板缺失，请先初始化 prompt_templates 数据。');
     }
+
+    const template = templateResult.data;
+    const systemPrompt = template.system_prompt || '';
+    const userPromptTemplate = template.user_prompt_template;
 
     // 替换变量
     let userPrompt = userPromptTemplate

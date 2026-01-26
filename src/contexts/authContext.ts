@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 
 // 用户类型定义
 export interface User {
@@ -29,3 +29,12 @@ const defaultContextValue: AuthContextType = {
 
 // 创建认证上下文
 export const AuthContext = createContext<AuthContextType>(defaultContextValue);
+
+// useAuth hook - 直接从 authContext 导出
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthContext.Provider');
+  }
+  return context;
+}
