@@ -1,43 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import RichTextEditor from '@/components/RichTextEditor';
-
-interface Work {
-  id: number;
-  title: string;
-  description: string;
-  content?: string;
-  category: string;
-  status: string;
-  tags: string[];
-  technologies: string[];
-  project_url: string;
-  github_url: string;
-  cover_image: string;
-  screenshots?: string[];
-  features?: string[];
-  challenges?: string[];
-  featured: boolean;
-  created_at?: string;
-  updated_at?: string;
-  date?: string;
-}
-
-interface WorkFormData {
-  title: string;
-  description: string;
-  content: string;
-  category: string;
-  status: string;
-  tags: string;
-  technologies: string;
-  project_url: string;
-  github_url: string;
-  cover_image: string;
-  screenshots: string;
-  features: string;
-  challenges: string;
-  featured: boolean;
-}
+import type { Work, WorkFormData } from '@/types';
 
 interface WorkFormProps {
   isOpen: boolean;

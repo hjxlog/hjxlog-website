@@ -8,37 +8,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import Empty from '@/components/Empty';
 import { toast } from 'sonner';
-
-interface Photo {
-  id: number;
-  title: string;
-  description?: string;
-  image_url: string;
-  thumbnail_url?: string;
-  category: string;
-  location?: string;
-  taken_at?: string;
-  published: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface PhotosResponse {
-  success: boolean;
-  data: {
-    photos: Photo[];
-    total: number;
-    page: number;
-    limit: number;
-  };
-  message?: string;
-}
-
-interface CategoriesResponse {
-  success: boolean;
-  data: string[];
-  message?: string;
-}
+import type { Photo, PhotosResponse, CategoriesResponse } from '@/types';
 
 export default function Photos() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -264,8 +234,8 @@ export default function Photos() {
               key={category}
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-3 rounded-full transition-all duration-300 ${selectedCategory === category
-                  ? 'bg-[#165DFF] text-white shadow-lg'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                ? 'bg-[#165DFF] text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                 }`}
             >
               {category}
