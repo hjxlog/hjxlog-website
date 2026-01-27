@@ -52,7 +52,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
-  
+
   // 初始化时检查本地存储的认证状态
   useEffect(() => {
     const savedAuth = localStorage.getItem('auth');
@@ -71,42 +71,37 @@ export default function App() {
       }
     }
   }, []);
-  
-  const login = useCallback((remember: boolean = false) => {
+
+  const login = useCallback((userData: User, remember: boolean = false) => {
     setIsAuthenticated(true);
-    
-    // 从localStorage获取用户数据
-    const savedUser = localStorage.getItem('user');
-    const userData = savedUser
-      ? parseJSON<User>(savedUser, 'Failed to parse user data')
-      : null;
-    
-    // 如果没有用户数据，使用默认数据
-    setUser(userData || DEFAULT_USER);
-    
+
+    // 直接使用传入的用户数据
+    const user = userData || DEFAULT_USER;
+    setUser(user);
+
     // 如果勾选"记住我"，保存到localStorage
     if (remember) {
       const authData = {
         token: 'token-' + Date.now(),
         expiration: getExpirationDate(),
-        user: userData || DEFAULT_USER
+        user: user
       };
       localStorage.setItem('auth', JSON.stringify(authData));
     }
   }, []);
-  
+
   const logout = useCallback(() => {
     setIsAuthenticated(false);
     setUser(null);
     localStorage.removeItem('auth');
     navigate('/login');
   }, [navigate]);
-  
+
   const updateUser = useCallback((userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      
+
       // 更新localStorage中的用户数据
       const savedAuth = localStorage.getItem('auth');
       if (savedAuth) {
@@ -127,7 +122,7 @@ export default function App() {
     () => ({ isAuthenticated, login, logout, user, updateUser }),
     [isAuthenticated, login, logout, user, updateUser]
   );
-  
+
   return (
     <AuthContext.Provider
       value={authContextValue}

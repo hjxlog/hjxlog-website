@@ -61,8 +61,8 @@ export default function Login() {
           localStorage.removeItem('loginExpiry');
         }
 
-        // 调用AuthContext中的login方法
-        login(rememberMe);
+        // 调用AuthContext中的login方法，直接传入用户数据
+        login(data.user, rememberMe);
         toast.success('登录成功！');
         // 确保在状态更新后再导航
         setTimeout(() => {

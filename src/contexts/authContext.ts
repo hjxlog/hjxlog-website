@@ -13,7 +13,7 @@ export interface User {
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (remember?: boolean) => void;
+  login: (userData: User, remember?: boolean) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -22,9 +22,9 @@ export interface AuthContextType {
 const defaultContextValue: AuthContextType = {
   isAuthenticated: false,
   user: null,
-  login: () => {},
-  logout: () => {},
-  updateUser: () => {}
+  login: () => { },
+  logout: () => { },
+  updateUser: () => { }
 };
 
 // 创建认证上下文
