@@ -32,9 +32,27 @@ export default function WorkDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeScreenshot, setActiveScreenshot] = useState(0);
-  
+
   // 使用回到顶部功能
   useBackToTop();
+
+  // 获取相关作品
+  const fetchRelatedWorks = useCallback(async (category: string, currentId: number) => {
+    try {
+      const result = await apiRequest(`/api/works?category=${encodeURIComponent(category)}&limit=6`);
+
+      if (result.success && Array.isArray(result.data)) {
+        // 过滤掉当前作品，只取前3个
+        const filtered = result.data.filter((work: WorkDetail) => work.id !== currentId).slice(0, 3);
+        setRelatedWorks(filtered);
+      } else {
+        setRelatedWorks([]);
+      }
+    } catch (error) {
+      console.error('获取相关作品失败:', error);
+      setRelatedWorks([]);
+    }
+  }, []);
 
   // 获取作品详情
   const fetchWorkDetail = useCallback(async () => {
@@ -47,9 +65,9 @@ export default function WorkDetail() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result = await apiRequest(`/api/works/${id}`);
-      
+
       if (result.success) {
         setWork(result.data);
         // 获取相关作品
@@ -64,24 +82,6 @@ export default function WorkDetail() {
       setLoading(false);
     }
   }, [id, fetchRelatedWorks]);
-
-  // 获取相关作品
-  const fetchRelatedWorks = useCallback(async (category: string, currentId: number) => {
-    try {
-      const result = await apiRequest(`/api/works?category=${encodeURIComponent(category)}&limit=6`);
-      
-      if (result.success && Array.isArray(result.data)) {
-        // 过滤掉当前作品，只取前3个
-        const filtered = result.data.filter((work: WorkDetail) => work.id !== currentId).slice(0, 3);
-        setRelatedWorks(filtered);
-      } else {
-        setRelatedWorks([]);
-      }
-    } catch (error) {
-      console.error('获取相关作品失败:', error);
-      setRelatedWorks([]);
-    }
-  }, []);
 
   useEffect(() => {
     fetchWorkDetail();
@@ -109,13 +109,13 @@ export default function WorkDetail() {
           <h2 className="text-2xl font-semibold text-slate-600 mb-4">加载失败</h2>
           <p className="text-slate-500 mb-6">{error || '作品不存在'}</p>
           <div className="space-x-4">
-            <button 
+            <button
               className="px-6 py-3 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
               onClick={() => navigate('/works')}
             >
               返回作品列表
             </button>
-            <button 
+            <button
               className="px-6 py-3 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors"
               onClick={fetchWorkDetail}
             >
@@ -188,7 +188,7 @@ export default function WorkDetail() {
               {work.screenshots && work.screenshots.length > 0 && (
                 <div className="bg-white rounded-xl p-8 shadow-sm mb-8">
                   <h2 className="text-2xl font-semibold text-slate-800 mb-6">项目截图</h2>
-                  
+
                   <div className="mb-6">
                     <img
                       src={work.screenshots[activeScreenshot]}
@@ -197,17 +197,16 @@ export default function WorkDetail() {
                       className="w-full rounded-lg shadow-md"
                     />
                   </div>
-                  
+
                   <div className="flex space-x-4 overflow-x-auto pb-2">
                     {work.screenshots.map((screenshot, index) => (
                       <button
                         key={index}
                         onClick={() => setActiveScreenshot(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                          activeScreenshot === index
+                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${activeScreenshot === index
                             ? 'border-[#165DFF]'
                             : 'border-slate-200 hover:border-slate-300'
-                        }`}
+                          }`}
                       >
                         <img
                           src={screenshot}
@@ -375,12 +374,12 @@ export default function WorkDetail() {
           )}
         </div>
       </main>
-      
+
       {/* 回到顶部按钮 */}
       <button id="backToTop" className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#165DFF] text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all">
         <i className="fas fa-arrow-up"></i>
       </button>
-      
+
       <Footer />
     </div>
   );
