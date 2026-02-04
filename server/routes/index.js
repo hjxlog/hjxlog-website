@@ -5,3 +5,4 @@ export { createMomentsRouter } from './momentsRouter.js';
 export { createPhotosRouter } from './photosRouter.js';
 export { createAuthRouter, createUsersRouter } from './authRouter.js';
 export { createAdminRouter } from './adminRouter.js';
+export { createExternalRouter } from './externalRouter.js';

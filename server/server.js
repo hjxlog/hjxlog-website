@@ -26,7 +26,8 @@ import {
   createPhotosRouter,
   createAuthRouter,
   createUsersRouter,
-  createAdminRouter
+  createAdminRouter,
+  createExternalRouter
 } from './routes/index.js';
 
 // ES模块中获取__dirname
@@ -299,6 +300,9 @@ app.use('/api/users', createUsersRouter(getDbClient));
 
 // 管理后台API
 app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
+
+// 外部API（用于OpenClaw等外部系统推送数据）
+app.use('/api/external', createExternalRouter(getDbClient));
 
 // ==================== 图片上传相关API ====================
 
