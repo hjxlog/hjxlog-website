@@ -29,6 +29,7 @@ export const dashboardTabGroups = [
     tabs: [
       { key: 'knowledge', label: '知识库', icon: 'fas fa-brain' },
       { key: 'prompts', label: '提示词管理', icon: 'fas fa-magic' },
+      { key: 'thoughts', label: '每日想法', icon: 'fas fa-sparkles', isExternalLink: true, externalPath: '/admin/thoughts' },
     ]
   },
   {

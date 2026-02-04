@@ -29,6 +29,10 @@ import {
   createAdminRouter
 } from './routes/index.js';
 
+// 导入 Task Memory 路由和定时任务
+import memoryRouter from './routes/memoryRouter.js';
+import { startMemoryCronJobs } from './cronJobs.js';
+
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -299,6 +303,9 @@ app.use('/api/users', createUsersRouter(getDbClient));
 
 // 管理后台API
 app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
+
+// Task Memory API (每日想法 + 长期记忆)
+app.use('/api', memoryRouter);
 
 // ==================== 图片上传相关API ====================
 
@@ -613,6 +620,11 @@ app.listen(PORT, () => {
   console.log(`   - GET  /api/works/categories  - 获取作品分类列表`);
   console.log(`   - GET  /api/works/:id         - 获取作品详情`);
   console.log(`   - GET  /api/featured          - 获取推荐内容（主页用）`);
+  console.log(`   - GET  /api/thoughts          - Task Memory: 每日想法`);
+  console.log(`   - GET  /api/memory            - Task Memory: 长期记忆`);
+
+  // 启动 Task Memory 定时任务
+  startMemoryCronJobs();
 });
 
 // 优雅关闭

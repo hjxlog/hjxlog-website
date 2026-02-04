@@ -50,32 +50,43 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                 <div className="h-px bg-gray-100 mx-2 mb-3" />
               )}
               <div className="space-y-1.5">
-                {group.tabs.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`relative group w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      activeTab === tab.key
-                        ? 'text-white bg-gradient-to-r from-[#165DFF] to-[#3B82F6] shadow-md shadow-blue-200'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-[#165DFF]'
-                    } ${isCollapsed ? 'justify-center' : ''}`}
-                    title={isCollapsed ? tab.label : undefined}
-                  >
-                    <i
-                      className={`${tab.icon} text-lg transition-colors duration-200 ${
-                        isCollapsed ? 'mx-auto' : 'mr-3'
-                      } ${activeTab === tab.key ? 'text-white' : 'text-gray-400 group-hover:text-[#165DFF]'}`}
-                    ></i>
-                    {!isCollapsed && <span>{tab.label}</span>}
-                    
-                    {/* Tooltip for collapsed state */}
-                    {isCollapsed && (
-                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                        {tab.label}
-                      </div>
-                    )}
-                  </button>
-                ))}
+                {group.tabs.map((tab) => {
+                  const isExternalLink = (tab as any).isExternalLink;
+                  const externalPath = (tab as any).externalPath;
+
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => {
+                        if (isExternalLink && externalPath) {
+                          navigate(externalPath);
+                        } else {
+                          setActiveTab(tab.key);
+                        }
+                      }}
+                      className={`relative group w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                        activeTab === tab.key
+                          ? 'text-white bg-gradient-to-r from-[#165DFF] to-[#3B82F6] shadow-md shadow-blue-200'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-[#165DFF]'
+                      } ${isCollapsed ? 'justify-center' : ''}`}
+                      title={isCollapsed ? tab.label : undefined}
+                    >
+                      <i
+                        className={`${tab.icon} text-lg transition-colors duration-200 ${
+                          isCollapsed ? 'mx-auto' : 'mr-3'
+                        } ${activeTab === tab.key ? 'text-white' : 'text-gray-400 group-hover:text-[#165DFF]'}`}
+                      ></i>
+                      {!isCollapsed && <span>{tab.label}</span>}
+
+                      {/* Tooltip for collapsed state */}
+                      {isCollapsed && (
+                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                          {tab.label}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
