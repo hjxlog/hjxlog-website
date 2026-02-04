@@ -17,6 +17,8 @@ import { createChatRouter } from './routes/chatRouter.js';
 import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
 import { createPromptRouter } from './routes/promptRouter.js';
 import { createAIRouter } from './routes/aiRouter.js';
+import { createAiSignalRouter } from './routes/aiSignalRouter.js';
+import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
 
 // 导入模块化路由
 import {
@@ -173,6 +175,7 @@ async function connectDatabase() {
 
     logger = createLogger(dbClient);
     await logger.system('server', 'startup', '服务器启动，数据库连接成功');
+    scheduleAiSignalJob(() => dbClient, logger);
 
     return true;
   } catch (error) {
@@ -277,6 +280,14 @@ app.use('/api/ai', (req, res, next) => {
     return res.status(503).json({ success: false, message: 'Database not connected' });
   }
   createAIRouter(() => dbClient)(req, res, next);
+});
+
+// AI 情报信号API
+app.use('/api/ai-signal', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({ success: false, message: 'Database not connected' });
+  }
+  createAiSignalRouter(() => dbClient)(req, res, next);
 });
 
 // 博客相关API
