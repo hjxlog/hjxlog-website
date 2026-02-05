@@ -1,8 +1,7 @@
 import React from 'react';
-import { Task } from '../../pages/TasksPage';
+import { Task } from '../../types/task';
 import { ExclamationTriangleIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
 
 interface TaskTodayViewProps {
   tasks: Task[];
@@ -73,7 +72,7 @@ const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => 
           )}
         </div>
         {task.due_date && (
-          <span>{format(new Date(task.due_date), 'MM月dd日', { locale: zhCN })}</span>
+          <span>{format(new Date(task.due_date), 'MM月dd日')}</span>
         )}
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task } from '../../pages/TasksPage';
+import { Task } from '../../types/task';
 import { CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import TaskDetailSidebar from './TaskDetailSidebar';
 
@@ -61,6 +61,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdate }) => {
                 key={task.id}
                 onClick={() => setSelectedTask(task)}
                 className="hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <td className="px-6 py-4">
                   <div>
                     <div className="text-sm font-medium text-gray-900">{task.title}</div>

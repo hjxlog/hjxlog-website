@@ -22,31 +22,7 @@ import TaskCalendar from '../components/tasks/TaskCalendar';
 import TaskTodayView from '../components/tasks/TaskTodayView';
 import TaskDetailSidebar from '../components/tasks/TaskDetailSidebar';
 import { useShortcut } from '../hooks/useShortcut';
-
-type ViewType = 'kanban' | 'list' | 'calendar' | 'today';
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  project_id: number;
-  status: string;
-  priority: string;
-  tags: string[];
-  due_date: string;
-  project_name?: string;
-  project_color?: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  color: string;
-  icon: string;
-  task_count: number;
-  completed_count: number;
-}
+import { Task, Project, ViewType } from '../types/task';
 
 const TasksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -125,9 +101,13 @@ const TasksPage: React.FC = () => {
 
   const handleCreateTask = async (taskData: any) => {
     try {
+      const cleanedData = {
+        ...taskData,
+        project_id: taskData.project_id || null
+      };
       await apiRequest('/api/tasks', {
         method: 'POST',
-        body: JSON.stringify(taskData)
+        body: JSON.stringify(cleanedData)
       });
       toast.success('任务创建成功');
       setShowCreateTask(false);

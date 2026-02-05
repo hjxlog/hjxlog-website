@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
-import { Task } from '../../pages/TasksPage';
+import { Task } from '../../types/task';
 import TaskDetailSidebar from './TaskDetailSidebar';
 
 interface TaskKanbanProps {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, PlusIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
-import { Task } from '../../pages/TasksPage';
+import { Task, SubTask } from '../../types/task';
 
 interface TaskDetailProps {
   task: Task;
