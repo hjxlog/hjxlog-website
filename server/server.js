@@ -307,6 +307,10 @@ app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
 // Task Memory API (每日想法 + 长期记忆)
 app.use('/api', memoryRouter);
 
+// Task Force API (任务/项目管理)
+import taskRouter from './routes/taskRouter.js';
+app.use('/api/tasks', taskRouter);
+
 // ==================== 图片上传相关API ====================
 
 // 单个图片上传到OSS

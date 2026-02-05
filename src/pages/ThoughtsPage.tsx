@@ -13,6 +13,7 @@ import MDEditor from '@uiw/react-md-editor';
 import DailyThoughtEditor from '../components/admin/DailyThoughtEditor';
 import ThoughtsList from '../components/admin/ThoughtsList';
 import LongTermMemory from '../components/admin/LongTermMemory';
+import CreateTaskFromThoughtModal from '../components/tasks/CreateTaskFromThoughtModal';
 
 interface DailyThought {
   id: number;
@@ -44,6 +45,8 @@ const ThoughtsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [memories, setMemories] = useState<LongTermMemoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'thoughts' | 'memory'>('thoughts');
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [projects, setProjects] = useState<Array<{ id: number; name: string; color: string }>>([]);
 
   // 获取指定日期的想法
   const fetchThoughtByDate = async (date: string) => {
@@ -105,11 +108,37 @@ const ThoughtsPage: React.FC = () => {
     }
   };
 
+  // 从想法创建任务
+  const handleCreateTaskFromThought = async (taskData: any) => {
+    try {
+      await apiRequest('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskData)
+      });
+      toast.success('任务创建成功');
+      setShowCreateTask(false);
+    } catch (error: any) {
+      console.error('创建任务失败:', error);
+      toast.error(error.message || '创建任务失败');
+    }
+  };
+
   // 初始化加载
   useEffect(() => {
     fetchThoughtByDate(selectedDate);
     fetchLongTermMemories();
+    fetchProjects();
   }, [selectedDate]);
+
+  // 获取项目列表
+  const fetchProjects = async () => {
+    try {
+      const data = await apiRequest<{ success: boolean; data: Array<{ id: number; name: string; color: string }> }>('/api/tasks/projects');
+      setProjects(data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+    }
+  };
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -196,6 +225,7 @@ const ThoughtsPage: React.FC = () => {
                 loading={loading}
                 onSave={handleSaveToday}
                 onSummarize={handleSummarize}
+                onCreateTask={() => setShowCreateTask(true)}
                 today={today}
               />
             </div>
@@ -204,6 +234,17 @@ const ThoughtsPage: React.FC = () => {
           <LongTermMemory memories={memories} onRefresh={fetchLongTermMemories} />
         )}
       </div>
+
+      {/* 创建任务弹窗 */}
+      {showCreateTask && currentThought && (
+        <CreateTaskFromThoughtModal
+          thoughtContent={currentThought.content}
+          thoughtDate={currentThought.thought_date}
+          projects={projects}
+          onClose={() => setShowCreateTask(false)}
+          onSubmit={handleCreateTaskFromThought}
+        />
+      )}
     </div>
   );
 };
