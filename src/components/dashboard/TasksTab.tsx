@@ -31,7 +31,33 @@ export default function TasksTab() {
   const [stats, setStats] = useState<any>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [createTaskInitialData, setCreateTaskInitialData] = useState<{ due_date?: string } | null>(null);
+  const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
+
+  const parseLocalDate = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+  };
+
+  const toLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getTaskRange = (task: Task) => {
+    const startRaw = task.start_date || task.due_date;
+    const endRaw = task.due_date || task.start_date;
+    if (!startRaw && !endRaw) return null;
+    const startDate = new Date(startRaw || endRaw || '');
+    const endDate = new Date(endRaw || startRaw || '');
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null;
+    const normalizedStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    return normalizedStart <= normalizedEnd
+      ? { start: normalizedStart, end: normalizedEnd }
+      : { start: normalizedEnd, end: normalizedStart };
+  };
 
   const fetchProjects = async () => {
     try {
@@ -116,6 +142,56 @@ export default function TasksTab() {
     } catch (error) {
       console.error('Failed to create project:', error);
       toast.error('创建项目失败');
+    }
+  };
+
+  const handleMoveTask = async (task: Task, targetDate: string) => {
+    try {
+      const range = getTaskRange(task);
+      if (!range) return;
+      const target = parseLocalDate(targetDate);
+      const durationDays = Math.max(0, Math.round((range.end.getTime() - range.start.getTime()) / (24 * 60 * 60 * 1000)));
+      const nextStart = target;
+      const nextEnd = new Date(target);
+      nextEnd.setDate(nextEnd.getDate() + durationDays);
+
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          start_date: toLocalDateString(nextStart),
+          due_date: toLocalDateString(nextEnd)
+        })
+      });
+      toast.success('任务日期已更新');
+      fetchTasks();
+      fetchStats();
+    } catch (error) {
+      console.error('Failed to move task:', error);
+      toast.error('移动任务失败');
+    }
+  };
+
+  const handleResizeTask = async (task: Task, targetDate: string) => {
+    try {
+      const range = getTaskRange(task);
+      if (!range) return;
+      const target = parseLocalDate(targetDate);
+      const start = range.start;
+      const nextEnd = target < start ? start : target;
+
+      await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          start_date: toLocalDateString(start),
+          due_date: toLocalDateString(nextEnd)
+        })
+      });
+      toast.success('任务截止日期已更新');
+      fetchTasks();
+      fetchStats();
+    } catch (error) {
+      console.error('Failed to resize task:', error);
+      toast.error('调整截止日期失败');
     }
   };
 
@@ -212,9 +288,11 @@ export default function TasksTab() {
                 tasks={tasks}
                 onTaskClick={setSelectedTask}
                 onCreateForDate={(date) => {
-                  setCreateTaskInitialData({ due_date: date });
+                  setCreateTaskInitialData({ start_date: date, due_date: date });
                   setShowCreateTask(true);
                 }}
+                onMoveTask={handleMoveTask}
+                onResizeTask={handleResizeTask}
               />
             )}
             {view === 'today' && (

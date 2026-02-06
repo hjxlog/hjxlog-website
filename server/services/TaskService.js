@@ -163,6 +163,7 @@ export async function createTask(data) {
     status = 'todo',
     priority = 'P2',
     tags,
+    start_date,
     due_date,
     estimated_hours,
     parent_task_id,
@@ -178,13 +179,13 @@ export async function createTask(data) {
   const result = await db.query(
     `INSERT INTO tasks (
       title, description, project_id, status, priority,
-      tags, due_date, estimated_hours, parent_task_id,
+      tags, start_date, due_date, estimated_hours, parent_task_id,
       source_thought_id, position
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *`,
     [
       title, description, project_id, status, priority,
-      tags || '{}', due_date, estimated_hours, parent_task_id,
+      tags || '{}', start_date, due_date, estimated_hours, parent_task_id,
       source_thought_id, position
     ]
   );
@@ -203,6 +204,7 @@ export async function updateTask(id, data) {
     status,
     priority,
     tags,
+    start_date,
     due_date,
     completed_at,
     estimated_hours,
@@ -218,16 +220,17 @@ export async function updateTask(id, data) {
          status = COALESCE($4, status),
          priority = COALESCE($5, priority),
          tags = COALESCE($6, tags),
-         due_date = COALESCE($7, due_date),
-         completed_at = COALESCE($8, completed_at),
-         estimated_hours = COALESCE($9, estimated_hours),
-         actual_hours = COALESCE($10, actual_hours),
-         position = COALESCE($11, position)
-     WHERE id = $12
+         start_date = COALESCE($7, start_date),
+         due_date = COALESCE($8, due_date),
+         completed_at = COALESCE($9, completed_at),
+         estimated_hours = COALESCE($10, estimated_hours),
+         actual_hours = COALESCE($11, actual_hours),
+         position = COALESCE($12, position)
+     WHERE id = $13
      RETURNING *`,
     [
       title, description, project_id, status, priority,
-      tags, due_date, completed_at, estimated_hours,
+      tags, start_date, due_date, completed_at, estimated_hours,
       actual_hours, position, id
     ]
   );
@@ -276,7 +279,7 @@ export async function deleteTask(id) {
  */
 export async function createTaskFromThought(thoughtId, taskData) {
   const db = getDbClient();
-  const { title, description, project_id, priority = 'P2', due_date } = taskData;
+  const { title, description, project_id, priority = 'P2', start_date, due_date } = taskData;
 
   // 获取想法内容
   const thoughtResult = await db.query(
@@ -293,9 +296,9 @@ export async function createTaskFromThought(thoughtId, taskData) {
   // 创建任务，关联想法
   const result = await db.query(
     `INSERT INTO tasks (
-      title, description, project_id, priority, due_date,
+      title, description, project_id, priority, start_date, due_date,
       source_thought_id, position
-    ) VALUES ($1, $2, $3, $4, $5, $6,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7,
       (SELECT COALESCE(MAX(position), -1) + 1 FROM tasks)
     )
     RETURNING *`,
@@ -304,6 +307,7 @@ export async function createTaskFromThought(thoughtId, taskData) {
       description || thought.content,
       project_id,
       priority,
+      start_date,
       due_date,
       thoughtId
     ]

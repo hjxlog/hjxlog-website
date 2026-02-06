@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     status VARCHAR(20) DEFAULT 'todo',  -- todo, in_progress, done, cancelled
     priority VARCHAR(10) DEFAULT 'P2',  -- P0, P1, P2, P3
     tags TEXT[] DEFAULT '{}',
+    start_date TIMESTAMP WITH TIME ZONE,
     due_date TIMESTAMP WITH TIME ZONE,
     completed_at TIMESTAMP WITH TIME ZONE,
     estimated_hours DECIMAL(5,2),
@@ -87,6 +88,7 @@ COMMENT ON TABLE task_time_logs IS '任务时间记录表';
 
 COMMENT ON COLUMN tasks.source_thought_id IS '关联的每日想法ID';
 COMMENT ON COLUMN tasks.position IS '看板视图中的排序位置';
+COMMENT ON COLUMN tasks.start_date IS '任务开始时间';
 COMMENT ON COLUMN tasks.estimated_hours IS '预估工时（小时）';
 COMMENT ON COLUMN tasks.actual_hours IS '实际工时（小时）';
 

@@ -8,6 +8,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'done' | 'cancelled';
   priority: 'P0' | 'P1' | 'P2' | 'P3';
   tags: string[];
+  start_date: string | null;
   due_date: string | null;
   project_name?: string;
   project_color?: string;

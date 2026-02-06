@@ -18,18 +18,31 @@ interface CreateTaskModalProps {
     project_id?: number | '';
     priority?: string;
     tags?: string;
+    start_date?: string;
     due_date?: string;
   };
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, initialTask }) => {
+  const toDateInputValue = (value?: string) => {
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getInitialFormData = () => ({
     title: initialTask?.title || '',
     description: initialTask?.description || '',
     project_id: initialTask?.project_id ?? (projects.length > 0 ? projects[0].id : ''),
     priority: initialTask?.priority || 'P2',
     tags: initialTask?.tags || '',
-    due_date: initialTask?.due_date || ''
+    start_date: toDateInputValue(initialTask?.start_date),
+    due_date: toDateInputValue(initialTask?.due_date)
   });
 
   const [formData, setFormData] = useState(getInitialFormData);
@@ -48,6 +61,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
       project_id: formData.project_id || null,
       priority: formData.priority,
       tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+      start_date: formData.start_date || null,
       due_date: formData.due_date || null
     };
 
@@ -131,8 +145,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
             </div>
           </div>
 
-          {/* 标签和截止日期 */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* 标签和时间 */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 标签
@@ -143,6 +157,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="用逗号分隔"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                开始日期
+              </label>
+              <input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 

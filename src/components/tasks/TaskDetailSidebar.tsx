@@ -188,6 +188,19 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate 
           )}
 
           {/* 截止日期 */}
+          {task.start_date && (
+            <div className="mb-6">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">开始日期</h4>
+              <p className="text-sm text-gray-600">
+                {new Date(task.start_date).toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+          )}
+
           {task.due_date && (
             <div className="mb-6">
               <h4 className="text-sm font-medium text-gray-700 mb-2">截止日期</h4>
