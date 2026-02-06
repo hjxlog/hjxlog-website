@@ -1,0 +1,290 @@
+{
+  "categories": ["model", "application", "engineering", "research", "safety"],
+  "sources": [
+    {
+      "name": "OpenAI News",
+      "type": "blog",
+      "url": "https://openai.com/blog/",
+      "description": "OpenAI official announcements and research updates.",
+      "tags": ["model", "product", "research", "safety"],
+      "active": true,
+      "weights": {
+        "model": 0.9,
+        "application": 0.7,
+        "engineering": 0.6,
+        "research": 0.8,
+        "safety": 0.8
+      }
+    },
+    {
+      "name": "Google DeepMind Blog",
+      "type": "blog",
+      "url": "https://deepmind.google/discover/blog/",
+      "description": "DeepMind research and product announcements.",
+      "tags": ["model", "research", "safety"],
+      "active": true,
+      "weights": {
+        "model": 0.9,
+        "application": 0.6,
+        "engineering": 0.5,
+        "research": 0.9,
+        "safety": 0.7
+      }
+    },
+    {
+      "name": "Google AI Blog",
+      "type": "blog",
+      "url": "https://blog.google/technology/ai/",
+      "description": "Google AI product and research updates.",
+      "tags": ["model", "application", "research"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.8,
+        "engineering": 0.6,
+        "research": 0.6,
+        "safety": 0.5
+      }
+    },
+    {
+      "name": "Anthropic Newsroom",
+      "type": "news",
+      "url": "https://www.anthropic.com/news",
+      "description": "Anthropic announcements, safety and model releases.",
+      "tags": ["model", "safety", "research"],
+      "active": true,
+      "weights": {
+        "model": 0.8,
+        "application": 0.6,
+        "engineering": 0.5,
+        "research": 0.7,
+        "safety": 0.9
+      }
+    },
+    {
+      "name": "Meta AI Blog",
+      "type": "blog",
+      "url": "https://ai.facebook.com/blog/",
+      "description": "Meta AI research and model releases.",
+      "tags": ["model", "research"],
+      "active": true,
+      "weights": {
+        "model": 0.8,
+        "application": 0.6,
+        "engineering": 0.6,
+        "research": 0.8,
+        "safety": 0.5
+      }
+    },
+    {
+      "name": "Microsoft Research Blog",
+      "type": "blog",
+      "url": "https://www.microsoft.com/en-us/research/blog/",
+      "description": "Microsoft Research AI updates.",
+      "tags": ["research", "application"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.6,
+        "engineering": 0.6,
+        "research": 0.9,
+        "safety": 0.5
+      }
+    },
+    {
+      "name": "NVIDIA Technical Blog (AI/ML Tag)",
+      "type": "blog",
+      "url": "https://developer.nvidia.com/blog/tag/machine-learning-and-artificial-intelligence/",
+      "description": "NVIDIA engineering and applied AI updates.",
+      "tags": ["engineering", "application"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.7,
+        "engineering": 0.9,
+        "research": 0.5,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "Stanford HAI News",
+      "type": "news",
+      "url": "https://hai.stanford.edu/news",
+      "description": "Stanford HAI research and policy updates.",
+      "tags": ["research", "safety"],
+      "active": true,
+      "weights": {
+        "model": 0.5,
+        "application": 0.6,
+        "engineering": 0.4,
+        "research": 0.8,
+        "safety": 0.7
+      }
+    },
+    {
+      "name": "BAIR Blog",
+      "type": "blog",
+      "url": "https://bair.berkeley.edu/blog/",
+      "description": "Berkeley AI Research blog.",
+      "tags": ["research", "model"],
+      "active": true,
+      "weights": {
+        "model": 0.8,
+        "application": 0.4,
+        "engineering": 0.5,
+        "research": 0.9,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "Hugging Face Blog",
+      "type": "blog",
+      "url": "https://huggingface.co/blog",
+      "description": "Open-source models, tooling, and engineering practices.",
+      "tags": ["engineering", "application", "model"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.8,
+        "engineering": 0.8,
+        "research": 0.6,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "GitHub Blog (AI Tag)",
+      "type": "blog",
+      "url": "https://github.blog/tag/ai/",
+      "description": "Engineering practices and AI tooling ecosystem.",
+      "tags": ["engineering", "application"],
+      "active": true,
+      "weights": {
+        "model": 0.4,
+        "application": 0.7,
+        "engineering": 0.8,
+        "research": 0.4,
+        "safety": 0.3
+      }
+    },
+    {
+      "name": "arXiv cs.LG Recent",
+      "type": "research",
+      "url": "https://arxiv.org/list/cs.LG/recent",
+      "description": "Latest machine learning papers.",
+      "tags": ["research", "model"],
+      "active": true,
+      "weights": {
+        "model": 0.9,
+        "application": 0.4,
+        "engineering": 0.4,
+        "research": 0.9,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "Papers with Code",
+      "type": "research",
+      "url": "https://paperswithcode.com/",
+      "description": "Papers, code, and SOTA tracking.",
+      "tags": ["research", "engineering"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.5,
+        "engineering": 0.6,
+        "research": 0.8,
+        "safety": 0.3
+      }
+    },
+    {
+      "name": "The Batch (DeepLearning.AI)",
+      "type": "newsletter",
+      "url": "https://www.deeplearning.ai/the-batch/",
+      "description": "Weekly AI industry summary.",
+      "tags": ["industry", "application"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.7,
+        "engineering": 0.5,
+        "research": 0.5,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "The Gradient",
+      "type": "blog",
+      "url": "https://thegradient.pub/",
+      "description": "Long-form AI research analysis.",
+      "tags": ["research", "safety"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.5,
+        "engineering": 0.4,
+        "research": 0.8,
+        "safety": 0.6
+      }
+    },
+    {
+      "name": "Alignment Forum",
+      "type": "forum",
+      "url": "https://alignmentforum.org/",
+      "description": "AI alignment and safety discussions.",
+      "tags": ["safety", "research"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.3,
+        "engineering": 0.3,
+        "research": 0.8,
+        "safety": 0.9
+      }
+    },
+    {
+      "name": "Jay Alammar",
+      "type": "personal",
+      "url": "https://jalammar.github.io/",
+      "description": "Explanatory posts on models and systems.",
+      "tags": ["model", "engineering"],
+      "active": true,
+      "weights": {
+        "model": 0.6,
+        "application": 0.4,
+        "engineering": 0.6,
+        "research": 0.6,
+        "safety": 0.3
+      }
+    },
+    {
+      "name": "Lilian Weng (Lil'Log)",
+      "type": "personal",
+      "url": "https://lilianweng.github.io/",
+      "description": "Deep research digests and system thinking.",
+      "tags": ["research", "engineering"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.5,
+        "engineering": 0.7,
+        "research": 0.8,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "Andrej Karpathy",
+      "type": "personal",
+      "url": "https://karpathy.github.io/",
+      "description": "AI engineering and research reflections.",
+      "tags": ["engineering", "model"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.6,
+        "engineering": 0.8,
+        "research": 0.5,
+        "safety": 0.3
+      }
+    }
+  ]
+}

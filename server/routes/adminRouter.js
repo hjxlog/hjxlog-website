@@ -1,4 +1,9 @@
 import express from 'express';
+import {
+    buildApiTokenPrefix,
+    generateApiToken,
+    hashApiToken
+} from '../utils/tokenValidator.js';
 
 // 创建管理后台路由的工厂函数
 export function createAdminRouter(getDbClient, getLogger) {
@@ -365,6 +370,113 @@ export function createAdminRouter(getDbClient, getLogger) {
                 success: false,
                 message: error.message
             });
+        }
+    });
+
+    // 获取外部API Token列表（简化模型：描述 + key + 启用状态）
+    router.get('/external-tokens', async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) throw new Error('数据库未连接');
+
+            const result = await dbClient.query(
+                `SELECT id, description, token, token_prefix, is_active, last_used_at, last_used_ip, created_at, updated_at
+                 FROM external_api_tokens
+                 ORDER BY created_at DESC`
+            );
+
+            res.json({ success: true, data: result.rows });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    // 创建外部API Token（简化模型：描述 + key）
+    router.post('/external-tokens', async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) throw new Error('数据库未连接');
+
+            const {
+                description = '',
+                key,
+                created_by = 'admin'
+            } = req.body || {};
+
+            if (!description || typeof description !== 'string') {
+                return res.status(400).json({ success: false, message: 'description 不能为空' });
+            }
+
+            const plainToken = typeof key === 'string' && key.trim()
+                ? key.trim()
+                : generateApiToken('oc_');
+            const tokenHash = hashApiToken(plainToken);
+            const maskedPrefix = buildApiTokenPrefix(plainToken);
+
+            const result = await dbClient.query(
+                `INSERT INTO external_api_tokens
+                    (token, token_hash, token_prefix, name, description, source, scopes, is_active, created_by)
+                 VALUES ($1, $2, $3, $4, $5, 'openclaw', '[]'::jsonb, true, $6)
+                 RETURNING id, description, token, token_prefix, is_active, created_at`,
+                [plainToken, tokenHash, maskedPrefix, description.trim(), description.trim(), created_by]
+            );
+
+            res.status(201).json({
+                success: true,
+                data: result.rows[0]
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    // 更新 token（仅描述和启用状态）
+    router.patch('/external-tokens/:id', async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) throw new Error('数据库未连接');
+
+            const { id } = req.params;
+            const { description, is_active } = req.body || {};
+
+            const updates = [];
+            const values = [];
+            let idx = 1;
+
+            if (typeof description === 'string') {
+                updates.push(`description = $${idx++}`);
+                updates.push(`name = $${idx++}`);
+                values.push(description.trim(), description.trim());
+            }
+            if (typeof is_active === 'boolean') {
+                updates.push(`is_active = $${idx++}`);
+                values.push(is_active);
+                if (!is_active) {
+                    updates.push('revoked_at = CURRENT_TIMESTAMP');
+                } else {
+                    updates.push('revoked_at = NULL');
+                }
+            }
+
+            if (updates.length === 0) {
+                return res.status(400).json({ success: false, message: '没有可更新字段' });
+            }
+
+            values.push(id);
+            const result = await dbClient.query(
+                `UPDATE external_api_tokens
+                 SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $${idx}
+                 RETURNING id, description, token, token_prefix, is_active, last_used_at, last_used_ip, created_at, updated_at, revoked_at`,
+                values
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ success: false, message: 'Token 不存在' });
+            }
+            res.json({ success: true, data: result.rows[0] });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
         }
     });
 
