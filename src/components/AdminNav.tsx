@@ -27,6 +27,7 @@ export const dashboardTabGroups = [
   {
     group: 'AI功能',
     tabs: [
+      { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },
       { key: 'knowledge', label: '知识库', icon: 'fas fa-brain' },
       { key: 'prompts', label: '提示词管理', icon: 'fas fa-magic' },
     ]
