@@ -19,6 +19,10 @@ import MomentForm from '@/components/dashboard/MomentForm';
 import PhotosTab from '@/components/dashboard/PhotosTab';
 import KnowledgeBaseTab from '@/components/dashboard/KnowledgeBaseTab';
 import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
+import AISignalTab from '@/components/dashboard/AISignalTab';
+import OpenClawReportsTab from '@/components/dashboard/OpenClawReportsTab';
+import ExternalTokensTab from '@/components/dashboard/ExternalTokensTab';
+import ThoughtsTab from '@/components/dashboard/ThoughtsTab';
 import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
@@ -688,6 +692,34 @@ export default function Dashboard() {
               <div className="space-y-6 animate-fade-in">
                 {/* 日志管理内容 */}
                 <LogManagement />
+              </div>
+            )}
+
+            {/* API Key 管理页面 */}
+            {activeTab === 'external-tokens' && (
+              <div className="animate-fade-in">
+                <ExternalTokensTab />
+              </div>
+            )}
+
+            {/* 知识库管理页面 */}
+            {activeTab === 'openclaw-reports' && (
+              <div className="animate-fade-in">
+                <OpenClawReportsTab />
+              </div>
+            )}
+
+            {/* AI 情报雷达页面 */}
+            {activeTab === 'thoughts' && (
+              <div className="animate-fade-in">
+                <ThoughtsTab />
+              </div>
+            )}
+
+            {/* AI 情报雷达页面 */}
+            {activeTab === 'ai-signal' && (
+              <div className="animate-fade-in">
+                <AISignalTab />
               </div>
             )}
 

@@ -17,6 +17,9 @@ import { createChatRouter } from './routes/chatRouter.js';
 import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
 import { createPromptRouter } from './routes/promptRouter.js';
 import { createAIRouter } from './routes/aiRouter.js';
+import { createAiSignalRouter } from './routes/aiSignalRouter.js';
+import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
+import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
 
 // 导入模块化路由
 import {
@@ -26,12 +29,14 @@ import {
   createPhotosRouter,
   createAuthRouter,
   createUsersRouter,
-  createAdminRouter
+  createAdminRouter,
+  createExternalRouter
 } from './routes/index.js';
 
 // 导入 Task Memory 路由和定时任务
 import memoryRouter from './routes/memoryRouter.js';
 import { startMemoryCronJobs } from './cronJobs.js';
+import { setMemoryDbClientGetter } from './services/MemoryService.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -177,6 +182,7 @@ async function connectDatabase() {
 
     logger = createLogger(dbClient);
     await logger.system('server', 'startup', '服务器启动，数据库连接成功');
+    scheduleAiSignalJob(() => dbClient, logger);
 
     return true;
   } catch (error) {
@@ -192,6 +198,7 @@ connectDatabase();
 // 获取数据库客户端的工厂函数
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
+setMemoryDbClientGetter(getDbClient);
 
 // 添加日志中间件
 app.use((req, res, next) => {
@@ -283,6 +290,14 @@ app.use('/api/ai', (req, res, next) => {
   createAIRouter(() => dbClient)(req, res, next);
 });
 
+// AI 情报信号API
+app.use('/api/ai-signal', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({ success: false, message: 'Database not connected' });
+  }
+  createAiSignalRouter(() => dbClient)(req, res, next);
+});
+
 // 博客相关API
 app.use('/api/blogs', createBlogsRouter(getDbClient));
 
@@ -310,6 +325,17 @@ app.use('/api', memoryRouter);
 // Task Force API (任务/项目管理)
 import taskRouter from './routes/taskRouter.js';
 app.use('/api/tasks', taskRouter);
+
+// 外部API（用于OpenClaw等外部系统推送数据）
+app.use('/api/external', createExternalRouter(getDbClient));
+
+// OpenClaw 汇报查看API（Dashboard使用）
+app.use('/api/openclaw-reports', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({ success: false, message: 'Database not connected' });
+  }
+  createOpenClawReportsRouter(() => dbClient)(req, res, next);
+});
 
 // ==================== 图片上传相关API ====================
 

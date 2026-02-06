@@ -8,7 +8,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "ai:test": "node scripts/testApi.js",
-    "ai:init": "node scripts/initKnowledgeBase.js"
+    "ai:init": "node scripts/initKnowledgeBase.js",
+    "ai:sources:seed": "node scripts/seedAiSources.js"
   },
   "dependencies": {
     "ali-oss": "^6.23.0",
@@ -16,6 +17,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0",
     "mime-types": "^3.0.1",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
