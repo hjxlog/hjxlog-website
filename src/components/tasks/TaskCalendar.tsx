@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Task } from '../../types/task';
 
 interface TaskCalendarProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
+  onCreateForDate?: (date: string) => void;
 }
 
-const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick }) => {
+const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreateForDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const getMonthData = (date: Date) => {
     const year = date.getFullYear();
@@ -22,8 +30,15 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick }) => {
   };
 
   const getTasksForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return tasks.filter(task => task.due_date && task.due_date.startsWith(dateStr));
+    return tasks.filter(task => {
+      if (!task.due_date) return false;
+      const taskDate = new Date(task.due_date);
+      return (
+        taskDate.getFullYear() === date.getFullYear() &&
+        taskDate.getMonth() === date.getMonth() &&
+        taskDate.getDate() === date.getDate()
+      );
+    });
   };
 
   const isToday = (date: Date) => {
@@ -74,10 +89,22 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick }) => {
           today ? 'bg-blue-50' : 'bg-white'
         } ${past ? 'bg-gray-50' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
       >
-        <div className={`text-sm font-medium mb-1 ${
-          today ? 'text-blue-600' : past ? 'text-gray-400' : 'text-gray-700'
-        }`}>
-          {day}
+        <div className="flex items-center justify-between mb-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateForDate?.(getLocalDateString(date));
+            }}
+            className="p-0.5 rounded text-gray-400 hover:text-[#165DFF] hover:bg-blue-100 transition-colors"
+            title={`为 ${getLocalDateString(date)} 添加任务`}
+          >
+            <PlusIcon className="h-3.5 w-3.5" />
+          </button>
+          <div className={`text-sm font-medium ${
+            today ? 'text-blue-600' : past ? 'text-gray-400' : 'text-gray-700'
+          }`}>
+            {day}
+          </div>
         </div>
         <div className="space-y-1">
           {dayTasks.slice(0, 3).map(task => (
@@ -187,7 +214,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick }) => {
       {/* 提示 */}
       <div className="p-4 border-t bg-gray-50">
         <p className="text-sm text-gray-500">
-          💡 点击日期可快速查看当天任务，点击任务卡片查看详情
+          💡 日期格左上角 `+` 可快速添加当天任务
         </p>
       </div>
     </div>

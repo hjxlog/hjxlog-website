@@ -10,9 +10,9 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import MDEditor from '@uiw/react-md-editor';
-import DailyThoughtEditor from '../components/admin/DailyThoughtEditor';
-import ThoughtsList from '../components/admin/ThoughtsList';
-import LongTermMemory from '../components/admin/LongTermMemory';
+import DailyThoughtEditor from '../components/dashboard/DailyThoughtEditor';
+import ThoughtsList from '../components/dashboard/ThoughtsList';
+import LongTermMemory from '../components/dashboard/LongTermMemory';
 import CreateTaskFromThoughtModal from '../components/tasks/CreateTaskFromThoughtModal';
 
 interface DailyThought {

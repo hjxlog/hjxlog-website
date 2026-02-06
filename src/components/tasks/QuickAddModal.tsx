@@ -17,6 +17,13 @@ interface QuickAddProps {
  * - 明天/后天/下周 - 截止日期
  */
 const parseTaskInput = (input: string, projects: any[]) => {
+  const toLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   let title = input;
   const tags: string[] = [];
   let priority = 'P2';
@@ -54,15 +61,15 @@ const parseTaskInput = (input: string, projects: any[]) => {
   const today = new Date();
   if (input.includes('明天')) {
     today.setDate(today.getDate() + 1);
-    due_date = today.toISOString().split('T')[0];
+    due_date = toLocalDateString(today);
     title = title.replace(/明天/, '').trim();
   } else if (input.includes('后天')) {
     today.setDate(today.getDate() + 2);
-    due_date = today.toISOString().split('T')[0];
+    due_date = toLocalDateString(today);
     title = title.replace(/后天/, '').trim();
   } else if (input.includes('下周')) {
     today.setDate(today.getDate() + 7);
-    due_date = today.toISOString().split('T')[0];
+    due_date = toLocalDateString(today);
     title = title.replace(/下周/, '').trim();
   }
 

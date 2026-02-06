@@ -1,7 +1,6 @@
 import React from 'react';
 import { Task } from '../../types/task';
 import { ExclamationTriangleIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
 
 interface TaskTodayViewProps {
   tasks: Task[];
@@ -9,6 +8,13 @@ interface TaskTodayViewProps {
 }
 
 const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => {
+  const formatDueDate = (input: string) => {
+    const date = new Date(input);
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${month}月${day}日`;
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -72,7 +78,7 @@ const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => 
           )}
         </div>
         {task.due_date && (
-          <span>{format(new Date(task.due_date), 'MM月dd日')}</span>
+          <span>{formatDueDate(task.due_date)}</span>
         )}
       </div>
     </div>

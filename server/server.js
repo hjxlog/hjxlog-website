@@ -37,6 +37,7 @@ import {
 import memoryRouter from './routes/memoryRouter.js';
 import { startMemoryCronJobs } from './cronJobs.js';
 import { setMemoryDbClientGetter } from './services/MemoryService.js';
+import { setTaskDbClientGetter } from './services/TaskService.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -199,6 +200,7 @@ connectDatabase();
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
 setMemoryDbClientGetter(getDbClient);
+setTaskDbClientGetter(getDbClient);
 
 // 添加日志中间件
 app.use((req, res, next) => {

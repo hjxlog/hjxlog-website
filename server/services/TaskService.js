@@ -3,9 +3,23 @@
  * 提供任务和项目的业务逻辑
  */
 
-import { getDbClient } from '../database/index.js';
+let dbClientGetter = null;
 
-const db = getDbClient();
+/**
+ * 注入统一数据库客户端获取函数
+ * @param {Function} getter - () => pgClient
+ */
+export function setTaskDbClientGetter(getter) {
+  dbClientGetter = getter;
+}
+
+function getDbClient() {
+  const client = typeof dbClientGetter === 'function' ? dbClientGetter() : null;
+  if (!client) {
+    throw new Error('数据库未连接');
+  }
+  return client;
+}
 
 // ==================== 项目管理 ====================
 
@@ -13,6 +27,7 @@ const db = getDbClient();
  * 获取所有项目
  */
 export async function getAllProjects() {
+  const db = getDbClient();
   const result = await db.query(
     `SELECT p.*,
             COUNT(t.id) as task_count,
@@ -30,6 +45,7 @@ export async function getAllProjects() {
  * 创建项目
  */
 export async function createProject(data) {
+  const db = getDbClient();
   const { name, description, color, icon, start_date, end_date } = data;
   const result = await db.query(
     `INSERT INTO projects (name, description, color, icon, start_date, end_date)
@@ -44,6 +60,7 @@ export async function createProject(data) {
  * 更新项目
  */
 export async function updateProject(id, data) {
+  const db = getDbClient();
   const { name, description, color, icon, status, start_date, end_date } = data;
   const result = await db.query(
     `UPDATE projects
@@ -65,6 +82,7 @@ export async function updateProject(id, data) {
  * 删除项目
  */
 export async function deleteProject(id) {
+  const db = getDbClient();
   await db.query('DELETE FROM projects WHERE id = $1', [id]);
 }
 
@@ -74,6 +92,7 @@ export async function deleteProject(id) {
  * 获取任务列表（支持筛选）
  */
 export async function getTasks(filters = {}) {
+  const db = getDbClient();
   const { project_id, status, priority, search } = filters;
   
   let query = `
@@ -119,6 +138,7 @@ export async function getTasks(filters = {}) {
  * 获取任务详情
  */
 export async function getTaskById(id) {
+  const db = getDbClient();
   const result = await db.query(
     `SELECT t.*,
             p.name as project_name,
@@ -135,6 +155,7 @@ export async function getTaskById(id) {
  * 创建任务
  */
 export async function createTask(data) {
+  const db = getDbClient();
   const {
     title,
     description,
@@ -174,6 +195,7 @@ export async function createTask(data) {
  * 更新任务
  */
 export async function updateTask(id, data) {
+  const db = getDbClient();
   const {
     title,
     description,
@@ -216,7 +238,9 @@ export async function updateTask(id, data) {
  * 批量更新任务位置（拖拽排序）
  */
 export async function updateTasksPosition(tasks) {
-  const client = await db.connect();
+  const db = getDbClient();
+  const client = typeof db.connect === 'function' ? await db.connect() : db;
+  const needRelease = client !== db && typeof client.release === 'function';
   try {
     await client.query('BEGIN');
     
@@ -233,7 +257,9 @@ export async function updateTasksPosition(tasks) {
     await client.query('ROLLBACK');
     throw error;
   } finally {
-    client.release();
+    if (needRelease) {
+      client.release();
+    }
   }
 }
 
@@ -241,6 +267,7 @@ export async function updateTasksPosition(tasks) {
  * 删除任务
  */
 export async function deleteTask(id) {
+  const db = getDbClient();
   await db.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
@@ -248,6 +275,7 @@ export async function deleteTask(id) {
  * 从想法创建任务
  */
 export async function createTaskFromThought(thoughtId, taskData) {
+  const db = getDbClient();
   const { title, description, project_id, priority = 'P2', due_date } = taskData;
 
   // 获取想法内容
@@ -306,6 +334,7 @@ export async function getKanbanData(projectId = null) {
  * 获取任务统计
  */
 export async function getTaskStats() {
+  const db = getDbClient();
   const result = await db.query(`
     SELECT
       COUNT(*) as total,

@@ -12,17 +12,27 @@ interface CreateTaskModalProps {
   projects: Project[];
   onClose: () => void;
   onSubmit: (task: any) => void;
+  initialTask?: {
+    title?: string;
+    description?: string;
+    project_id?: number | '';
+    priority?: string;
+    tags?: string;
+    due_date?: string;
+  };
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    project_id: projects.length > 0 ? projects[0].id : '',
-    priority: 'P2',
-    tags: '',
-    due_date: ''
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, initialTask }) => {
+  const getInitialFormData = () => ({
+    title: initialTask?.title || '',
+    description: initialTask?.description || '',
+    project_id: initialTask?.project_id ?? (projects.length > 0 ? projects[0].id : ''),
+    priority: initialTask?.priority || 'P2',
+    tags: initialTask?.tags || '',
+    due_date: initialTask?.due_date || ''
   });
+
+  const [formData, setFormData] = useState(getInitialFormData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
