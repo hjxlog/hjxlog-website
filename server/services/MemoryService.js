@@ -1,29 +1,33 @@
-import pg from 'pg';
 import { ZhipuAI } from 'zhipuai';
-
-const { Client } = pg;
 
 /**
  * Task Memory 功能 - 核心服务层
  * 功能：每日想法记录 + AI 自动总结到长期记忆
  */
 
-// 数据库连接配置
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'postgres',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD
-};
+let dbClientGetter = null;
 
 /**
- * 获取数据库连接
+ * 注入统一数据库客户端获取函数
+ * @param {Function} getter - () => pgClient
  */
-async function getDbConnection() {
-  const client = new Client(dbConfig);
-  await client.connect();
+export function setMemoryDbClientGetter(getter) {
+  dbClientGetter = getter;
+}
+
+function getDbClient() {
+  const client = typeof dbClientGetter === 'function' ? dbClientGetter() : null;
+  if (!client) {
+    throw new Error('数据库未连接');
+  }
   return client;
+}
+
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -32,18 +36,14 @@ async function getDbConnection() {
  * @returns {Object|null} 想法对象或null
  */
 export async function getDailyThoughtByDate(date) {
-  const client = await getDbConnection();
-  try {
-    const query = `
-      SELECT id, thought_date, content, mood, tags, is_summarized, created_at, updated_at
-      FROM daily_thoughts
-      WHERE thought_date = $1
-    `;
-    const result = await client.query(query, [date]);
-    return result.rows[0] || null;
-  } finally {
-    await client.end();
-  }
+  const client = getDbClient();
+  const query = `
+    SELECT id, thought_date, content, mood, tags, is_summarized, created_at, updated_at
+    FROM daily_thoughts
+    WHERE thought_date = $1
+  `;
+  const result = await client.query(query, [date]);
+  return result.rows[0] || null;
 }
 
 /**
@@ -51,7 +51,7 @@ export async function getDailyThoughtByDate(date) {
  * @returns {Object|null} 想法对象或null
  */
 export async function getTodayThought() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   return getDailyThoughtByDate(today);
 }
 
@@ -64,36 +64,36 @@ export async function getTodayThought() {
  * @returns {Object} 创建或更新后的想法
  */
 export async function createOrUpdateTodayThought({ content, mood, tags }) {
-  const client = await getDbConnection();
-  try {
-    const today = new Date().toISOString().split('T')[0];
+  const client = getDbClient();
+  const today = getLocalDateString();
 
-    // 先检查今天是否已有想法
-    const existing = await getDailyThoughtByDate(today);
+  const existingQuery = `
+    SELECT id
+    FROM daily_thoughts
+    WHERE thought_date = $1
+    LIMIT 1
+  `;
+  const existingResult = await client.query(existingQuery, [today]);
+  const exists = existingResult.rows.length > 0;
 
-    if (existing) {
-      // 更新
-      const query = `
-        UPDATE daily_thoughts
-        SET content = $1, mood = $2, tags = $3, updated_at = CURRENT_TIMESTAMP
-        WHERE thought_date = $4
-        RETURNING *
-      `;
-      const result = await client.query(query, [content, mood, tags, today]);
-      return result.rows[0];
-    } else {
-      // 创建
-      const query = `
-        INSERT INTO daily_thoughts (thought_date, content, mood, tags)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `;
-      const result = await client.query(query, [today, content, mood, tags]);
-      return result.rows[0];
-    }
-  } finally {
-    await client.end();
+  if (exists) {
+    const query = `
+      UPDATE daily_thoughts
+      SET content = $1, mood = $2, tags = $3, updated_at = CURRENT_TIMESTAMP
+      WHERE thought_date = $4
+      RETURNING *
+    `;
+    const result = await client.query(query, [content, mood, tags, today]);
+    return result.rows[0];
   }
+
+  const query = `
+    INSERT INTO daily_thoughts (thought_date, content, mood, tags)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+  `;
+  const result = await client.query(query, [today, content, mood, tags]);
+  return result.rows[0];
 }
 
 /**
@@ -103,33 +103,27 @@ export async function createOrUpdateTodayThought({ content, mood, tags }) {
  * @returns {Object} { data: [], total, page }
  */
 export async function getThoughtsList(page = 1, limit = 30) {
-  const client = await getDbConnection();
-  try {
-    const offset = (page - 1) * limit;
+  const client = getDbClient();
+  const offset = (page - 1) * limit;
 
-    // 获取总数
-    const countQuery = 'SELECT COUNT(*) as total FROM daily_thoughts';
-    const countResult = await client.query(countQuery);
-    const total = parseInt(countResult.rows[0].total);
+  const countQuery = 'SELECT COUNT(*) as total FROM daily_thoughts';
+  const countResult = await client.query(countQuery);
+  const total = parseInt(countResult.rows[0].total);
 
-    // 获取分页数据
-    const dataQuery = `
-      SELECT id, thought_date, content, mood, tags, is_summarized, created_at, updated_at
-      FROM daily_thoughts
-      ORDER BY thought_date DESC
-      LIMIT $1 OFFSET $2
-    `;
-    const dataResult = await client.query(dataQuery, [limit, offset]);
+  const dataQuery = `
+    SELECT id, thought_date, content, mood, tags, is_summarized, created_at, updated_at
+    FROM daily_thoughts
+    ORDER BY thought_date DESC
+    LIMIT $1 OFFSET $2
+  `;
+  const dataResult = await client.query(dataQuery, [limit, offset]);
 
-    return {
-      data: dataResult.rows,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    };
-  } finally {
-    await client.end();
-  }
+  return {
+    data: dataResult.rows,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
+  };
 }
 
 /**
@@ -138,7 +132,7 @@ export async function getThoughtsList(page = 1, limit = 30) {
  * @returns {boolean} 是否可编辑
  */
 export function canEditThought(date) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   return date === today;
 }
 
@@ -202,18 +196,14 @@ ${dailyContent}`;
  * @returns {Object} 创建的记忆
  */
 export async function saveToLongTermMemory({ title, content, source_date, category, importance, tags }) {
-  const client = await getDbConnection();
-  try {
-    const query = `
-      INSERT INTO long_term_memory (title, content, source_date, category, importance, tags)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `;
-    const result = await client.query(query, [title, content, source_date, category, importance, tags || []]);
-    return result.rows[0];
-  } finally {
-    await client.end();
-  }
+  const client = getDbClient();
+  const query = `
+    INSERT INTO long_term_memory (title, content, source_date, category, importance, tags)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+  `;
+  const result = await client.query(query, [title, content, source_date, category, importance, tags || []]);
+  return result.rows[0];
 }
 
 /**
@@ -222,18 +212,14 @@ export async function saveToLongTermMemory({ title, content, source_date, catego
  * @returns {boolean} 是否成功
  */
 export async function markAsSummarized(date) {
-  const client = await getDbConnection();
-  try {
-    const query = `
-      UPDATE daily_thoughts
-      SET is_summarized = true
-      WHERE thought_date = $1
-    `;
-    await client.query(query, [date]);
-    return true;
-  } finally {
-    await client.end();
-  }
+  const client = getDbClient();
+  const query = `
+    UPDATE daily_thoughts
+    SET is_summarized = true
+    WHERE thought_date = $1
+  `;
+  await client.query(query, [date]);
+  return true;
 }
 
 /**
@@ -245,46 +231,39 @@ export async function markAsSummarized(date) {
  * @returns {Object} { data: [], total, page }
  */
 export async function getLongTermMemories({ page = 1, limit = 20, category } = {}) {
-  const client = await getDbConnection();
-  try {
-    const offset = (page - 1) * limit;
+  const client = getDbClient();
+  const offset = (page - 1) * limit;
 
-    // 构建查询条件
-    let whereClause = '';
-    const params = [];
-    let paramIndex = 1;
+  let whereClause = '';
+  const params = [];
+  let paramIndex = 1;
 
-    if (category) {
-      whereClause = `WHERE category = $${paramIndex}`;
-      params.push(category);
-      paramIndex++;
-    }
-
-    // 获取总数
-    const countQuery = `SELECT COUNT(*) as total FROM long_term_memory ${whereClause}`;
-    const countResult = await client.query(countQuery, params);
-    const total = parseInt(countResult.rows[0].total);
-
-    // 获取分页数据
-    params.push(limit, offset);
-    const dataQuery = `
-      SELECT id, title, content, source_date, category, importance, tags, created_at, updated_at
-      FROM long_term_memory
-      ${whereClause}
-      ORDER BY created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
-    const dataResult = await client.query(dataQuery, params);
-
-    return {
-      data: dataResult.rows,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit)
-    };
-  } finally {
-    await client.end();
+  if (category) {
+    whereClause = `WHERE category = $${paramIndex}`;
+    params.push(category);
+    paramIndex++;
   }
+
+  const countQuery = `SELECT COUNT(*) as total FROM long_term_memory ${whereClause}`;
+  const countResult = await client.query(countQuery, params);
+  const total = parseInt(countResult.rows[0].total);
+
+  params.push(limit, offset);
+  const dataQuery = `
+    SELECT id, title, content, source_date, category, importance, tags, created_at, updated_at
+    FROM long_term_memory
+    ${whereClause}
+    ORDER BY created_at DESC
+    LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+  `;
+  const dataResult = await client.query(dataQuery, params);
+
+  return {
+    data: dataResult.rows,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit)
+  };
 }
 
 /**
@@ -293,7 +272,6 @@ export async function getLongTermMemories({ page = 1, limit = 20, category } = {
  * @returns {Object} { thought, memory }
  */
 export async function summarizeDailyThought(date) {
-  // 1. 获取想法
   const thought = await getDailyThoughtByDate(date);
   if (!thought) {
     throw new Error(`No thought found for date: ${date}`);
@@ -303,10 +281,8 @@ export async function summarizeDailyThought(date) {
     return { thought, message: 'Already summarized' };
   }
 
-  // 2. AI 总结
   const summary = await generateAISummary(thought.content);
 
-  // 3. 保存到长期记忆
   const memory = await saveToLongTermMemory({
     title: summary.title,
     content: summary.content,
@@ -315,20 +291,15 @@ export async function summarizeDailyThought(date) {
     importance: summary.importance
   });
 
-  // 4. 标记已总结
   await markAsSummarized(date);
 
   return { thought, memory };
 }
 
-/**
- * 获取昨天的日期（用于定时任务）
- * @returns {string} 日期字符串 (YYYY-MM-DD)
- */
 function getYesterdayDate() {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  return yesterday.toISOString().split('T')[0];
+  return getLocalDateString(yesterday);
 }
 
 /**
@@ -340,8 +311,6 @@ export async function dailySummarizationTask() {
 
   try {
     const yesterday = getYesterdayDate();
-
-    // 检查昨天的想法是否存在且未总结
     const thought = await getDailyThoughtByDate(yesterday);
 
     if (!thought) {
@@ -354,7 +323,6 @@ export async function dailySummarizationTask() {
       return;
     }
 
-    // 执行总结
     const result = await summarizeDailyThought(yesterday);
     console.log(`✅ 想法总结成功: ${result.memory.title}`);
   } catch (error) {

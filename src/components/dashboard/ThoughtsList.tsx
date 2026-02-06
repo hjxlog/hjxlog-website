@@ -15,6 +15,33 @@ interface ThoughtItem {
   mood?: string;
 }
 
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeDate = (input: string): string => {
+  if (!input) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+
+  const parsed = new Date(input);
+  if (!Number.isNaN(parsed.getTime())) {
+    return formatLocalDate(parsed);
+  }
+
+  return input.includes('T') ? input.slice(0, 10) : input;
+};
+
+const getLocalToday = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const ThoughtsList: React.FC<ThoughtsListProps> = ({
   selectedDate,
   onSelectDate,
@@ -43,20 +70,28 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
   // 生成过去30天的日期（如果数据库中没有数据）
   const generateLast30Days = () => {
     const dates: string[] = [];
+    const base = new Date(getLocalToday());
     for (let i = 0; i < 30; i++) {
-      const date = new Date();
+      const date = new Date(base);
       date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      dates.push(`${year}-${month}-${day}`);
     }
     return dates;
   };
 
-  const displayDates = thoughts.length > 0
-    ? thoughts.map(t => t.thought_date)
-    : generateLast30Days();
+  const displayDates = (() => {
+    const last30Days = generateLast30Days();
+    const thoughtDates = thoughts.map((t) => normalizeDate(t.thought_date)).filter(Boolean);
+    // Always keep today visible while preserving recent-day browsing.
+    const merged = [...new Set([...last30Days, ...thoughtDates])];
+    return merged.sort((a, b) => b.localeCompare(a));
+  })();
 
   const getPreviewText = (date: string): string => {
-    const thought = thoughts.find(t => t.thought_date === date);
+    const thought = thoughts.find(t => normalizeDate(t.thought_date) === date);
     if (!thought || !thought.content) return '暂无记录';
 
     // 移除 Markdown 符号，获取纯文本预览
@@ -116,7 +151,7 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
 
       <div className="max-h-[600px] overflow-y-auto">
         {displayDates.map((date) => {
-          const thought = thoughts.find(t => t.thought_date === date);
+          const thought = thoughts.find(t => normalizeDate(t.thought_date) === date);
           const isSelected = date === selectedDate;
           const isToday = date === today;
           const hasContent = thought && thought.content && thought.content.trim().length > 0;

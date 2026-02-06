@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import MDEditor from '@uiw/react-md-editor';
 import { toast } from 'sonner';
 import {
   CalendarIcon,
   SparklesIcon,
   LockClosedIcon,
-  PencilIcon,
-  EyeIcon
+  PencilIcon
 } from '@heroicons/react/24/outline';
 
 interface DailyThought {
@@ -22,6 +20,7 @@ interface DailyThought {
 
 interface DailyThoughtEditorProps {
   thought: DailyThought | null;
+  selectedDate: string;
   canEdit: boolean;
   loading: boolean;
   onSave: (content: string, mood?: string, tags?: string[]) => Promise<void>;
@@ -29,8 +28,28 @@ interface DailyThoughtEditorProps {
   today: string;
 }
 
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeDate = (input?: string) => {
+  if (!input) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+
+  const parsed = new Date(input);
+  if (!Number.isNaN(parsed.getTime())) {
+    return formatLocalDate(parsed);
+  }
+
+  return input.includes('T') ? input.slice(0, 10) : input;
+};
+
 const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
   thought,
+  selectedDate,
   canEdit,
   loading,
   onSave,
@@ -77,7 +96,7 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
 
   const handleSummarize = () => {
     if (thought) {
-      onSummarize(thought.thought_date);
+      onSummarize(normalizeDate(thought.thought_date));
     }
   };
 
@@ -93,7 +112,9 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
     );
   }
 
-  const isToday = thought?.thought_date === today;
+  const thoughtDate = normalizeDate(thought?.thought_date);
+  const displayDate = thoughtDate || selectedDate;
+  const isToday = displayDate === today;
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -103,7 +124,7 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
           <div className="flex items-center space-x-3">
             <CalendarIcon className="h-5 w-5 text-gray-400" />
             <span className="text-lg font-semibold text-gray-900">
-              {thought ? thought.thought_date : today}
+              {displayDate}
             </span>
             {isToday && (
               <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
@@ -142,25 +163,21 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
         )}
       </div>
 
-      {/* Markdown 编辑器 */}
+      {/* 纯文本编辑区 */}
       <div className="p-4">
-        <div data-color-mode="light">
-          {canEdit ? (
-            <MDEditor
-              value={content}
-              onChange={(val) => setContent(val || '')}
-              height={400}
-              preview="edit"
-              hideToolbar={false}
-              visibleDragBar={false}
-            />
-          ) : (
-            <MDEditor.Markdown
-              source={content || '暂无内容'}
-              style={{ whiteSpace: 'pre-wrap' }}
-            />
-          )}
-        </div>
+        {canEdit ? (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={16}
+            placeholder="写下今天的想法..."
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#165DFF] focus:border-[#165DFF] resize-y"
+          />
+        ) : (
+          <div className="min-h-[280px] rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap">
+            {content || '暂无内容'}
+          </div>
+        )}
       </div>
 
       {/* 底部操作栏 */}
@@ -206,7 +223,10 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {thought && !thought.is_summarized && thought.thought_date !== today && (
+            {canEdit && !thought && (
+              <span className="text-xs text-slate-500">首次保存即新增今日想法</span>
+            )}
+            {thought && !thought.is_summarized && thoughtDate !== today && (
               <button
                 onClick={handleSummarize}
                 className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center text-sm font-medium"

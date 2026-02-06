@@ -17,6 +17,14 @@ import {
 
 const router = express.Router();
 
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * 获取指定日期的想法
  * GET /api/thoughts/:date
@@ -66,7 +74,7 @@ router.get('/thoughts/:date', async (req, res) => {
 router.get('/thoughts/today', async (req, res) => {
   try {
     const thought = await getTodayThought();
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
 
     res.json({
       success: true,

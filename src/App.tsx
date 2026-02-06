@@ -20,7 +20,6 @@ const BlogEditor = lazy(() => import("@/pages/BlogEditor"));
 const Moments = lazy(() => import("@/pages/Moments"));
 const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
 const Photos = lazy(() => import("@/pages/Photos"));
-const ThoughtsPage = lazy(() => import("@/pages/ThoughtsPage"));
 
 const DEFAULT_USER: User = {
   id: '1',
@@ -146,7 +145,6 @@ export default function App() {
           <Route path="/moments" element={<Moments />} />
           <Route path="/moments/:id" element={<MomentDetail />} />
           <Route path="/photos" element={<Photos />} />
-          <Route path="/admin/thoughts" element={isAuthenticated ? <ThoughtsPage /> : <Login />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

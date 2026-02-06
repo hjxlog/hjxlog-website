@@ -36,6 +36,7 @@ import {
 // 导入 Task Memory 路由和定时任务
 import memoryRouter from './routes/memoryRouter.js';
 import { startMemoryCronJobs } from './cronJobs.js';
+import { setMemoryDbClientGetter } from './services/MemoryService.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -197,6 +198,7 @@ connectDatabase();
 // 获取数据库客户端的工厂函数
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
+setMemoryDbClientGetter(getDbClient);
 
 // 添加日志中间件
 app.use((req, res, next) => {
