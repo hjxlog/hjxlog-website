@@ -3,7 +3,8 @@ import {
   runDailySignalJob,
   getLatestDigest,
   getDigestByDate,
-  saveOpinion
+  saveOpinion,
+  getCollectedItems
 } from '../services/aiSignalService.js';
 
 export function createAiSignalRouter(getDbClient) {
@@ -36,6 +37,22 @@ export function createAiSignalRouter(getDbClient) {
       const dbClient = getDbClient();
       if (!dbClient) throw new Error('数据库未连接');
       const result = await runDailySignalJob(dbClient);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  router.get('/items', async (req, res) => {
+    try {
+      const dbClient = getDbClient();
+      if (!dbClient) throw new Error('数据库未连接');
+      const { since, limit } = req.query;
+      const sinceDate = since ? new Date(String(since)) : null;
+      const result = await getCollectedItems(dbClient, {
+        sinceDate: sinceDate && !Number.isNaN(sinceDate.getTime()) ? sinceDate : null,
+        limit: limit ? Number(limit) : 50
+      });
       res.json({ success: true, data: result });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
