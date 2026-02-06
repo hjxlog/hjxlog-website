@@ -18,6 +18,7 @@ import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
 import { createPromptRouter } from './routes/promptRouter.js';
 import { createAIRouter } from './routes/aiRouter.js';
 import { createAiSignalRouter } from './routes/aiSignalRouter.js';
+import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
 import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
 
 // 导入模块化路由
@@ -28,7 +29,8 @@ import {
   createPhotosRouter,
   createAuthRouter,
   createUsersRouter,
-  createAdminRouter
+  createAdminRouter,
+  createExternalRouter
 } from './routes/index.js';
 
 // ES模块中获取__dirname
@@ -310,6 +312,17 @@ app.use('/api/users', createUsersRouter(getDbClient));
 
 // 管理后台API
 app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
+
+// 外部API（用于OpenClaw等外部系统推送数据）
+app.use('/api/external', createExternalRouter(getDbClient));
+
+// OpenClaw 汇报查看API（Dashboard使用）
+app.use('/api/openclaw-reports', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({ success: false, message: 'Database not connected' });
+  }
+  createOpenClawReportsRouter(() => dbClient)(req, res, next);
+});
 
 // ==================== 图片上传相关API ====================
 
