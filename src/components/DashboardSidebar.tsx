@@ -67,7 +67,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                       } ${activeTab === tab.key ? 'text-white' : 'text-gray-400 group-hover:text-[#165DFF]'}`}
                     ></i>
                     {!isCollapsed && <span>{tab.label}</span>}
-                    
+
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
                       <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">

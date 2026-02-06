@@ -22,6 +22,7 @@ import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
 import AISignalTab from '@/components/dashboard/AISignalTab';
 import OpenClawReportsTab from '@/components/dashboard/OpenClawReportsTab';
 import ExternalTokensTab from '@/components/dashboard/ExternalTokensTab';
+import ThoughtsTab from '@/components/dashboard/ThoughtsTab';
 import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
@@ -705,6 +706,13 @@ export default function Dashboard() {
             {activeTab === 'openclaw-reports' && (
               <div className="animate-fade-in">
                 <OpenClawReportsTab />
+              </div>
+            )}
+
+            {/* AI 情报雷达页面 */}
+            {activeTab === 'thoughts' && (
+              <div className="animate-fade-in">
+                <ThoughtsTab />
               </div>
             )}
 
