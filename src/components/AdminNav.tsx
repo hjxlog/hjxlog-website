@@ -27,6 +27,7 @@ export const dashboardTabGroups = [
   {
     group: 'AI功能',
     tabs: [
+      { key: 'tasks', label: '待办事项', icon: 'fas fa-list-check' },
       { key: 'thoughts', label: '每日想法', icon: 'fas fa-lightbulb' },
       { key: 'openclaw-reports', label: 'OpenClaw汇报', icon: 'fas fa-robot' },
       { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },

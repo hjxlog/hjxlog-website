@@ -4,7 +4,9 @@ import {
   CalendarIcon,
   SparklesIcon,
   LockClosedIcon,
-  PencilIcon
+  PencilIcon,
+  EyeIcon,
+  Squares2X2Icon
 } from '@heroicons/react/24/outline';
 
 interface DailyThought {
@@ -25,6 +27,7 @@ interface DailyThoughtEditorProps {
   loading: boolean;
   onSave: (content: string, mood?: string, tags?: string[]) => Promise<void>;
   onSummarize: (date: string) => void;
+  onCreateTask?: () => void;
   today: string;
 }
 
@@ -54,6 +57,7 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
   loading,
   onSave,
   onSummarize,
+  onCreateTask,
   today
 }) => {
   const [content, setContent] = useState<string>('');
@@ -233,6 +237,16 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
               >
                 <SparklesIcon className="h-4 w-4 mr-2" />
                 AI 总结
+              </button>
+            )}
+
+            {onCreateTask && thought && (
+              <button
+                onClick={onCreateTask}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center text-sm font-medium"
+              >
+                <Squares2X2Icon className="h-4 w-4 mr-2" />
+                创建任务
               </button>
             )}
 

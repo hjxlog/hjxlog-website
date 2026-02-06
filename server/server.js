@@ -37,6 +37,7 @@ import {
 import memoryRouter from './routes/memoryRouter.js';
 import { startMemoryCronJobs } from './cronJobs.js';
 import { setMemoryDbClientGetter } from './services/MemoryService.js';
+import { setTaskDbClientGetter } from './services/TaskService.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -199,6 +200,7 @@ connectDatabase();
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
 setMemoryDbClientGetter(getDbClient);
+setTaskDbClientGetter(getDbClient);
 
 // 添加日志中间件
 app.use((req, res, next) => {
@@ -321,6 +323,10 @@ app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
 
 // Task Memory API (每日想法 + 长期记忆)
 app.use('/api', memoryRouter);
+
+// Task Force API (任务/项目管理)
+import taskRouter from './routes/taskRouter.js';
+app.use('/api/tasks', taskRouter);
 
 // 外部API（用于OpenClaw等外部系统推送数据）
 app.use('/api/external', createExternalRouter(getDbClient));
