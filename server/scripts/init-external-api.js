@@ -7,6 +7,7 @@ import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { buildApiTokenPrefix, generateApiToken, hashApiToken } from '../utils/tokenValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,53 +41,69 @@ async function initDatabase() {
         await client.query(`
             CREATE TABLE external_api_tokens (
                 id SERIAL PRIMARY KEY,
-                token VARCHAR(255) UNIQUE NOT NULL,
+                token VARCHAR(255) UNIQUE,
+                token_hash VARCHAR(64) UNIQUE,
+                token_prefix VARCHAR(20),
                 name VARCHAR(100) NOT NULL,
                 description TEXT,
                 source VARCHAR(50) NOT NULL,
+                scopes JSONB NOT NULL DEFAULT '[]'::jsonb,
                 is_active BOOLEAN DEFAULT true,
+                expires_at TIMESTAMP WITH TIME ZONE,
                 last_used_at TIMESTAMP WITH TIME ZONE,
+                last_used_ip INET,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                created_by VARCHAR(50) DEFAULT 'admin'
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                revoked_at TIMESTAMP WITH TIME ZONE,
+                rotated_from_id INTEGER REFERENCES external_api_tokens(id) ON DELETE SET NULL,
+                created_by VARCHAR(50) DEFAULT 'admin',
+                CHECK (token IS NOT NULL OR token_hash IS NOT NULL)
             )
         `);
         console.log('  ✅ 创建表结构');
 
         // 创建索引
         await client.query('CREATE INDEX idx_external_api_tokens_token ON external_api_tokens(token)');
+        await client.query('CREATE INDEX idx_external_api_tokens_token_hash ON external_api_tokens(token_hash)');
         await client.query('CREATE INDEX idx_external_api_tokens_source ON external_api_tokens(source)');
+        await client.query('CREATE INDEX idx_external_api_tokens_scopes ON external_api_tokens USING GIN (scopes)');
         await client.query('CREATE INDEX idx_external_api_tokens_is_active ON external_api_tokens(is_active)');
         console.log('  ✅ 创建索引');
 
         // 生成并插入默认token
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 15);
-        const tokenHash = Buffer.from(`oc_${timestamp}${random}`).toString('base64');
-        const defaultToken = 'oc_' + tokenHash.replace(/[^a-zA-Z0-9]/g, '').substring(0, 40);
+        const defaultToken = generateApiToken('oc_');
+        const defaultTokenHash = hashApiToken(defaultToken);
+        const defaultTokenPrefix = buildApiTokenPrefix(defaultToken);
 
         await client.query(
-            `INSERT INTO external_api_tokens (token, name, description, source, created_by)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO external_api_tokens
+                (token, token_hash, token_prefix, name, description, source, scopes, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)`,
             [
-                defaultToken,
+                null,
+                defaultTokenHash,
+                defaultTokenPrefix,
                 'OpenClaw内部Token',
                 '用于OpenClaw系统推送日记和动态',
                 'openclaw',
+                JSON.stringify(['openclaw:reports:write']),
                 'admin'
             ]
         );
         console.log('  ✅ 插入默认Token');
 
         // 查询并显示token
-        const result = await client.query('SELECT token, name, source FROM external_api_tokens');
+        const result = await client.query('SELECT token_prefix, name, source, scopes FROM external_api_tokens');
         console.log('\n🎉 数据库初始化完成！');
         console.log('\n📋 当前Token列表：');
         result.rows.forEach((row, index) => {
             console.log(`  ${index + 1}. ${row.name}`);
-            console.log(`     Token: ${row.token}`);
+            console.log(`     Token前缀: ${row.token_prefix}`);
             console.log(`     Source: ${row.source}`);
+            console.log(`     Scopes: ${Array.isArray(row.scopes) ? row.scopes.join(',') : ''}`);
         });
 
+        console.log(`\n🔑 默认Token明文（仅显示一次）: ${defaultToken}`);
         console.log('\n⚠️  请妥善保存以上Token，用于API认证！');
 
     } catch (error) {

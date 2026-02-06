@@ -88,6 +88,38 @@ fetch('http://your-domain.com/api/external/moments', {
 .then(data => console.log(data));
 ```
 
+### 1.1 推送 OpenClaw 每日汇报（推荐）
+
+**端点：** `POST /api/external/openclaw/reports`
+
+**请求头：**
+```http
+Content-Type: application/json
+Authorization: Bearer <your_token>
+```
+
+**请求体：**
+```json
+{
+  "reportDate": "2026-02-06",
+  "title": "OpenClaw 每日执行汇报",
+  "content": "## 今日完成\n- 任务A\n- 任务B",
+  "status": "ok",
+  "tasks": [
+    { "title": "抓取日报", "done": true },
+    { "title": "同步知识库", "done": false, "detail": "目标接口超时" }
+  ],
+  "metadata": {
+    "workspace": "prod",
+    "duration_minutes": 42
+  }
+}
+```
+
+**说明：**
+- 该接口会写入独立表 `openclaw_daily_reports`，不会进入 `moments`。
+- 同一 `source + reportDate` 会自动覆盖更新，适合每日定时推送。
+
 **成功响应：**
 ```json
 {
@@ -120,6 +152,13 @@ curl http://your-domain.com/api/external/health
 ---
 
 ## Token管理
+
+### 后台可视化管理（推荐）
+
+在 Dashboard 新增了 `系统 -> API Key管理`，支持：
+- 创建 Key（描述 + key）
+- 禁用 / 启用
+- 查看最近使用时间与 IP
 
 ### 查看所有Token
 

@@ -12,6 +12,8 @@ import {
 } from '../utils/ossConfig.js';
 import { createLogger } from '../utils/logMiddleware.js';
 import { createTokenAuthMiddleware } from '../utils/tokenValidator.js';
+import { parseOpenClawReportPayload } from './openclawReportsRouter.js';
+import { upsertOpenClawDailyReport } from '../services/openclawReportService.js';
 
 const logger = createLogger('ExternalAPI');
 
@@ -46,7 +48,7 @@ export function createExternalRouter(getDbClient) {
         const tokenInfo = req.apiToken;
 
         try {
-            logger.info('收到外部API推送请求', {
+            console.log('[ExternalAPI] 收到外部API推送请求', {
                 source: tokenInfo.source,
                 tokenName: tokenInfo.name,
                 hasImages: !!req.files
@@ -67,7 +69,7 @@ export function createExternalRouter(getDbClient) {
             // 上传图片到OSS
             let imageUrls = [];
             if (files.length > 0) {
-                logger.info(`开始上传 ${files.length} 张图片到OSS`);
+                console.log(`[ExternalAPI] 开始上传 ${files.length} 张图片到OSS`);
                 
                 try {
                     const uploadPromises = files.map(async (file) => {
@@ -93,12 +95,12 @@ export function createExternalRouter(getDbClient) {
                     });
 
                     imageUrls = await Promise.all(uploadPromises);
-                    logger.info(`成功上传 ${imageUrls.length} 张图片`, {
+                    console.log(`[ExternalAPI] 成功上传 ${imageUrls.length} 张图片`, {
                         urls: imageUrls
                     });
 
                 } catch (uploadError) {
-                    logger.error('图片上传失败', { error: uploadError.message });
+                    console.error('[ExternalAPI] 图片上传失败', { error: uploadError.message });
                     return res.status(500).json({
                         success: false,
                         message: `图片上传失败: ${uploadError.message}`
@@ -118,7 +120,7 @@ export function createExternalRouter(getDbClient) {
 
             const newMoment = insertResult.rows[0];
 
-            logger.info('日记推送成功', {
+            console.log('[ExternalAPI] 日记推送成功', {
                 momentId: newMoment.id,
                 visibility: newMoment.visibility,
                 hasImages: !!newMoment.images
@@ -137,7 +139,7 @@ export function createExternalRouter(getDbClient) {
             });
 
         } catch (error) {
-            logger.error('外部API推送失败', {
+            console.error('[ExternalAPI] 外部API推送失败', {
                 error: error.message,
                 stack: error.stack
             });
@@ -176,6 +178,50 @@ export function createExternalRouter(getDbClient) {
                 description: tokenInfo.description
             }
         });
+    });
+
+    /**
+     * POST /api/external/openclaw/reports
+     * OpenClaw 每日汇报推送（JSON）
+     */
+    router.post('/openclaw/reports', getTokenAuthMiddleware(), async (req, res) => {
+        const dbClient = getDbClient();
+        const tokenInfo = req.apiToken;
+
+        try {
+            const parsed = parseOpenClawReportPayload(req.body || {});
+            const source = tokenInfo?.source || 'openclaw';
+            const report = await upsertOpenClawDailyReport(dbClient, {
+                source,
+                reportDate: parsed.reportDate,
+                title: parsed.title,
+                content: parsed.content,
+                status: parsed.status,
+                tasks: parsed.tasks,
+                metadata: parsed.metadata
+            });
+
+            console.log('[ExternalAPI] OpenClaw 每日汇报推送成功', {
+                source,
+                reportDate: parsed.reportDate,
+                status: parsed.status
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: '汇报推送成功',
+                data: report
+            });
+        } catch (error) {
+            console.error('[ExternalAPI] OpenClaw 每日汇报推送失败', {
+                source: tokenInfo?.source || 'openclaw',
+                error: error.message
+            });
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
     });
 
     return router;
