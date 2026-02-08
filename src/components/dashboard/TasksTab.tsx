@@ -68,9 +68,9 @@ export default function TasksTab() {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const params = new URLSearchParams();
       if (filters.project_id) params.append('project_id', filters.project_id.toString());
       if (filters.status) params.append('status', filters.status);
@@ -83,7 +83,7 @@ export default function TasksTab() {
       console.error('Failed to fetch tasks:', error);
       toast.error('获取任务列表失败');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -111,7 +111,7 @@ export default function TasksTab() {
   });
 
   const refreshTaskAndStats = useCallback(async () => {
-    await Promise.all([fetchTasks(), fetchStats()]);
+    await Promise.all([fetchTasks(false), fetchStats()]);
   }, [fetchTasks, fetchStats]);
 
   const handleCreateTask = async (taskData: any) => {
@@ -126,7 +126,7 @@ export default function TasksTab() {
       });
       toast.success('任务创建成功');
       setShowCreateTask(false);
-      fetchTasks();
+      fetchTasks(false);
       fetchStats();
     } catch (error) {
       console.error('Failed to create task:', error);
@@ -278,13 +278,18 @@ export default function TasksTab() {
 
       {stats && <TaskStats stats={stats} />}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 min-h-[300px]">
-        {loading ? (
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 min-h-[300px] relative">
+        {loading && tasks.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#165DFF]"></div>
           </div>
         ) : (
           <>
+            {loading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 rounded-2xl">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#165DFF]"></div>
+              </div>
+            )}
             {view === 'kanban' && <TaskKanban tasks={tasks} projects={projects} onUpdate={refreshTaskAndStats} />}
             {view === 'list' && <TaskList tasks={tasks} projects={projects} onUpdate={refreshTaskAndStats} />}
             {view === 'calendar' && (

@@ -15,9 +15,9 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const columns = [
-    { id: 'todo', title: '待办', color: 'border-gray-300' },
-    { id: 'in_progress', title: '进行中', color: 'border-blue-300' },
-    { id: 'done', title: '已完成', color: 'border-green-300' }
+    { id: 'todo', title: '待办', color: 'border-t-gray-300' },
+    { id: 'in_progress', title: '进行中', color: 'border-t-blue-300' },
+    { id: 'done', title: '已完成', color: 'border-t-green-300' }
   ];
 
   const handleDragStart = (task: Task) => {
@@ -114,7 +114,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {columns.map(column => (
         <div key={column.id}>
-          <div className={`bg-white rounded-t-lg p-4 border-t-4 ${column.color}`}>
+          <div className={`bg-white rounded-t-lg p-4 border border-b-0 border-gray-200 border-t-4 ${column.color}`}>
             <h3 className="font-semibold text-gray-900 flex items-center justify-between">
               {column.title}
               <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-sm">
@@ -123,7 +123,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
             </h3>
           </div>
           <div
-            className={`bg-gray-50 rounded-b-lg p-4 min-h-96 border-t-0 ${column.color}`}
+            className={`bg-gray-50 rounded-b-lg p-4 min-h-96 border border-t-0 border-gray-200 ${column.color}`}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(column.id)}
           >

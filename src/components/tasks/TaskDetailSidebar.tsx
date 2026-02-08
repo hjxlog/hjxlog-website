@@ -180,7 +180,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     }
   }, [notes]);
 
-  const handleSaveTask = async (closeAfterSave = false) => {
+  const handleSaveTask = useCallback(async (closeAfterSave = false) => {
     try {
       setSavingNotes(true);
       await apiRequest(`/api/tasks/${task.id}`, {
@@ -210,7 +210,19 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     } finally {
       setSavingNotes(false);
     }
-  };
+  }, [task.id, title, notes, meta, onUpdate, onClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSaveTask(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSaveTask]);
 
   const handleBackdropClick = async () => {
     await handleSaveTask(true);
@@ -299,7 +311,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
               </button>
               <div className="h-4 w-px bg-slate-200 mx-1" />
               <button
-                onClick={() => handleSaveTask(true)}
+                onClick={onClose}
                 className="text-slate-400 hover:text-slate-600 transition-colors p-1"
               >
                 <XMarkIcon className="h-6 w-6" />
