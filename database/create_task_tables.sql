@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     color VARCHAR(7) DEFAULT '#6366f1',  -- 项目颜色
     icon VARCHAR(50),  -- 项目图标
-    status VARCHAR(20) DEFAULT 'active',  -- active, archived, completed
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'archived', 'completed')),  -- active, archived, completed
     start_date DATE,
     end_date DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
-    status VARCHAR(20) DEFAULT 'todo',  -- todo, in_progress, done, cancelled
-    priority VARCHAR(10) DEFAULT 'P2',  -- P0, P1, P2, P3
+    status VARCHAR(20) DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'done', 'cancelled')),  -- todo, in_progress, done, cancelled
+    priority VARCHAR(10) DEFAULT 'P2' CHECK (priority IN ('P0', 'P1', 'P2', 'P3')),  -- P0, P1, P2, P3
     tags TEXT[] DEFAULT '{}',
     start_date TIMESTAMP WITH TIME ZONE,
     due_date TIMESTAMP WITH TIME ZONE,

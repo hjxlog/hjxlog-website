@@ -197,42 +197,43 @@ export async function createTask(data) {
  */
 export async function updateTask(id, data) {
   const db = getDbClient();
-  const {
-    title,
-    description,
-    project_id,
-    status,
-    priority,
-    tags,
-    start_date,
-    due_date,
-    completed_at,
-    estimated_hours,
-    actual_hours,
-    position
-  } = data;
+  const allowedFields = [
+    'title',
+    'description',
+    'project_id',
+    'status',
+    'priority',
+    'tags',
+    'start_date',
+    'due_date',
+    'completed_at',
+    'estimated_hours',
+    'actual_hours',
+    'position'
+  ];
 
+  const setClauses = [];
+  const values = [];
+  let index = 1;
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(data, field)) {
+      setClauses.push(`${field} = $${index++}`);
+      values.push(data[field]);
+    }
+  }
+
+  if (setClauses.length === 0) {
+    return getTaskById(id);
+  }
+
+  values.push(id);
   const result = await db.query(
     `UPDATE tasks
-     SET title = COALESCE($1, title),
-         description = COALESCE($2, description),
-         project_id = COALESCE($3, project_id),
-         status = COALESCE($4, status),
-         priority = COALESCE($5, priority),
-         tags = COALESCE($6, tags),
-         start_date = COALESCE($7, start_date),
-         due_date = COALESCE($8, due_date),
-         completed_at = COALESCE($9, completed_at),
-         estimated_hours = COALESCE($10, estimated_hours),
-         actual_hours = COALESCE($11, actual_hours),
-         position = COALESCE($12, position)
-     WHERE id = $13
+     SET ${setClauses.join(', ')}
+     WHERE id = $${index}
      RETURNING *`,
-    [
-      title, description, project_id, status, priority,
-      tags, start_date, due_date, completed_at, estimated_hours,
-      actual_hours, position, id
-    ]
+    values
   );
   return result.rows[0];
 }
@@ -328,7 +329,8 @@ export async function getKanbanData(projectId = null) {
   return {
     todo: tasks.filter(t => t.status === 'todo'),
     in_progress: tasks.filter(t => t.status === 'in_progress'),
-    done: tasks.filter(t => t.status === 'done')
+    done: tasks.filter(t => t.status === 'done'),
+    cancelled: tasks.filter(t => t.status === 'cancelled')
   };
 }
 
@@ -345,9 +347,10 @@ export async function getTaskStats() {
       COUNT(CASE WHEN status = 'todo' THEN 1 END) as todo,
       COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
       COUNT(CASE WHEN status = 'done' THEN 1 END) as done,
+      COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled,
       COUNT(CASE WHEN priority = 'P0' THEN 1 END) as p0,
       COUNT(CASE WHEN priority = 'P1' THEN 1 END) as p1,
-      COUNT(CASE WHEN due_date < NOW() AND status != 'done' THEN 1 END) as overdue
+      COUNT(CASE WHEN due_date < NOW() AND status NOT IN ('done', 'cancelled') THEN 1 END) as overdue
     FROM tasks
   `);
   

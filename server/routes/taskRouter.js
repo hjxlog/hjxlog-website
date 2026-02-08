@@ -21,6 +21,112 @@ import {
 } from '../services/TaskService.js';
 
 const router = express.Router();
+const TASK_STATUSES = new Set(['todo', 'in_progress', 'done', 'cancelled']);
+const TASK_PRIORITIES = new Set(['P0', 'P1', 'P2', 'P3']);
+
+function isValidDateValue(value) {
+  if (value === null) return true;
+  if (typeof value !== 'string') return false;
+  return !Number.isNaN(new Date(value).getTime());
+}
+
+function normalizeTaskPayload(payload, { requireTitle = false } = {}) {
+  const normalized = {};
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'title')) {
+    if (typeof payload.title !== 'string' || !payload.title.trim()) {
+      return { error: '任务标题不能为空' };
+    }
+    normalized.title = payload.title.trim();
+  } else if (requireTitle) {
+    return { error: '任务标题不能为空' };
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+    if (payload.description !== null && typeof payload.description !== 'string') {
+      return { error: '任务描述格式错误' };
+    }
+    normalized.description = payload.description;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'project_id')) {
+    if (payload.project_id !== null && !Number.isInteger(payload.project_id)) {
+      return { error: '项目ID格式错误' };
+    }
+    normalized.project_id = payload.project_id;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'status')) {
+    if (!TASK_STATUSES.has(payload.status)) {
+      return { error: '任务状态不合法' };
+    }
+    normalized.status = payload.status;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'priority')) {
+    if (!TASK_PRIORITIES.has(payload.priority)) {
+      return { error: '任务优先级不合法' };
+    }
+    normalized.priority = payload.priority;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'tags')) {
+    if (!Array.isArray(payload.tags) || payload.tags.some(tag => typeof tag !== 'string')) {
+      return { error: '任务标签格式错误' };
+    }
+    normalized.tags = payload.tags;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'start_date')) {
+    if (!isValidDateValue(payload.start_date)) {
+      return { error: '开始日期格式错误' };
+    }
+    normalized.start_date = payload.start_date;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'due_date')) {
+    if (!isValidDateValue(payload.due_date)) {
+      return { error: '截止日期格式错误' };
+    }
+    normalized.due_date = payload.due_date;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'completed_at')) {
+    if (!isValidDateValue(payload.completed_at)) {
+      return { error: '完成时间格式错误' };
+    }
+    normalized.completed_at = payload.completed_at;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'estimated_hours')) {
+    if (
+      payload.estimated_hours !== null &&
+      (typeof payload.estimated_hours !== 'number' || Number.isNaN(payload.estimated_hours))
+    ) {
+      return { error: '预估工时格式错误' };
+    }
+    normalized.estimated_hours = payload.estimated_hours;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'actual_hours')) {
+    if (
+      payload.actual_hours !== null &&
+      (typeof payload.actual_hours !== 'number' || Number.isNaN(payload.actual_hours))
+    ) {
+      return { error: '实际工时格式错误' };
+    }
+    normalized.actual_hours = payload.actual_hours;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'position')) {
+    if (payload.position !== null && !Number.isInteger(payload.position)) {
+      return { error: '排序字段格式错误' };
+    }
+    normalized.position = payload.position;
+  }
+
+  return { data: normalized };
+}
 
 // ==================== 项目路由 ====================
 
@@ -158,7 +264,12 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const task = await createTask(req.body);
+    const { data, error } = normalizeTaskPayload(req.body, { requireTitle: true });
+    if (error) {
+      return res.status(400).json({ success: false, error });
+    }
+
+    const task = await createTask(data);
     res.json({
       success: true,
       data: task
@@ -178,7 +289,12 @@ router.post('/', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
   try {
-    const task = await updateTask(req.params.id, req.body);
+    const { data, error } = normalizeTaskPayload(req.body);
+    if (error) {
+      return res.status(400).json({ success: false, error });
+    }
+
+    const task = await updateTask(req.params.id, data);
     res.json({
       success: true,
       data: task
@@ -239,7 +355,12 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/from-thought/:thoughtId', async (req, res) => {
   try {
-    const task = await createTaskFromThought(req.params.thoughtId, req.body);
+    const { data, error } = normalizeTaskPayload(req.body);
+    if (error) {
+      return res.status(400).json({ success: false, error });
+    }
+
+    const task = await createTaskFromThought(req.params.thoughtId, data);
     res.json({
       success: true,
       data: task

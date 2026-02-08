@@ -52,6 +52,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
           <option value="todo">待办</option>
           <option value="in_progress">进行中</option>
           <option value="done">已完成</option>
+          <option value="cancelled">已取消</option>
         </select>
         <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
       </div>

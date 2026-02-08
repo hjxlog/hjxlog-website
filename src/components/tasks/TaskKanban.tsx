@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
 import { Task, Project } from '../../types/task';
 import TaskDetailSidebar from './TaskDetailSidebar';
+import { formatTaskDateZhCN } from '@/utils/taskDate';
 
 interface TaskKanbanProps {
   tasks: Task[];
@@ -17,7 +18,8 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
   const columns = [
     { id: 'todo', title: '待办', color: 'border-t-gray-300' },
     { id: 'in_progress', title: '进行中', color: 'border-t-blue-300' },
-    { id: 'done', title: '已完成', color: 'border-t-green-300' }
+    { id: 'done', title: '已完成', color: 'border-t-green-300' },
+    { id: 'cancelled', title: '已取消', color: 'border-t-slate-400' }
   ];
 
   const handleDragStart = (task: Task) => {
@@ -104,14 +106,14 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
           )}
         </div>
         {task.due_date && (
-          <span>{new Date(task.due_date).toLocaleDateString('zh-CN')}</span>
+          <span>{formatTaskDateZhCN(task.due_date)}</span>
         )}
       </div>
     </div>
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {columns.map(column => (
         <div key={column.id}>
           <div className={`bg-white rounded-t-lg p-4 border border-b-0 border-gray-200 border-t-4 ${column.color}`}>

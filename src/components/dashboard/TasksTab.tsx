@@ -14,6 +14,7 @@ import TaskCalendar from '@/components/tasks/TaskCalendar';
 import TaskTodayView from '@/components/tasks/TaskTodayView';
 import TaskDetailSidebar from '@/components/tasks/TaskDetailSidebar';
 import { Task, Project, ViewType } from '@/types/task';
+import { parseTaskDate } from '@/utils/taskDate';
 
 export default function TasksTab() {
   const [view, setView] = useState<ViewType>('kanban');
@@ -49,9 +50,9 @@ export default function TasksTab() {
     const startRaw = task.start_date || task.due_date;
     const endRaw = task.due_date || task.start_date;
     if (!startRaw && !endRaw) return null;
-    const startDate = new Date(startRaw || endRaw || '');
-    const endDate = new Date(endRaw || startRaw || '');
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null;
+    const startDate = parseTaskDate(startRaw || endRaw || '');
+    const endDate = parseTaskDate(endRaw || startRaw || '');
+    if (!startDate || !endDate) return null;
     const normalizedStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
     const normalizedEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
     return normalizedStart <= normalizedEnd
@@ -98,7 +99,6 @@ export default function TasksTab() {
 
   useEffect(() => {
     fetchProjects();
-    fetchTasks();
     fetchStats();
   }, []);
 

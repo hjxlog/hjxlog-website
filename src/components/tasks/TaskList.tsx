@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Task, Project } from '../../types/task';
 import { CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import TaskDetailSidebar from './TaskDetailSidebar';
+import { formatTaskDateZhCN } from '@/utils/taskDate';
 
 interface TaskListProps {
   tasks: Task[];
@@ -25,7 +26,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
     const badges = {
       todo: { color: 'bg-gray-100 text-gray-700', icon: ClockIcon, label: '待办' },
       in_progress: { color: 'bg-blue-100 text-blue-700', icon: ClockIcon, label: '进行中' },
-      done: { color: 'bg-green-100 text-green-700', icon: CheckIcon, label: '已完成' }
+      done: { color: 'bg-green-100 text-green-700', icon: CheckIcon, label: '已完成' },
+      cancelled: { color: 'bg-slate-100 text-slate-700', icon: ClockIcon, label: '已取消' }
     };
     return badges[status as keyof typeof badges] || badges.todo;
   };
@@ -108,7 +110,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {task.due_date ? new Date(task.due_date).toLocaleDateString('zh-CN') : '-'}
+                  {formatTaskDateZhCN(task.due_date)}
                 </td>
               </tr>
             );

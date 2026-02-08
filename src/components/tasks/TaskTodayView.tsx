@@ -1,6 +1,7 @@
 import React from 'react';
 import { Task } from '../../types/task';
 import { ExclamationTriangleIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { parseTaskDate } from '@/utils/taskDate';
 
 interface TaskTodayViewProps {
   tasks: Task[];
@@ -9,7 +10,8 @@ interface TaskTodayViewProps {
 
 const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => {
   const formatDueDate = (input: string) => {
-    const date = new Date(input);
+    const date = parseTaskDate(input);
+    if (!date) return '-';
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
     return `${month}月${day}日`;
@@ -23,19 +25,24 @@ const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => 
 
   // 分类任务
   const overdueTasks = tasks.filter(task => {
-    if (!task.due_date || task.status === 'done') return false;
-    return new Date(task.due_date) < today;
+    if (!task.due_date || task.status === 'done' || task.status === 'cancelled') return false;
+    const taskDate = parseTaskDate(task.due_date);
+    if (!taskDate) return false;
+    return taskDate < today;
   });
 
   const todayTasks = tasks.filter(task => {
     if (!task.due_date) return false;
-    const taskDate = new Date(task.due_date);
-    return taskDate >= today && taskDate < tomorrow && task.status !== 'done';
+    if (task.status === 'done' || task.status === 'cancelled') return false;
+    const taskDate = parseTaskDate(task.due_date);
+    if (!taskDate) return false;
+    return taskDate >= today && taskDate < tomorrow;
   });
 
   const upcomingTasks = tasks.filter(task => {
-    if (!task.due_date || task.status === 'done') return false;
-    const taskDate = new Date(task.due_date);
+    if (!task.due_date || task.status === 'done' || task.status === 'cancelled') return false;
+    const taskDate = parseTaskDate(task.due_date);
+    if (!taskDate) return false;
     return taskDate >= tomorrow && taskDate < new Date(tomorrow.getTime() + 7 * 24 * 60 * 60 * 1000);
   });
 

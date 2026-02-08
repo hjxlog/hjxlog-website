@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Task } from '../../types/task';
+import { parseTaskDate } from '@/utils/taskDate';
 
 interface TaskCalendarProps {
   tasks: Task[];
@@ -30,10 +31,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   };
 
   const toLocalDate = (value?: string | null) => {
-    if (!value) return null;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    return parseTaskDate(value);
   };
 
   const isSameDate = (left: Date, right: Date) => {
