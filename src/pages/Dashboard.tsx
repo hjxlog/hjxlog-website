@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { API_BASE_URL, apiRequest } from '@/config/api';
 
 // 导入模块化组件
-import OverviewTab from '@/components/dashboard/OverviewTab';
 import MomentsTab from '@/components/dashboard/MomentsTab';
 import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
@@ -610,6 +609,7 @@ export default function Dashboard() {
               <div className="animate-fade-in">
                 <TodayHubTab
                   username={user.username}
+                  totalViews={totalViews}
                   worksCount={works.length}
                   blogsCount={blogs.length}
                   momentsCount={moments.length}
@@ -628,21 +628,6 @@ export default function Dashboard() {
                   onOpenMomentForm={() => openMomentForm()}
                 />
               </div>
-            )}
-
-            {/* 概览页面 */}
-            {activeTab === 'overview' && (
-              <OverviewTab 
-                user={user}
-                works={works}
-                blogs={blogs}
-                moments={moments}
-                totalViews={totalViews}
-                openWorkForm={openWorkForm}
-                openBlogForm={openBlogForm}
-                openMomentForm={openMomentForm}
-                onViewAllLogs={() => setActiveTab('moments')}
-              />
             )}
 
             {/* 动态管理页面 */}

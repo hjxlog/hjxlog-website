@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Task } from '../../types/task';
+import { Task, Project } from '../../types/task';
 import { CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import TaskDetailSidebar from './TaskDetailSidebar';
 
 interface TaskListProps {
   tasks: Task[];
+  projects: Project[];
   onUpdate: () => void;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdate }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -124,6 +125,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onUpdate }) => {
       {selectedTask && (
         <TaskDetailSidebar
           task={selectedTask}
+          projects={projects}
           onClose={() => setSelectedTask(null)}
           onUpdate={onUpdate}
         />

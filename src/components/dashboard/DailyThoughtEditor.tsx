@@ -4,8 +4,6 @@ import {
   CalendarIcon,
   SparklesIcon,
   LockClosedIcon,
-  PencilIcon,
-  EyeIcon,
   Squares2X2Icon
 } from '@heroicons/react/24/outline';
 
@@ -50,6 +48,9 @@ const normalizeDate = (input?: string) => {
   return input.includes('T') ? input.slice(0, 10) : input;
 };
 
+const MOOD_OPTIONS = ['开心', '平静', '专注', '期待', '疲惫', '焦虑'];
+const TAG_OPTIONS = ['工作', '学习', '生活', '健康', '家庭', '复盘', '灵感', '待办'];
+
 const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
   thought,
   selectedDate,
@@ -62,18 +63,18 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
 }) => {
   const [content, setContent] = useState<string>('');
   const [mood, setMood] = useState<string>('');
-  const [tags, setTags] = useState<string>('');
+  const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (thought) {
       setContent(thought.content || '');
       setMood(thought.mood || '');
-      setTags(thought.tags?.join(', ') || '');
+      setTags(thought.tags || []);
     } else {
       setContent('');
       setMood('');
-      setTags('');
+      setTags([]);
     }
   }, [thought]);
 
@@ -85,17 +86,20 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
 
     setIsSaving(true);
     try {
-      const tagsArray = tags
-        .split(',')
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-
-      await onSave(content, mood || undefined, tagsArray);
+      await onSave(content, mood || undefined, tags);
     } catch (error) {
       // Error already handled in parent
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setTags((prev) => (
+      prev.includes(tag)
+        ? prev.filter((item) => item !== tag)
+        : [...prev, tag]
+    ));
   };
 
   const handleSummarize = () => {
@@ -144,14 +148,7 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
           </div>
 
           <div className="flex items-center space-x-2">
-            {canEdit ? (
-              <>
-                <span className="text-xs text-gray-500 flex items-center">
-                  <PencilIcon className="h-4 w-4 mr-1" />
-                  可编辑
-                </span>
-              </>
-            ) : (
+            {!canEdit && (
               <span className="text-xs text-gray-400 flex items-center">
                 <LockClosedIcon className="h-4 w-4 mr-1" />
                 只读
@@ -187,34 +184,49 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
       {/* 底部操作栏 */}
       <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* 心情输入 */}
+          {/* 心情枚举 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              今天的心情（可选）
+              今天的心情
             </label>
-            <input
-              type="text"
+            <select
               value={mood}
               onChange={(e) => setMood(e.target.value)}
               disabled={!canEdit}
-              placeholder="例如：平静、兴奋、焦虑..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
+            >
+              <option value="">请选择</option>
+              {MOOD_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </div>
 
-          {/* 标签输入 */}
+          {/* 标签枚举 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              标签（可选，逗号分隔）
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              标签
             </label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              disabled={!canEdit}
-              placeholder="例如：工作, 想法, TODO"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
+            <div className="flex flex-wrap gap-2">
+              {TAG_OPTIONS.map((tag) => {
+                const active = tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleTagToggle(tag)}
+                    disabled={!canEdit}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors disabled:cursor-not-allowed ${
+                      active
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -227,9 +239,6 @@ const DailyThoughtEditor: React.FC<DailyThoughtEditorProps> = ({
           </div>
 
           <div className="flex items-center space-x-3">
-            {canEdit && !thought && (
-              <span className="text-xs text-slate-500">首次保存即新增今日想法</span>
-            )}
             {thought && !thought.is_summarized && thoughtDate !== today && (
               <button
                 onClick={handleSummarize}

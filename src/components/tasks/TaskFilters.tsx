@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface Project {
   id: number;
@@ -21,45 +22,55 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
   const updateFilter = (key: string, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
   };
+  const hasActiveFilters = Boolean(filters.project_id || filters.status || filters.priority || filters.search);
 
   return (
     <div className="flex items-center space-x-3">
       {/* 项目筛选 */}
-      <select
-        value={filters.project_id || ''}
-        onChange={(e) => updateFilter('project_id', e.target.value ? parseInt(e.target.value) : null)}
-        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      >
-        <option value="">所有项目</option>
-        {projects.map(project => (
-          <option key={project.id} value={project.id}>{project.name}</option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={filters.project_id || ''}
+          onChange={(e) => updateFilter('project_id', e.target.value ? parseInt(e.target.value) : null)}
+          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        >
+          <option value="">所有项目</option>
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>{project.name}</option>
+          ))}
+        </select>
+        <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      </div>
 
       {/* 状态筛选 */}
-      <select
-        value={filters.status || ''}
-        onChange={(e) => updateFilter('status', e.target.value || null)}
-        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      >
-        <option value="">所有状态</option>
-        <option value="todo">待办</option>
-        <option value="in_progress">进行中</option>
-        <option value="done">已完成</option>
-      </select>
+      <div className="relative">
+        <select
+          value={filters.status || ''}
+          onChange={(e) => updateFilter('status', e.target.value || null)}
+          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        >
+          <option value="">所有状态</option>
+          <option value="todo">待办</option>
+          <option value="in_progress">进行中</option>
+          <option value="done">已完成</option>
+        </select>
+        <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      </div>
 
       {/* 优先级筛选 */}
-      <select
-        value={filters.priority || ''}
-        onChange={(e) => updateFilter('priority', e.target.value || null)}
-        className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      >
-        <option value="">所有优先级</option>
-        <option value="P0">P0 - 紧急</option>
-        <option value="P1">P1 - 高</option>
-        <option value="P2">P2 - 中</option>
-        <option value="P3">P3 - 低</option>
-      </select>
+      <div className="relative">
+        <select
+          value={filters.priority || ''}
+          onChange={(e) => updateFilter('priority', e.target.value || null)}
+          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        >
+          <option value="">所有优先级</option>
+          <option value="P0">P0 - 紧急</option>
+          <option value="P1">P1 - 高</option>
+          <option value="P2">P2 - 中</option>
+          <option value="P3">P3 - 低</option>
+        </select>
+        <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      </div>
 
       {/* 搜索框 */}
       <div className="relative">
@@ -74,23 +85,27 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
       </div>
 
       {/* 清除筛选 */}
-      {(filters.project_id || filters.status || filters.priority || filters.search) && (
-        <button
-          onClick={() => onFiltersChange({
+      <button
+        onClick={() => {
+          if (!hasActiveFilters) return;
+          onFiltersChange({
             project_id: null,
             status: null,
             priority: null,
             search: ''
-          })}
-          className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          清除筛选
-        </button>
-      )}
+          });
+        }}
+        disabled={!hasActiveFilters}
+        className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+          hasActiveFilters
+            ? 'text-slate-700 border-slate-300 hover:bg-slate-50'
+            : 'text-slate-400 border-slate-200 bg-slate-50 cursor-not-allowed'
+        }`}
+      >
+        清除筛选
+      </button>
     </div>
   );
 };
-
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default TaskFilters;

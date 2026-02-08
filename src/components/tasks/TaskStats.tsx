@@ -65,18 +65,18 @@ const TaskStats: React.FC<TaskStatsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
       {cards.map(card => {
         const Icon = card.icon;
         return (
-          <div key={card.title} className="bg-white rounded-lg shadow-sm p-4">
+          <div key={card.title} className="bg-white rounded-lg shadow-sm p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                <p className={`text-2xl font-bold ${card.textColor} mt-1`}>{card.value}</p>
+                <p className="text-xs font-medium text-gray-600">{card.title}</p>
+                <p className={`text-xl font-bold ${card.textColor} mt-1`}>{card.value}</p>
               </div>
-              <div className={`${card.color} p-2 rounded-lg`}>
-                <Icon className="h-5 w-5 text-white" />
+              <div className={`${card.color} p-1.5 rounded-lg`}>
+                <Icon className="h-4 w-4 text-white" />
               </div>
             </div>
           </div>

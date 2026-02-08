@@ -17,16 +17,15 @@ export const dashboardTabGroups = [
       { key: 'thoughts', label: '每日想法', icon: 'fas fa-lightbulb' },
       { key: 'openclaw-reports', label: 'OpenClaw汇报', icon: 'fas fa-robot' },
       { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },
-      { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
     ]
   },
   {
     group: '内容管理',
     tabs: [
-      { key: 'overview', label: '概览', icon: 'fas fa-chart-pie' },
-      { key: 'works', label: '作品管理', icon: 'fas fa-briefcase' },
+      { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
       { key: 'blogs', label: '博客管理', icon: 'fas fa-blog' },
       { key: 'photos', label: '摄影管理', icon: 'fas fa-images' },
+      { key: 'works', label: '作品管理', icon: 'fas fa-briefcase' },
     ]
   },
   {

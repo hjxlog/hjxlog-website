@@ -557,12 +557,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
         </div>
       </div>
 
-      {/* 提示 */}
-      <div className="p-4 border-t bg-gray-50">
-        <p className="text-sm text-gray-500">
-          💡 拖拽时会显示预览条；拖动条块移动日期，拖动 `⇢` 延长截止
-        </p>
-      </div>
     </div>
   );
 };

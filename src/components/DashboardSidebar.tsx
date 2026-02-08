@@ -25,24 +25,24 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
   return (
     <aside
       className={`hidden lg:flex flex-col bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ease-in-out sticky top-16 h-[calc(100vh-4rem)] z-30 ${
-        isCollapsed ? 'w-20' : 'w-64'
+        isCollapsed ? 'w-16' : 'w-56'
       }`}
     >
-      <div className="flex-1 overflow-y-auto py-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
         {/* 折叠按钮 */}
         <button
           onClick={handleToggle}
-          className="absolute top-6 right-[-12px] z-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-[#165DFF] hover:border-[#165DFF] shadow-sm transition-all duration-200"
+          className="absolute top-4 right-[-12px] z-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-[#165DFF] hover:border-[#165DFF] shadow-sm transition-all duration-200"
           title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
           <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'left'} text-xs transform transition-transform duration-300`}></i>
         </button>
 
-        <div className="space-y-8 px-4">
+        <div className="space-y-6 px-3">
           {dashboardTabGroups.map((group) => (
             <div key={group.group}>
               {!isCollapsed && (
-                <h3 className="px-3 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <h3 className="px-2 mb-2 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                   {group.group}
                 </h3>
               )}
@@ -54,7 +54,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`relative group w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`relative group w-full flex items-center px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeTab === tab.key
                         ? 'text-white bg-gradient-to-r from-[#165DFF] to-[#3B82F6] shadow-md shadow-blue-200'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-[#165DFF]'
@@ -63,7 +63,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                   >
                     <i
                       className={`${tab.icon} text-lg transition-colors duration-200 ${
-                        isCollapsed ? 'mx-auto' : 'mr-3'
+                        isCollapsed ? 'mx-auto' : 'mr-2.5'
                       } ${activeTab === tab.key ? 'text-white' : 'text-gray-400 group-hover:text-[#165DFF]'}`}
                     ></i>
                     {!isCollapsed && <span>{tab.label}</span>}
@@ -83,12 +83,12 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
       </div>
 
       {/* 底部用户区域 */}
-      <div className={`p-4 border-t border-gray-100 bg-gray-50/50 ${isCollapsed ? 'flex justify-center' : ''}`}>
+      <div className={`p-3 border-t border-gray-100 bg-gray-50/50 ${isCollapsed ? 'flex justify-center' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
           {/* 头像 */}
           <div className="relative group cursor-pointer" onClick={handleNavigateProfile}>
             <img
-              className="h-9 w-9 rounded-full border border-gray-200 shadow-sm transition-transform group-hover:scale-105"
+              className="h-8 w-8 rounded-full border border-gray-200 shadow-sm transition-transform group-hover:scale-105"
               src={user?.avatar || '/default-avatar.png'}
               alt="User"
             />
@@ -110,17 +110,17 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
 
         {/* 展开状态下的操作按钮栏 */}
         {!isCollapsed && (
-          <div className="mt-3 flex space-x-1">
+          <div className="mt-2.5 flex space-x-1">
             <button
               onClick={handleNavigateProfile}
-              className="flex-1 flex items-center justify-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-[#165DFF] hover:border-[#165DFF] hover:bg-blue-50 transition-all"
+              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-[#165DFF] hover:border-[#165DFF] hover:bg-blue-50 transition-all"
               title="个人资料"
             >
               <i className="fas fa-user-cog mr-1.5"></i>设置
             </button>
             <button
               onClick={handleLogout}
-              className="flex-1 flex items-center justify-center px-2 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all"
+              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all"
               title="退出登录"
             >
               <i className="fas fa-sign-out-alt mr-1.5"></i>退出

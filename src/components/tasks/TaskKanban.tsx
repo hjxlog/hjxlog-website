@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
-import { Task } from '../../types/task';
+import { Task, Project } from '../../types/task';
 import TaskDetailSidebar from './TaskDetailSidebar';
 
 interface TaskKanbanProps {
   tasks: Task[];
+  projects: Project[];
   onUpdate: () => void;
 }
 
-const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, onUpdate }) => {
+const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -138,6 +139,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, onUpdate }) => {
       {selectedTask && (
         <TaskDetailSidebar
           task={selectedTask}
+          projects={projects}
           onClose={() => setSelectedTask(null)}
           onUpdate={onUpdate}
         />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { apiRequest } from '@/config/api';
@@ -61,7 +61,7 @@ export default function TasksTab() {
 
   const fetchProjects = async () => {
     try {
-      const data = await apiRequest<{ success: boolean; data: Project[] }>('/api/tasks/projects');
+      const data = await apiRequest('/api/tasks/projects') as { success: boolean; data: Project[] };
       setProjects(data.data || []);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -77,7 +77,7 @@ export default function TasksTab() {
       if (filters.priority) params.append('priority', filters.priority);
       if (filters.search) params.append('search', filters.search);
 
-      const data = await apiRequest<{ success: boolean; data: Task[] }>(`/api/tasks?${params}`);
+      const data = await apiRequest(`/api/tasks?${params}`) as { success: boolean; data: Task[] };
       setTasks(data.data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -89,7 +89,7 @@ export default function TasksTab() {
 
   const fetchStats = async () => {
     try {
-      const data = await apiRequest<{ success: boolean; data: any }>('/api/tasks/stats/overview');
+      const data = await apiRequest('/api/tasks/stats/overview') as { success: boolean; data: any };
       setStats(data.data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -109,6 +109,10 @@ export default function TasksTab() {
   useShortcut('cmd+k', () => {
     setShowQuickAdd(true);
   });
+
+  const refreshTaskAndStats = useCallback(async () => {
+    await Promise.all([fetchTasks(), fetchStats()]);
+  }, [fetchTasks, fetchStats]);
 
   const handleCreateTask = async (taskData: any) => {
     try {
@@ -196,18 +200,18 @@ export default function TasksTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Task Force</h3>
-              <p className="text-sm text-slate-500">任务与项目管理</p>
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">待办事项</h3>
+              <p className="text-xs sm:text-sm text-slate-500">任务与项目管理</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowCreateProject(true)}
-                className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-2.5 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 新建项目
               </button>
@@ -216,7 +220,7 @@ export default function TasksTab() {
                   setCreateTaskInitialData(null);
                   setShowCreateTask(true);
                 }}
-                className="px-3 py-2 text-sm font-medium text-white bg-[#165DFF] rounded-lg hover:bg-[#0E4BA4] transition-colors flex items-center"
+                className="px-2.5 py-1.5 text-sm font-medium text-white bg-[#165DFF] rounded-lg hover:bg-[#0E4BA4] transition-colors flex items-center"
               >
                 <PlusIcon className="h-4 w-4 mr-1" />
                 新建任务
@@ -224,11 +228,11 @@ export default function TasksTab() {
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
             <div className="flex items-center flex-wrap gap-2">
               <button
                 onClick={() => setView('kanban')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'kanban'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -238,7 +242,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'list'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -248,7 +252,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('calendar')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'calendar'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -258,7 +262,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('today')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'today'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -274,15 +278,15 @@ export default function TasksTab() {
 
       {stats && <TaskStats stats={stats} />}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 min-h-[320px]">
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 min-h-[300px]">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#165DFF]"></div>
           </div>
         ) : (
           <>
-            {view === 'kanban' && <TaskKanban tasks={tasks} onUpdate={fetchTasks} />}
-            {view === 'list' && <TaskList tasks={tasks} onUpdate={fetchTasks} />}
+            {view === 'kanban' && <TaskKanban tasks={tasks} projects={projects} onUpdate={refreshTaskAndStats} />}
+            {view === 'list' && <TaskList tasks={tasks} projects={projects} onUpdate={refreshTaskAndStats} />}
             {view === 'calendar' && (
               <TaskCalendar
                 tasks={tasks}
@@ -335,8 +339,9 @@ export default function TasksTab() {
       {selectedTask && (
         <TaskDetailSidebar
           task={selectedTask}
+          projects={projects}
           onClose={() => setSelectedTask(null)}
-          onUpdate={fetchTasks}
+          onUpdate={refreshTaskAndStats}
         />
       )}
     </div>
