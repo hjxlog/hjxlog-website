@@ -1,12 +1,30 @@
--- ================================================
--- HJXLog 博客系统测试数据
--- 数据库: hjxlog
--- 用户: postgres
--- 密码: 12345678
--- ================================================
+-- Local debug test data for HJXLog
+-- Execute after dbschema and (optionally) preset.
 
--- 清空现有数据
-TRUNCATE TABLE blog_views, moments, system_logs, photos, works, blogs, users RESTART IDENTITY CASCADE;
+TRUNCATE TABLE
+  ai_user_opinions,
+  ai_daily_digests,
+  ai_source_items,
+  knowledge_base,
+  chat_sessions,
+  chat_rate_limits,
+  chat_global_usage,
+  task_time_logs,
+  task_comments,
+  tasks,
+  projects,
+  long_term_memory,
+  daily_thoughts,
+  openclaw_daily_reports,
+  blog_views,
+  view_logs,
+  system_logs,
+  photos,
+  moments,
+  works,
+  blogs,
+  users
+RESTART IDENTITY CASCADE;
 
 -- 插入用户数据
 INSERT INTO users (username, email, password_hash, avatar, bio) VALUES
@@ -603,3 +621,31 @@ SELECT
     (SELECT COUNT(*) FROM system_logs) as system_logs_count,
     (SELECT COUNT(*) FROM moments) as moments_count,
     (SELECT COUNT(*) FROM photos) as photos_count;
+
+-- Task force sample data
+INSERT INTO projects (name, description, color, icon) VALUES
+  ('个人网站优化', '持续优化 hjxlog-website', '#6366f1', 'globe'),
+  ('学习计划', '技术学习和技能提升', '#10b981', 'book'),
+  ('生活事务', '日常待办事项', '#f59e0b', 'home')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO tasks (title, description, project_id, status, priority, due_date) VALUES
+  ('实现任务管理功能', '设计并实现Task Force模块', 1, 'in_progress', 'P1', '2026-02-10'),
+  ('学习 Rust 基础', '完成 Rustlings 练习', 2, 'todo', 'P2', '2026-02-15'),
+  ('购买日用品', '牛奶、面包、水果', 3, 'todo', 'P3', '2026-02-06')
+ON CONFLICT DO NOTHING;
+
+-- Memory sample data
+INSERT INTO daily_thoughts (thought_date, content, mood, tags, is_summarized) VALUES
+  ('2026-02-06', '今天完成了任务管理模块的大部分接口，剩余前端细节。', 'productive', ARRAY['task-force','backend'], true),
+  ('2026-02-07', '开始梳理数据库脚本结构，准备统一 schema/preset/test。', 'focused', ARRAY['database','refactor'], false)
+ON CONFLICT (thought_date) DO UPDATE SET
+  content = EXCLUDED.content,
+  mood = EXCLUDED.mood,
+  tags = EXCLUDED.tags,
+  is_summarized = EXCLUDED.is_summarized,
+  updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO long_term_memory (title, content, source_date, category, importance, tags) VALUES
+  ('统一数据库脚本入口', '将建表和数据脚本拆分为 dbschema/preset/test，可显著降低维护复杂度。', '2026-02-07', '架构', 8, ARRAY['database','engineering'])
+ON CONFLICT DO NOTHING;
