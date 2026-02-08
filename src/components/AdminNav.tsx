@@ -10,6 +10,17 @@ interface AdminNavProps {
 // Dashboard页面内的标签页 - 分组显示 (移到函数外部以便导出)
 export const dashboardTabGroups = [
   {
+    group: '个人中枢',
+    tabs: [
+      { key: 'today', label: '中枢总览', icon: 'fas fa-house-chimney' },
+      { key: 'tasks', label: '待办事项', icon: 'fas fa-list-check' },
+      { key: 'thoughts', label: '每日想法', icon: 'fas fa-lightbulb' },
+      { key: 'openclaw-reports', label: 'OpenClaw汇报', icon: 'fas fa-robot' },
+      { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },
+      { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
+    ]
+  },
+  {
     group: '内容管理',
     tabs: [
       { key: 'overview', label: '概览', icon: 'fas fa-chart-pie' },
@@ -19,18 +30,8 @@ export const dashboardTabGroups = [
     ]
   },
   {
-    group: '互动管理',
-    tabs: [
-      { key: 'moments', label: '动态管理', icon: 'fas fa-camera' },
-    ]
-  },
-  {
     group: 'AI功能',
     tabs: [
-      { key: 'tasks', label: '待办事项', icon: 'fas fa-list-check' },
-      { key: 'thoughts', label: '每日想法', icon: 'fas fa-lightbulb' },
-      { key: 'openclaw-reports', label: 'OpenClaw汇报', icon: 'fas fa-robot' },
-      { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },
       { key: 'knowledge', label: '知识库', icon: 'fas fa-brain' },
       { key: 'prompts', label: '提示词管理', icon: 'fas fa-magic' },
     ]
@@ -66,9 +67,9 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
 
   const handleGoOverview = useCallback(() => {
     if (setActiveTab) {
-      setActiveTab('overview');
+      setActiveTab('today');
     } else {
-      navigate('/dashboard?tab=overview');
+      navigate('/dashboard?tab=today');
     }
   }, [navigate, setActiveTab]);
 

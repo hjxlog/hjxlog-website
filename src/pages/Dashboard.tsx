@@ -24,6 +24,7 @@ import OpenClawReportsTab from '@/components/dashboard/OpenClawReportsTab';
 import ExternalTokensTab from '@/components/dashboard/ExternalTokensTab';
 import ThoughtsTab from '@/components/dashboard/ThoughtsTab';
 import TasksTab from '@/components/dashboard/TasksTab';
+import TodayHubTab from '@/components/dashboard/TodayHubTab';
 import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
@@ -31,7 +32,7 @@ import { Work, Blog, Moment } from '@/types';
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('today');
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
 
@@ -392,6 +393,8 @@ export default function Dashboard() {
     const tab = urlParams.get('tab');
     if (tab) {
       setActiveTab(tab);
+    } else {
+      setActiveTab('today');
     }
   }, []);
 
@@ -602,6 +605,31 @@ export default function Dashboard() {
         {/* 右侧主内容区域 */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
           <div className="max-w-7xl mx-auto space-y-6">
+            {/* 今日中心页面 */}
+            {activeTab === 'today' && (
+              <div className="animate-fade-in">
+                <TodayHubTab
+                  username={user.username}
+                  worksCount={works.length}
+                  blogsCount={blogs.length}
+                  momentsCount={moments.length}
+                  works={works}
+                  blogs={blogs}
+                  moments={moments}
+                  onGoTasks={() => setActiveTab('tasks')}
+                  onGoThoughts={() => setActiveTab('thoughts')}
+                  onGoReports={() => setActiveTab('openclaw-reports')}
+                  onGoSignal={() => setActiveTab('ai-signal')}
+                  onGoWorks={() => setActiveTab('works')}
+                  onGoBlogs={() => setActiveTab('blogs')}
+                  onGoMoments={() => setActiveTab('moments')}
+                  onOpenWorkForm={() => openWorkForm()}
+                  onOpenBlogForm={() => openBlogForm()}
+                  onOpenMomentForm={() => openMomentForm()}
+                />
+              </div>
+            )}
+
             {/* 概览页面 */}
             {activeTab === 'overview' && (
               <OverviewTab 

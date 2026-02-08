@@ -5,6 +5,7 @@ import { apiRequest } from '@/config/api';
 import DailyThoughtEditor from '@/components/dashboard/DailyThoughtEditor';
 import ThoughtsList from '@/components/dashboard/ThoughtsList';
 import LongTermMemory from '@/components/dashboard/LongTermMemory';
+import CreateTaskFromThoughtModal from '@/components/tasks/CreateTaskFromThoughtModal';
 
 interface DailyThought {
   id: number;
@@ -28,6 +29,12 @@ interface LongTermMemoryItem {
   created_at: string;
 }
 
+interface TaskProject {
+  id: number;
+  name: string;
+  color: string;
+}
+
 const getLocalToday = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -42,6 +49,8 @@ export default function ThoughtsTab() {
   const [canEdit, setCanEdit] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
   const [memories, setMemories] = useState<LongTermMemoryItem[]>([]);
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [projects, setProjects] = useState<TaskProject[]>([]);
 
   const fetchThoughtByDate = async (date: string) => {
     try {
@@ -81,6 +90,15 @@ export default function ThoughtsTab() {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const result = await apiRequest('/api/tasks/projects');
+      setProjects(result.data || []);
+    } catch (error) {
+      console.error('获取项目列表失败:', error);
+    }
+  };
+
   const handleSummarize = async (date: string) => {
     if (!confirm(`确定要总结 ${date} 的想法吗？`)) return;
 
@@ -95,12 +113,31 @@ export default function ThoughtsTab() {
     }
   };
 
+  const handleCreateTaskFromThought = async (taskData: any) => {
+    if (!currentThought?.id) return;
+    try {
+      await apiRequest(`/api/tasks/from-thought/${currentThought.id}`, {
+        method: 'POST',
+        body: JSON.stringify(taskData)
+      });
+      toast.success('任务创建成功');
+      setShowCreateTask(false);
+    } catch (error: any) {
+      console.error('从想法创建任务失败:', error);
+      toast.error(error.message || '创建任务失败');
+    }
+  };
+
   const today = getLocalToday();
 
   useEffect(() => {
     fetchThoughtByDate(selectedDate);
     fetchLongTermMemories();
   }, [selectedDate]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -111,6 +148,7 @@ export default function ThoughtsTab() {
         loading={loading}
         onSave={handleSaveToday}
         onSummarize={handleSummarize}
+        onCreateTask={() => setShowCreateTask(true)}
         today={today}
       />
 
@@ -136,6 +174,16 @@ export default function ThoughtsTab() {
           <LongTermMemory memories={memories} onRefresh={fetchLongTermMemories} />
         </div>
       </div>
+
+      {showCreateTask && currentThought && (
+        <CreateTaskFromThoughtModal
+          thoughtContent={currentThought.content}
+          thoughtDate={currentThought.thought_date}
+          projects={projects}
+          onClose={() => setShowCreateTask(false)}
+          onSubmit={handleCreateTaskFromThought}
+        />
+      )}
     </div>
   );
 }

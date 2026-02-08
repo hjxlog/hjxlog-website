@@ -26,6 +26,30 @@ const getLocalDateString = () => {
 };
 
 /**
+ * 获取今天的想法
+ * GET /api/thoughts/today
+ */
+router.get('/thoughts/today', async (req, res) => {
+  try {
+    const thought = await getTodayThought();
+    const today = getLocalDateString();
+
+    res.json({
+      success: true,
+      data: thought,
+      canEdit: true, // 今天总是可编辑
+      today
+    });
+  } catch (error) {
+    console.error('Error fetching today thought:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * 获取指定日期的想法
  * GET /api/thoughts/:date
  * Query params: date (YYYY-MM-DD)
@@ -60,30 +84,6 @@ router.get('/thoughts/:date', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching thought:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * 获取今天的想法
- * GET /api/thoughts/today
- */
-router.get('/thoughts/today', async (req, res) => {
-  try {
-    const thought = await getTodayThought();
-    const today = getLocalDateString();
-
-    res.json({
-      success: true,
-      data: thought,
-      canEdit: true, // 今天总是可编辑
-      today
-    });
-  } catch (error) {
-    console.error('Error fetching today thought:', error.message);
     res.status(500).json({
       success: false,
       error: error.message

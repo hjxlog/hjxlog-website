@@ -151,7 +151,14 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate 
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl transform transition-transform">
+    <>
+      <button
+        type="button"
+        aria-label="关闭任务详情"
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/30"
+      />
+      <aside className="fixed inset-y-0 right-0 z-50 w-full md:w-96 bg-white shadow-2xl transform transition-transform">
       <div className="h-full flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between p-6 border-b">
@@ -338,7 +345,8 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate 
           </div>
         </div>
       </div>
-    </div>
+      </aside>
+    </>
   );
 };
 
