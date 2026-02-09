@@ -1,27 +1,73 @@
--- 提示词配置表
--- 用于管理不同场景下的AI提示词模板
+-- Required preset data for HJXLog
+-- Execute after dbschema/001_schema.sql
 
-CREATE TABLE IF NOT EXISTS prompt_templates (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,           -- 模板名称（如：location_query, tech_query）
-    display_name VARCHAR(100) NOT NULL,          -- 显示名称
-    scenario VARCHAR(50) NOT NULL,               -- 场景类型（location/tech/blog/general）
-    keywords TEXT[] DEFAULT '{}',                 -- 触发关键词
-    system_prompt TEXT,                          -- 系统提示词
-    user_prompt_template TEXT NOT NULL,          -- 用户提示词模板
-    variables TEXT[] DEFAULT '{}',                -- 可用变量（如：{context}, {question}）
-    is_active BOOLEAN DEFAULT true,              -- 是否启用
-    version INTEGER DEFAULT 1,                   -- 版本号
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- Default admin user
+INSERT INTO users (username, email, password_hash, avatar, bio)
+VALUES (
+  'admin',
+  'admin@hjxlog.com',
+  '$2b$10$93QjprbEpLkLmz8.VqjGkOXyPJzZ02Dd01W5HVMxQK.cRQwxwkApG',
+  '/avatars/admin.jpg',
+  '系统默认管理员账号'
+)
+ON CONFLICT (username) DO NOTHING;
+
+-- Default external API token for openclaw integration
+INSERT INTO external_api_tokens (token, token_prefix, name, description, source, scopes, created_by)
+SELECT
+  'oc_' || md5(random()::text || clock_timestamp()::text),
+  'oc_default',
+  'OpenClaw内部Token',
+  '用于OpenClaw系统推送日记和动态',
+  'openclaw',
+  '["openclaw:reports:write"]'::jsonb,
+  'admin'
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM external_api_tokens
+  WHERE source = 'openclaw' AND name = 'OpenClaw内部Token' AND is_active = true
 );
 
--- 创建索引
-CREATE INDEX idx_prompt_templates_scenario ON prompt_templates(scenario);
-CREATE INDEX idx_prompt_templates_active ON prompt_templates(is_active);
-CREATE INDEX idx_prompt_templates_updated ON prompt_templates(updated_at DESC);
+-- AI sources (minimal required baseline)
+INSERT INTO ai_sources (name, url, rss_url, type, description, tags, active)
+VALUES
+  ('OpenAI News', 'https://openai.com/blog/', NULL, 'blog', 'OpenAI official updates', ARRAY['model','product','research','safety'], true),
+  ('Anthropic Newsroom', 'https://www.anthropic.com/news', NULL, 'news', 'Anthropic announcements', ARRAY['model','safety','research'], true),
+  ('Hugging Face Blog', 'https://huggingface.co/blog', NULL, 'blog', 'Open-source AI engineering updates', ARRAY['engineering','application','model'], true)
+ON CONFLICT (url) DO UPDATE SET
+  name = EXCLUDED.name,
+  rss_url = EXCLUDED.rss_url,
+  type = EXCLUDED.type,
+  description = EXCLUDED.description,
+  tags = EXCLUDED.tags,
+  active = EXCLUDED.active,
+  updated_at = CURRENT_TIMESTAMP;
 
--- 插入默认提示词模板
+INSERT INTO ai_source_weights (source_id, category, weight)
+SELECT s.id, v.category, v.weight
+FROM (
+  VALUES
+    ('https://openai.com/blog/', 'model', 0.9::numeric),
+    ('https://openai.com/blog/', 'application', 0.7::numeric),
+    ('https://openai.com/blog/', 'engineering', 0.6::numeric),
+    ('https://openai.com/blog/', 'research', 0.8::numeric),
+    ('https://openai.com/blog/', 'safety', 0.8::numeric),
+    ('https://www.anthropic.com/news', 'model', 0.8::numeric),
+    ('https://www.anthropic.com/news', 'application', 0.6::numeric),
+    ('https://www.anthropic.com/news', 'engineering', 0.5::numeric),
+    ('https://www.anthropic.com/news', 'research', 0.7::numeric),
+    ('https://www.anthropic.com/news', 'safety', 0.9::numeric),
+    ('https://huggingface.co/blog', 'model', 0.7::numeric),
+    ('https://huggingface.co/blog', 'application', 0.8::numeric),
+    ('https://huggingface.co/blog', 'engineering', 0.8::numeric),
+    ('https://huggingface.co/blog', 'research', 0.6::numeric),
+    ('https://huggingface.co/blog', 'safety', 0.4::numeric)
+) AS v(url, category, weight)
+JOIN ai_sources s ON s.url = v.url
+ON CONFLICT (source_id, category) DO UPDATE SET
+  weight = EXCLUDED.weight,
+  updated_at = CURRENT_TIMESTAMP;
+
 INSERT INTO prompt_templates (name, display_name, scenario, keywords, system_prompt, user_prompt_template, variables) VALUES
 (
     'location_query',
@@ -362,19 +408,3 @@ INSERT INTO prompt_templates (name, display_name, scenario, keywords, system_pro
     ARRAY['{location}', '{title}', '{description}', '{category}', '{taken_at}']
 )
 ON CONFLICT (name) DO NOTHING;
-
--- 添加更新时间触发器
-CREATE OR REPLACE FUNCTION update_prompt_template_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER prompt_templates_updated_at
-    BEFORE UPDATE ON prompt_templates
-    FOR EACH ROW
-    EXECUTE FUNCTION update_prompt_template_updated_at();
-
-COMMENT ON TABLE prompt_templates IS 'AI提示词模板配置表，用于管理不同场景的提示词';

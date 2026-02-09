@@ -6,8 +6,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 读取 SQL 文件
-const sqlFilePath = path.join(__dirname, '../../database/create_memory_tables.sql');
+// 读取统一 Schema 文件
+const sqlFilePath = path.join(__dirname, '../../database/dbschema/001_schema.sql');
 const sql = fs.readFileSync(sqlFilePath, 'utf-8');
 
 // 数据库配置
@@ -25,7 +25,7 @@ try {
   await client.connect();
   console.log('✅ 数据库连接成功');
 
-  console.log('📝 正在执行 SQL: create_memory_tables.sql');
+  console.log('📝 正在执行 SQL: dbschema/001_schema.sql');
   await client.query(sql);
   console.log('✅ 表创建成功！');
 
