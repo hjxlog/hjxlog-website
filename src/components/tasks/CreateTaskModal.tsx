@@ -25,6 +25,14 @@ interface CreateTaskModalProps {
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, initialTask }) => {
+  const todayDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const toDateInputValue = (value?: string) => {
     if (!value) return '';
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -42,8 +50,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
     project_id: initialTask?.project_id ?? (projects.length > 0 ? projects[0].id : ''),
     priority: initialTask?.priority || 'P2',
     tags: initialTask?.tags || '',
-    start_date: toDateInputValue(initialTask?.start_date),
-    due_date: toDateInputValue(initialTask?.due_date)
+    start_date: toDateInputValue(initialTask?.start_date) || todayDate(),
+    due_date: toDateInputValue(initialTask?.due_date) || todayDate()
   });
 
   const [formData, setFormData] = useState(getInitialFormData);

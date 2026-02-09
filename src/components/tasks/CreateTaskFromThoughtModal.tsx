@@ -23,12 +23,20 @@ const CreateTaskFromThoughtModal: React.FC<CreateTaskFromThoughtModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const todayDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState({
     title: `来自 ${thoughtDate} 的想法`,
     description: thoughtContent.substring(0, 200) + (thoughtContent.length > 200 ? '...' : ''),
     project_id: projects.length > 0 ? projects[0].id : null,
     priority: 'P2',
-    due_date: ''
+    due_date: todayDate()
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

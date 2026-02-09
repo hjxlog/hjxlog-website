@@ -21,6 +21,14 @@ function getDbClient() {
   return client;
 }
 
+function getTodayDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ==================== 项目管理 ====================
 
 /**
@@ -176,6 +184,9 @@ export async function createTask(data) {
   );
   const position = positionResult.rows[0].next_position;
 
+  const effectiveStartDate = start_date || getTodayDateString();
+  const effectiveDueDate = due_date || getTodayDateString();
+
   const result = await db.query(
     `INSERT INTO tasks (
       title, description, project_id, status, priority,
@@ -185,7 +196,7 @@ export async function createTask(data) {
     RETURNING *`,
     [
       title, description, project_id, status, priority,
-      tags || '{}', start_date, due_date, estimated_hours, parent_task_id,
+      tags || '{}', effectiveStartDate, effectiveDueDate, estimated_hours, parent_task_id,
       source_thought_id, position
     ]
   );
@@ -295,6 +306,9 @@ export async function createTaskFromThought(thoughtId, taskData) {
   const thought = thoughtResult.rows[0];
 
   // 创建任务，关联想法
+  const effectiveStartDate = start_date || getTodayDateString();
+  const effectiveDueDate = due_date || getTodayDateString();
+
   const result = await db.query(
     `INSERT INTO tasks (
       title, description, project_id, priority, start_date, due_date,
@@ -308,8 +322,8 @@ export async function createTaskFromThought(thoughtId, taskData) {
       description || thought.content,
       project_id,
       priority,
-      start_date,
-      due_date,
+      effectiveStartDate,
+      effectiveDueDate,
       thoughtId
     ]
   );
