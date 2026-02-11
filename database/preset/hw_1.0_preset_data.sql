@@ -1,5 +1,5 @@
 -- Required preset data for HJXLog
--- Execute after dbschema/001_schema.sql
+-- Execute after dbschema/hw_1.0_create_table.sql
 
 -- Default admin user
 INSERT INTO users (username, email, password_hash, avatar, bio)

@@ -1,397 +1,289 @@
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { apiRequest } from '@/config/api';
+import { useCallback, useMemo } from 'react';
+import { API_BASE_URL } from '@/config/api';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  BoltIcon,
-  RocketLaunchIcon,
-  ClipboardDocumentListIcon,
-  ChartBarSquareIcon
+  CameraIcon,
+  EyeIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  CircleStackIcon,
+  ClockIcon,
+  ChartPieIcon,
+  RssIcon
 } from '@heroicons/react/24/outline';
 import type { Blog, Moment, Work } from '@/types';
-import type { Task } from '@/types/task';
-
-interface OpenClawReport {
-  id: number;
-  report_date: string;
-  title?: string;
-  content: string;
-  status: 'ok' | 'warning' | 'error';
-}
-
-interface DigestItem {
-  itemId: number;
-  title: string;
-  score: number;
-  source: string;
-}
-
-interface DailyDigest {
-  id: number;
-  digest_date: string;
-  status: 'ready' | 'empty' | 'error';
-  summary_text?: string;
-  items: DigestItem[];
-}
 
 interface TodayHubTabProps {
   username: string;
   totalViews: number;
-  worksCount: number;
-  blogsCount: number;
-  momentsCount: number;
   works: Work[];
   blogs: Blog[];
   moments: Moment[];
-  onGoTasks: () => void;
-  onGoThoughts: () => void;
-  onGoReports: () => void;
-  onGoSignal: () => void;
-  onGoWorks: () => void;
-  onGoBlogs: () => void;
-  onGoMoments: () => void;
   onOpenWorkForm: () => void;
   onOpenBlogForm: () => void;
   onOpenMomentForm: () => void;
+  onGoMoments: () => void;
 }
 
-const toDateString = (value?: string | null) => {
+const toDisplayDate = (value?: string | null) => {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${date.getMonth() + 1}-${date.getDate()}`;
 };
-
-const getToday = () => toDateString(new Date().toISOString());
-const stripMarkdown = (text: string) => text.replace(/[#*_>`\-]/g, ' ').replace(/\s+/g, ' ').trim();
 
 export default function TodayHubTab({
   username,
   totalViews,
-  worksCount,
-  blogsCount,
-  momentsCount,
   works,
   blogs,
   moments,
-  onGoTasks,
-  onGoThoughts,
-  onGoReports,
-  onGoSignal,
-  onGoWorks,
-  onGoBlogs,
-  onGoMoments,
   onOpenWorkForm,
   onOpenBlogForm,
-  onOpenMomentForm
+  onOpenMomentForm,
+  onGoMoments
 }: TodayHubTabProps) {
-  const [loading, setLoading] = useState(true);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [latestReport, setLatestReport] = useState<OpenClawReport | null>(null);
-  const [latestDigest, setLatestDigest] = useState<DailyDigest | null>(null);
-
-  const loadHubData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [tasksRes, reportRes, digestRes] = await Promise.all([
-        apiRequest('/api/tasks'),
-        apiRequest('/api/openclaw-reports/latest'),
-        apiRequest('/api/ai-signal/digest/latest')
-      ]);
-      setTasks(tasksRes?.data || []);
-      setLatestReport(reportRes?.data || null);
-      setLatestDigest(digestRes?.data || null);
-    } catch {
-      toast.error('加载中枢总览失败，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadHubData();
-  }, [loadHubData]);
-
-  const taskSummary = useMemo(() => {
-    const today = getToday();
-    const active = tasks.filter((task) => task.status !== 'done');
-    const overdue = active.filter((task) => task.due_date && toDateString(task.due_date) < today).length;
-    const dueToday = active.filter((task) => task.due_date && toDateString(task.due_date) === today).length;
-    const inProgress = active.filter((task) => task.status === 'in_progress').length;
-    const done = tasks.filter((task) => task.status === 'done').length;
-    return { active: active.length, overdue, dueToday, inProgress, done };
-  }, [tasks]);
+  const totalContent = works.length + blogs.length + moments.length;
 
   const pieData = useMemo(
-    () =>
-      [
-        { name: '博客', value: blogsCount, color: '#0ea5e9' },
-        { name: '作品', value: worksCount, color: '#22c55e' },
-        { name: '动态', value: momentsCount, color: '#f97316' }
-      ].filter((item) => item.value > 0),
-    [blogsCount, worksCount, momentsCount]
+    () => [
+      { name: '博客文章', value: blogs.length, color: '#10b981' },
+      { name: '生活动态', value: moments.length, color: '#6366f1' },
+      { name: '作品项目', value: works.length, color: '#3b82f6' }
+    ].filter((item) => item.value > 0),
+    [blogs.length, moments.length, works.length]
   );
-
-  const digestTopItems = useMemo(() => (latestDigest?.items || []).slice(0, 4), [latestDigest]);
-  const draftBlogsCount = useMemo(() => blogs.filter((blog) => !blog.published).length, [blogs]);
-  const privateMomentsCount = useMemo(() => moments.filter((moment) => moment.visibility !== 'public').length, [moments]);
 
   const recentActivities = useMemo(() => {
     return [
+      ...moments.map((item) => ({
+        id: `moment-${item.id}`,
+        title: item.content,
+        type: '动态',
+        status: item.visibility === 'public' ? '公开' : '私密',
+        date: item.created_at || ''
+      })),
       ...blogs.map((item) => ({
         id: `blog-${item.id}`,
-        type: '博客',
         title: item.title,
+        type: '博客',
         status: item.published ? '已发布' : '草稿',
         date: item.created_at || ''
       })),
       ...works.map((item) => ({
         id: `work-${item.id}`,
-        type: '作品',
         title: item.title,
+        type: '作品',
         status: item.status || '未知',
         date: item.created_at || item.date || ''
-      })),
-      ...moments.map((item) => ({
-        id: `moment-${item.id}`,
-        type: '动态',
-        title: item.content,
-        status: item.visibility === 'public' ? '公开' : '私密',
-        date: item.created_at || ''
       }))
     ]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 12);
-  }, [blogs, works, moments]);
+      .slice(0, 5);
+  }, [blogs, moments, works]);
 
-  const riskItems = useMemo(() => {
-    const items: Array<{ label: string; tone: 'danger' | 'warn' | 'ok'; action: () => void }> = [];
+  const handleExportAll = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/admin/export/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-    if (taskSummary.overdue > 0) {
-      items.push({ label: `${taskSummary.overdue} 个任务已逾期`, tone: 'danger', action: onGoTasks });
+      if (!response.ok) {
+        throw new Error('导出失败');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `full_backup_${new Date().toISOString().slice(0, 10)}.sql`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(anchor);
+      toast.success('数据备份下载成功');
+    } catch {
+      toast.error('数据备份失败');
     }
-    if (taskSummary.dueToday > 0) {
-      items.push({ label: `${taskSummary.dueToday} 个任务今天到期`, tone: 'warn', action: onGoTasks });
-    }
-    if (latestReport?.status === 'warning' || latestReport?.status === 'error') {
-      items.push({ label: `OpenClaw 状态异常（${latestReport.status}）`, tone: 'warn', action: onGoReports });
-    }
-    if (items.length === 0) {
-      items.push({ label: '当前没有高优先级风险', tone: 'ok', action: onGoTasks });
-    }
-
-    return items;
-  }, [latestReport?.status, onGoReports, onGoTasks, taskSummary.dueToday, taskSummary.overdue]);
-
-  const toneClass = (tone: 'danger' | 'warn' | 'ok') => {
-    if (tone === 'danger') return 'border-red-200 bg-red-50 text-red-700';
-    if (tone === 'warn') return 'border-amber-200 bg-amber-50 text-amber-700';
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  };
-
-  if (loading) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-500">正在加载中枢总览...</p>
-      </div>
-    );
-  }
+  }, []);
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white p-3">
-        <div className="flex min-h-12 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-base font-semibold text-slate-900">中枢总览</p>
-              <p className="text-xs text-slate-500">欢迎回来，{username}</p>
-            </div>
-            <div className="hidden lg:flex items-center gap-2">
-              <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">逾期 {taskSummary.overdue}</span>
-              <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">今日到期 {taskSummary.dueToday}</span>
-              <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">草稿 {draftBlogsCount}</span>
-            </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800">晚上好，{username} 👋</h2>
+            <p className="mt-2 text-slate-500">准备好开始今天的创作了吗？您目前共有 <span className="font-bold text-slate-700">{totalContent}</span> 个内容条目。</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button onClick={onOpenWorkForm} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">新建作品</button>
-            <button onClick={onOpenBlogForm} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">写博客</button>
-            <button onClick={onOpenMomentForm} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">发动态</button>
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={loadHubData}
-              className="inline-flex items-center rounded-lg bg-[#165DFF] px-3 py-1.5 text-xs text-white hover:bg-[#0E4BA4]"
+              onClick={onOpenBlogForm}
+              className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
             >
-              <ArrowPathIcon className="mr-1 h-3.5 w-3.5" /> 刷新
+              <PencilSquareIcon className="mr-1.5 h-4 w-4" />
+              写文章
+            </button>
+            <button
+              onClick={onOpenMomentForm}
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <CameraIcon className="mr-1.5 h-4 w-4" />
+              发动态
+            </button>
+            <button
+              onClick={onOpenWorkForm}
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <PlusIcon className="mr-1.5 h-4 w-4" />
+              加作品
+            </button>
+            <button
+              onClick={handleExportAll}
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <CircleStackIcon className="mr-1.5 h-4 w-4" />
+              数据备份
             </button>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <StatCard title="总浏览量" value={totalViews} />
-        <StatCard title="内容总量" value={worksCount + blogsCount + momentsCount} />
-        <StatCard title="活跃任务" value={taskSummary.active} />
-        <StatCard title="进行中" value={taskSummary.inProgress} />
-        <StatCard title="博客草稿" value={draftBlogsCount} />
-        <StatCard title="私密动态" value={privateMomentsCount} />
-      </section>
-
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="space-y-4 xl:col-span-8">
-          <Panel title="风险提醒" icon={<ExclamationTriangleIcon className="h-4 w-4" />} actionLabel="任务面板" onAction={onGoTasks}>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              {riskItems.map((item, idx) => (
-                <button
-                  key={`${item.label}-${idx}`}
-                  onClick={item.action}
-                  className={`rounded-xl border px-3 py-2 text-left text-sm ${toneClass(item.tone)}`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </Panel>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard
+              icon={<EyeIcon className="h-6 w-6" />}
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+              value={String(totalViews)}
+              label="总浏览量"
+            />
+            <StatCard
+              icon={<RssIcon className="h-6 w-6" />}
+              iconBg="bg-emerald-100"
+              iconColor="text-emerald-600"
+              value={String(blogs.length)}
+              label="文章"
+            />
+            <StatCard
+              icon={<CameraIcon className="h-6 w-6" />}
+              iconBg="bg-indigo-100"
+              iconColor="text-indigo-600"
+              value={String(moments.length)}
+              label="动态"
+            />
+          </div>
 
-          <Panel title="内容活动流" icon={<ClipboardDocumentListIcon className="h-4 w-4" />} actionLabel="进入内容管理" onAction={onGoBlogs}>
-            <div className="max-h-72 space-y-2 overflow-auto pr-1">
-              {recentActivities.length === 0 ? (
-                <p className="text-sm text-slate-500">暂无活动记录</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <h3 className="mb-4 inline-flex items-center text-lg font-semibold text-slate-800">
+              <ChartPieIcon className="mr-2 h-5 w-5 text-slate-400" />
+              内容分布
+            </h3>
+            <div className="h-64">
+              {pieData.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-slate-500">暂无内容数据</div>
               ) : (
-                recentActivities.map((item) => (
-                  <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="line-clamp-1 text-sm font-medium text-slate-900">{item.title}</p>
-                      <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] text-slate-600">{item.type}</span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500">{item.status} · {toDateString(item.date) || '未知时间'}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </Panel>
-        </div>
-
-        <div className="space-y-4 xl:col-span-4">
-          <Panel title="AI与汇报" icon={<RocketLaunchIcon className="h-4 w-4" />} actionLabel="查看详情" onAction={onGoReports}>
-            <div className="space-y-2">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-xs text-slate-500">OpenClaw</p>
-                <p className="mt-1 line-clamp-1 text-sm font-medium text-slate-900">{latestReport?.title || '暂无汇报'}</p>
-                <p className="mt-1 text-xs text-slate-500">状态 {latestReport?.status || '-'} · {latestReport?.report_date || '-'}</p>
-                {latestReport?.content ? (
-                  <p className="mt-2 line-clamp-2 text-xs text-slate-600">{stripMarkdown(latestReport.content)}</p>
-                ) : null}
-              </div>
-              <div className="max-h-40 space-y-2 overflow-auto pr-1">
-                {digestTopItems.length === 0 ? (
-                  <p className="text-sm text-slate-500">暂无雷达条目</p>
-                ) : (
-                  digestTopItems.map((item) => (
-                    <button
-                      key={item.itemId}
-                      onClick={onGoSignal}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-left hover:bg-slate-50"
-                    >
-                      <p className="line-clamp-2 text-sm text-slate-900">{item.title}</p>
-                      <p className="mt-1 text-xs text-slate-500">{item.source} · {item.score?.toFixed(2) || '0.00'}</p>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </Panel>
-
-          <Panel title="内容分布" icon={<ChartBarSquareIcon className="h-4 w-4" />}>
-            {pieData.length === 0 ? (
-              <p className="text-sm text-slate-500">暂无内容数据</p>
-            ) : (
-              <div className="h-44">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={pieData} dataKey="value" cx="50%" cy="48%" innerRadius={34} outerRadius={54} paddingAngle={4}>
-                      {pieData.map((entry, idx) => (
-                        <Cell key={`pie-${idx}`} fill={entry.color} />
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="48%"
+                      innerRadius={72}
+                      outerRadius={96}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {pieData.map((item) => (
+                        <Cell key={item.name} fill={item.color} />
                       ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-          </Panel>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
+              {pieData.map((item) => (
+                <div key={item.name} className="inline-flex items-center text-slate-600">
+                  <span className="mr-1.5 h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="xl:col-span-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="inline-flex items-center text-lg font-semibold text-slate-800">
+                <ClockIcon className="mr-2 h-5 w-5 text-slate-400" />
+                最新动态
+              </h3>
+              <span className="rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-400">近 {recentActivities.length} 条</span>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {recentActivities.length === 0 ? (
+                <p className="text-sm text-slate-500">暂无动态</p>
+              ) : (
+                recentActivities.map((item) => (
+                  <div key={item.id} className="relative pl-6">
+                    <span className="absolute left-0 top-2 h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                    <span className="absolute left-1 top-5 h-[calc(100%-8px)] w-px bg-slate-200" />
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="line-clamp-1 text-base font-semibold text-slate-800">{item.title}</p>
+                      <span className="text-sm text-slate-400">{toDisplayDate(item.date)}</span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{item.type}</span>
+                      <span className={`rounded px-2 py-0.5 text-xs ${item.status === '公开' || item.status === '已发布' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <button
+              onClick={onGoMoments}
+              className="mt-6 inline-flex items-center text-sm font-medium text-slate-500 hover:text-[#165DFF]"
+            >
+              查看更多动态 {'->'}
+            </button>
+          </div>
         </div>
       </section>
-
-      <details className="rounded-2xl border border-slate-200 bg-white p-4" open>
-        <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">内容预览与快速入口</summary>
-        <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-8">
-          <QuickButton label="待办事项" onClick={onGoTasks} variant="primary" />
-          <QuickButton label="每日想法" onClick={onGoThoughts} variant="primary" />
-          <QuickButton label="OpenClaw 汇报" onClick={onGoReports} variant="primary" />
-          <QuickButton label="情报雷达" onClick={onGoSignal} variant="primary" />
-          <QuickButton label="作品管理" onClick={onGoWorks} />
-          <QuickButton label="博客管理" onClick={onGoBlogs} />
-          <QuickButton label="动态管理" onClick={onGoMoments} />
-          <QuickButton label="发动态" onClick={onOpenMomentForm} />
-        </div>
-      </details>
     </div>
   );
 }
 
-function StatCard({ title, value }: { title: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-xs text-slate-500">{title}</p>
-      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
-    </div>
-  );
-}
-
-function Panel({
-  title,
+function StatCard({
   icon,
-  actionLabel,
-  onAction,
-  children
+  iconBg,
+  iconColor,
+  value,
+  label
 }: {
-  title: string;
-  icon?: ReactNode;
-  actionLabel?: string;
-  onAction?: () => void;
-  children: ReactNode;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  value: string;
+  label: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-slate-900">
-          {icon}
-          <h3 className="text-sm font-semibold">{title}</h3>
-        </div>
-        {actionLabel && onAction ? (
-          <button onClick={onAction} className="text-xs text-blue-600 hover:underline">{actionLabel}</button>
-        ) : null}
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${iconBg} ${iconColor}`}>
+        {icon}
       </div>
-      {children}
+      <p className="mt-4 text-center text-3xl font-bold text-slate-800">{value}</p>
+      <p className="mt-1 text-center text-slate-500">{label}</p>
     </div>
-  );
-}
-
-function QuickButton({ label, onClick, variant = 'default' }: { label: string; onClick: () => void; variant?: 'default' | 'primary' }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-        variant === 'primary'
-          ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-      }`}
-    >
-      {label}
-    </button>
   );
 }

@@ -24,6 +24,13 @@ interface DailyDigest {
   empty_reason?: string;
 }
 
+const EMPTY_REASON_LABELS: Record<string, string> = {
+  no_active_sources: '当前没有可用数据源，请先初始化或启用资讯源。',
+  no_recent_items: '最近时间窗口内未抓到可用资讯，请稍后重试。',
+  no_matched_signal_types: '采集到资讯但未命中筛选关键词，可调整来源或规则。',
+  no_high_value_items: '今天没有值得花时间的内容。'
+};
+
 interface CollectedItem {
   id: number;
   title: string;
@@ -99,7 +106,7 @@ export default function AISignalTab() {
       } else {
         toast.error(result.message || '获取简报失败');
       }
-    } catch (error) {
+    } catch {
       toast.error('获取简报失败');
     } finally {
       setLoading(false);
@@ -118,7 +125,7 @@ export default function AISignalTab() {
       } else {
         toast.error(result.message || '获取采集列表失败');
       }
-    } catch (error) {
+    } catch {
       toast.error('获取采集列表失败');
     } finally {
       setListLoading(false);
@@ -139,13 +146,18 @@ export default function AISignalTab() {
     try {
       const result = await apiRequest('/api/ai-signal/run', { method: 'POST' });
       if (result.success) {
-        toast.success('已触发生成');
+        const reason = result?.data?.emptyReason || result?.data?.empty_reason;
+        if (result?.data?.status === 'empty') {
+          toast.warning(EMPTY_REASON_LABELS[reason] || '本次生成暂无有效内容');
+        } else {
+          toast.success('已触发生成');
+        }
         await loadDigest();
         await loadCollected();
       } else {
         toast.error(result.message || '触发失败');
       }
-    } catch (error) {
+    } catch {
       toast.error('触发失败');
     } finally {
       setRunning(false);
@@ -169,7 +181,7 @@ export default function AISignalTab() {
       } else {
         toast.error(result.message || '提交失败');
       }
-    } catch (error) {
+    } catch {
       toast.error('提交失败');
     }
   }, [opinions]);
@@ -216,6 +228,11 @@ export default function AISignalTab() {
       impact: summary['影响'] || ''
     };
   }, []);
+
+  const emptyReasonText = useMemo(() => {
+    if (!digest?.empty_reason) return '';
+    return EMPTY_REASON_LABELS[digest.empty_reason] || '';
+  }, [digest?.empty_reason]);
 
   if (loading) {
     return (
@@ -310,7 +327,7 @@ export default function AISignalTab() {
             </div>
 
             {digest.status === 'empty' && (
-              <div className="text-slate-600">{digest.summary_text || '今天没有值得花时间的内容。'}</div>
+              <div className="text-slate-600">{digest.summary_text || emptyReasonText || '今天没有值得花时间的内容。'}</div>
             )}
 
             {digest.status === 'ready' && (

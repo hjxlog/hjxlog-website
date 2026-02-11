@@ -15,7 +15,6 @@ import {
   updateTask,
   updateTasksPosition,
   deleteTask,
-  createTaskFromThought,
   getKanbanData,
   getTaskStats
 } from '../services/TaskService.js';
@@ -342,31 +341,6 @@ router.delete('/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting task:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * 从想法创建任务
- * POST /api/tasks/from-thought/:thoughtId
- */
-router.post('/from-thought/:thoughtId', async (req, res) => {
-  try {
-    const { data, error } = normalizeTaskPayload(req.body);
-    if (error) {
-      return res.status(400).json({ success: false, error });
-    }
-
-    const task = await createTaskFromThought(req.params.thoughtId, data);
-    res.json({
-      success: true,
-      data: task
-    });
-  } catch (error) {
-    console.error('Error creating task from thought:', error.message);
     res.status(500).json({
       success: false,
       error: error.message

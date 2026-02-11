@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 读取统一 Schema 文件
-const sqlFilePath = path.join(__dirname, '../../database/dbschema/001_schema.sql');
+const sqlFilePath = path.join(__dirname, '../../database/dbschema/dbschema_1.0_000_init.sql');
 const sql = fs.readFileSync(sqlFilePath, 'utf-8');
 
 // 数据库配置
@@ -25,7 +25,7 @@ try {
   await client.connect();
   console.log('✅ 数据库连接成功');
 
-  console.log('📝 正在执行 SQL: dbschema/001_schema.sql');
+  console.log('📝 正在执行 SQL: dbschema/dbschema_1.0_000_init.sql');
   await client.query(sql);
   console.log('✅ 表创建成功！');
 
@@ -34,7 +34,7 @@ try {
     SELECT table_name
     FROM information_schema.tables
     WHERE table_schema='public'
-    AND table_name IN ('daily_thoughts', 'long_term_memory')
+    AND table_name IN ('daily_thoughts')
     ORDER BY table_name;
   `);
 

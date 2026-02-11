@@ -24,7 +24,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ease-in-out sticky top-16 h-[calc(100vh-4rem)] z-30 ${
+      className={`hidden lg:flex flex-col bg-[#fbfbfa] border-r border-slate-200 flex-shrink-0 transition-all duration-300 ease-in-out sticky top-16 h-[calc(100vh-4rem)] z-30 ${
         isCollapsed ? 'w-16' : 'w-56'
       }`}
     >
@@ -32,7 +32,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
         {/* 折叠按钮 */}
         <button
           onClick={handleToggle}
-          className="absolute top-4 right-[-12px] z-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-[#165DFF] hover:border-[#165DFF] shadow-sm transition-all duration-200"
+          className="absolute top-4 right-[-12px] z-10 w-6 h-6 bg-[#fbfbfa] border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 shadow-sm transition-all duration-200"
           title={isCollapsed ? '展开侧边栏' : '收起侧边栏'}
         >
           <i className={`fas fa-chevron-${isCollapsed ? 'right' : 'left'} text-xs transform transition-transform duration-300`}></i>
@@ -47,7 +47,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                 </h3>
               )}
               {isCollapsed && (
-                <div className="h-px bg-gray-100 mx-2 mb-3" />
+                <div className="h-px bg-slate-200 mx-2 mb-3" />
               )}
               <div className="space-y-1.5">
                 {group.tabs.map((tab) => (
@@ -57,14 +57,14 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
                     className={`relative group w-full flex items-center px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       activeTab === tab.key
                         ? 'text-white bg-gradient-to-r from-[#165DFF] to-[#3B82F6] shadow-md shadow-blue-200'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-[#165DFF]'
+                        : 'text-slate-600 hover:bg-white hover:text-slate-900'
                     } ${isCollapsed ? 'justify-center' : ''}`}
                     title={isCollapsed ? tab.label : undefined}
                   >
                     <i
                       className={`${tab.icon} text-lg transition-colors duration-200 ${
                         isCollapsed ? 'mx-auto' : 'mr-2.5'
-                      } ${activeTab === tab.key ? 'text-white' : 'text-gray-400 group-hover:text-[#165DFF]'}`}
+                      } ${activeTab === tab.key ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`}
                     ></i>
                     {!isCollapsed && <span>{tab.label}</span>}
 
@@ -83,7 +83,7 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
       </div>
 
       {/* 底部用户区域 */}
-      <div className={`p-3 border-t border-gray-100 bg-gray-50/50 ${isCollapsed ? 'flex justify-center' : ''}`}>
+      <div className={`p-3 border-t border-slate-200 bg-[#f8f8f7] ${isCollapsed ? 'flex justify-center' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
           {/* 头像 */}
           <div className="relative group cursor-pointer" onClick={handleNavigateProfile}>
@@ -113,14 +113,14 @@ export default function DashboardSidebar({ activeTab, setActiveTab }: DashboardS
           <div className="mt-2.5 flex space-x-1">
             <button
               onClick={handleNavigateProfile}
-              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-[#165DFF] hover:border-[#165DFF] hover:bg-blue-50 transition-all"
+              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-slate-600 bg-white border border-slate-200 rounded hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-all"
               title="个人资料"
             >
               <i className="fas fa-user-cog mr-1.5"></i>设置
             </button>
             <button
               onClick={handleLogout}
-              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all"
+              className="flex-1 flex items-center justify-center px-2 py-1.5 text-[11px] font-medium text-slate-600 bg-white border border-slate-200 rounded hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-all"
               title="退出登录"
             >
               <i className="fas fa-sign-out-alt mr-1.5"></i>退出

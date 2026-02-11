@@ -286,51 +286,6 @@ export async function deleteTask(id) {
   await db.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
-/**
- * 从想法创建任务
- */
-export async function createTaskFromThought(thoughtId, taskData) {
-  const db = getDbClient();
-  const { title, description, project_id, priority = 'P2', start_date, due_date } = taskData;
-
-  // 获取想法内容
-  const thoughtResult = await db.query(
-    'SELECT content, thought_date FROM daily_thoughts WHERE id = $1',
-    [thoughtId]
-  );
-  
-  if (thoughtResult.rows.length === 0) {
-    throw new Error('Thought not found');
-  }
-
-  const thought = thoughtResult.rows[0];
-
-  // 创建任务，关联想法
-  const effectiveStartDate = start_date || getTodayDateString();
-  const effectiveDueDate = due_date || getTodayDateString();
-
-  const result = await db.query(
-    `INSERT INTO tasks (
-      title, description, project_id, priority, start_date, due_date,
-      source_thought_id, position
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7,
-      (SELECT COALESCE(MAX(position), -1) + 1 FROM tasks)
-    )
-    RETURNING *`,
-    [
-      title || `来自 ${thought.thought_date} 的想法`,
-      description || thought.content,
-      project_id,
-      priority,
-      effectiveStartDate,
-      effectiveDueDate,
-      thoughtId
-    ]
-  );
-
-  return result.rows[0];
-}
-
 // ==================== 看板视图数据 ====================
 
 /**

@@ -610,22 +610,13 @@ export default function Dashboard() {
                 <TodayHubTab
                   username={user.username}
                   totalViews={totalViews}
-                  worksCount={works.length}
-                  blogsCount={blogs.length}
-                  momentsCount={moments.length}
                   works={works}
                   blogs={blogs}
                   moments={moments}
-                  onGoTasks={() => setActiveTab('tasks')}
-                  onGoThoughts={() => setActiveTab('thoughts')}
-                  onGoReports={() => setActiveTab('openclaw-reports')}
-                  onGoSignal={() => setActiveTab('ai-signal')}
-                  onGoWorks={() => setActiveTab('works')}
-                  onGoBlogs={() => setActiveTab('blogs')}
-                  onGoMoments={() => setActiveTab('moments')}
                   onOpenWorkForm={() => openWorkForm()}
                   onOpenBlogForm={() => openBlogForm()}
                   onOpenMomentForm={() => openMomentForm()}
+                  onGoMoments={() => setActiveTab('moments')}
                 />
               </div>
             )}

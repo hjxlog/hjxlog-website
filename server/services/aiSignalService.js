@@ -58,6 +58,12 @@ const QUESTION_TEMPLATES = {
 const MAX_ARTICLE_CHARS = 4000;
 const SUMMARY_MAX = 220;
 const SUMMARY_CONCURRENCY = 3;
+const EMPTY_REASON_MESSAGES = {
+  no_active_sources: '未找到可用数据源，请先初始化 ai_sources。',
+  no_recent_items: '最近时间窗口内没有抓取到可用条目。',
+  no_matched_signal_types: '采集到了条目，但未命中情报信号关键词。',
+  no_high_value_items: '今天没有值得花时间的内容。'
+};
 
 function stripHtml(input) {
   if (!input) return '';
@@ -358,20 +364,75 @@ async function collectSourceItems(source) {
   return { items, rssUrl };
 }
 
+async function saveEmptyDigest(dbClient, {
+  digestDateStr,
+  emptyReason,
+  summaryText,
+  windowDays,
+  maxItems
+}) {
+  await dbClient.query(
+    `INSERT INTO ai_daily_digests (digest_date, status, summary_text, items, empty_reason, source_window_days, max_items)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (digest_date) DO UPDATE SET
+       status = EXCLUDED.status,
+       summary_text = EXCLUDED.summary_text,
+       items = EXCLUDED.items,
+       empty_reason = EXCLUDED.empty_reason,
+       source_window_days = EXCLUDED.source_window_days,
+       max_items = EXCLUDED.max_items,
+       updated_at = NOW()`,
+    [
+      digestDateStr,
+      'empty',
+      summaryText,
+      JSON.stringify([]),
+      emptyReason,
+      windowDays,
+      maxItems
+    ]
+  );
+}
+
 export async function runDailySignalJob(dbClient, options = {}) {
   const now = new Date();
   const maxItems = options.maxItems || Number(process.env.AI_SIGNAL_MAX_ITEMS) || 5;
   const windowDays = options.windowDays || 3;
   const useLlm = (process.env.AI_SIGNAL_USE_LLM || 'true') === 'true' && !!process.env.ZHIPU_API_KEY;
+  const digestDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const digestDateStr = digestDate.toISOString().slice(0, 10);
 
   const sourcesResult = await dbClient.query(
     'SELECT * FROM ai_sources WHERE active = true ORDER BY id ASC'
   );
+  const activeSources = sourcesResult.rows;
+
+  if (activeSources.length === 0) {
+    const emptyReason = 'no_active_sources';
+    const summaryText = EMPTY_REASON_MESSAGES[emptyReason];
+    await saveEmptyDigest(dbClient, {
+      digestDateStr,
+      emptyReason,
+      summaryText,
+      windowDays,
+      maxItems
+    });
+    return {
+      status: 'empty',
+      items: [],
+      emptyReason,
+      stats: {
+        activeSources: 0,
+        collectedItems: 0,
+        matchedItems: 0
+      }
+    };
+  }
 
   const allCandidates = [];
   const allCollected = [];
 
-  for (const source of sourcesResult.rows) {
+  for (const source of activeSources) {
     let items = [];
     try {
       const result = await collectSourceItems(source);
@@ -399,7 +460,7 @@ export async function runDailySignalJob(dbClient, options = {}) {
   }
 
   let digestItems = [];
-  for (const source of sourcesResult.rows) {
+  for (const source of activeSources) {
     const itemsBySource = allCandidates.filter(item => item.source.id === source.id);
     const enriched = await buildDigestItems(dbClient, source, itemsBySource, now);
     digestItems.push(...enriched);
@@ -456,33 +517,32 @@ export async function runDailySignalJob(dbClient, options = {}) {
     }
   }
 
-  const digestDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const digestDateStr = digestDate.toISOString().slice(0, 10);
-
   if (finalItems.length === 0) {
-    await dbClient.query(
-      `INSERT INTO ai_daily_digests (digest_date, status, summary_text, items, empty_reason, source_window_days, max_items)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (digest_date) DO UPDATE SET
-         status = EXCLUDED.status,
-         summary_text = EXCLUDED.summary_text,
-         items = EXCLUDED.items,
-         empty_reason = EXCLUDED.empty_reason,
-         source_window_days = EXCLUDED.source_window_days,
-         max_items = EXCLUDED.max_items,
-         updated_at = NOW()`,
-      [
-        digestDateStr,
-        'empty',
-        '今天没有值得花时间的内容。',
-        JSON.stringify([]),
-        'no_high_value_items',
-        windowDays,
-        maxItems
-      ]
-    );
+    let emptyReason = 'no_high_value_items';
+    if (allCollected.length === 0) {
+      emptyReason = 'no_recent_items';
+    } else if (digestItems.length === 0) {
+      emptyReason = 'no_matched_signal_types';
+    }
+    const summaryText = EMPTY_REASON_MESSAGES[emptyReason] || EMPTY_REASON_MESSAGES.no_high_value_items;
+    await saveEmptyDigest(dbClient, {
+      digestDateStr,
+      emptyReason,
+      summaryText,
+      windowDays,
+      maxItems
+    });
 
-    return { status: 'empty', items: [] };
+    return {
+      status: 'empty',
+      items: [],
+      emptyReason,
+      stats: {
+        activeSources: activeSources.length,
+        collectedItems: allCollected.length,
+        matchedItems: digestItems.length
+      }
+    };
   }
 
   const summaryText = `今日精选 ${finalItems.length} 条，聚焦于你应投入注意力的变化信号。`;

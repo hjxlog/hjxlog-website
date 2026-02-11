@@ -11,8 +11,6 @@ interface ThoughtsListProps {
 interface ThoughtItem {
   thought_date: string;
   content: string;
-  is_summarized: boolean;
-  mood?: string;
 }
 
 const formatLocalDate = (date: Date): string => {
@@ -108,23 +106,6 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
       : plainText;
   };
 
-  const getMoodEmoji = (mood?: string): string => {
-    if (!mood) return '';
-
-    const moodMap: { [key: string]: string } = {
-      '开心': '😊',
-      '兴奋': '🎉',
-      '平静': '😌',
-      '焦虑': '😰',
-      '疲惫': '😫',
-      '沮丧': '😞',
-      '愤怒': '😠',
-      '期待': '🤩'
-    };
-
-    return moodMap[mood] || '';
-  };
-
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-4">
@@ -176,14 +157,6 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
                       <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
                         今天
                       </span>
-                    )}
-                    {thought?.is_summarized && (
-                      <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                        ✨
-                      </span>
-                    )}
-                    {getMoodEmoji(thought?.mood) && (
-                      <span className="text-lg">{getMoodEmoji(thought?.mood)}</span>
                     )}
                   </div>
 

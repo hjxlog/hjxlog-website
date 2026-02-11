@@ -1,5 +1,7 @@
--- Unified schema for HJXLog
--- Execute this file first to create all tables and indexes.
+-- HJXLog Database Schema v1.0
+-- First-time setup entrypoint:
+--   database/dbschema/hw_1.0_create_table.sql
+-- This script is idempotent and can be executed multiple times safely.
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
@@ -198,21 +200,6 @@ CREATE TABLE IF NOT EXISTS daily_thoughts (
   id SERIAL PRIMARY KEY,
   thought_date DATE UNIQUE NOT NULL,
   content TEXT NOT NULL,
-  mood VARCHAR(50),
-  tags TEXT[] DEFAULT '{}',
-  is_summarized BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS long_term_memory (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  content TEXT NOT NULL,
-  source_date DATE,
-  category VARCHAR(100),
-  importance INTEGER DEFAULT 5 CHECK (importance BETWEEN 1 AND 10),
-  tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -405,11 +392,6 @@ CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_daily_thoughts_date ON daily_thoughts(thought_date DESC);
-CREATE INDEX IF NOT EXISTS idx_daily_thoughts_summarized ON daily_thoughts(is_summarized);
-CREATE INDEX IF NOT EXISTS idx_long_term_memory_category ON long_term_memory(category);
-CREATE INDEX IF NOT EXISTS idx_long_term_memory_importance ON long_term_memory(importance DESC);
-CREATE INDEX IF NOT EXISTS idx_long_term_memory_source_date ON long_term_memory(source_date DESC);
-CREATE INDEX IF NOT EXISTS idx_long_term_memory_created_at ON long_term_memory(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_external_api_tokens_token ON external_api_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_external_api_tokens_token_hash ON external_api_tokens(token_hash);
@@ -460,9 +442,6 @@ CREATE TRIGGER trg_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE 
 
 DROP TRIGGER IF EXISTS trg_daily_thoughts_updated_at ON daily_thoughts;
 CREATE TRIGGER trg_daily_thoughts_updated_at BEFORE UPDATE ON daily_thoughts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS trg_long_term_memory_updated_at ON long_term_memory;
-CREATE TRIGGER trg_long_term_memory_updated_at BEFORE UPDATE ON long_term_memory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS trg_external_api_tokens_updated_at ON external_api_tokens;
 CREATE TRIGGER trg_external_api_tokens_updated_at BEFORE UPDATE ON external_api_tokens FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

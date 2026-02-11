@@ -13,7 +13,6 @@ TRUNCATE TABLE
   task_comments,
   tasks,
   projects,
-  long_term_memory,
   daily_thoughts,
   openclaw_daily_reports,
   blog_views,
@@ -636,16 +635,9 @@ INSERT INTO tasks (title, description, project_id, status, priority, due_date) V
 ON CONFLICT DO NOTHING;
 
 -- Memory sample data
-INSERT INTO daily_thoughts (thought_date, content, mood, tags, is_summarized) VALUES
-  ('2026-02-06', '今天完成了任务管理模块的大部分接口，剩余前端细节。', 'productive', ARRAY['task-force','backend'], true),
-  ('2026-02-07', '开始梳理数据库脚本结构，准备统一 schema/preset/test。', 'focused', ARRAY['database','refactor'], false)
+INSERT INTO daily_thoughts (thought_date, content) VALUES
+  ('2026-02-06', '今天完成了任务管理模块的大部分接口，剩余前端细节。'),
+  ('2026-02-07', '开始梳理数据库脚本结构，准备统一 schema/preset/test。')
 ON CONFLICT (thought_date) DO UPDATE SET
   content = EXCLUDED.content,
-  mood = EXCLUDED.mood,
-  tags = EXCLUDED.tags,
-  is_summarized = EXCLUDED.is_summarized,
   updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO long_term_memory (title, content, source_date, category, importance, tags) VALUES
-  ('统一数据库脚本入口', '将建表和数据脚本拆分为 dbschema/preset/test，可显著降低维护复杂度。', '2026-02-07', '架构', 8, ARRAY['database','engineering'])
-ON CONFLICT DO NOTHING;
