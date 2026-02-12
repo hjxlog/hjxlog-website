@@ -101,6 +101,15 @@ export default function DailyThoughtEditor({
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <span>{wordCount} 字</span>
             <span>更新于 {formatDateTime(thought?.updated_at)}</span>
+            {canEdit && (
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !content.trim()}
+                className="rounded-md bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                {isSaving ? '保存中...' : '保存'}
+              </button>
+            )}
             {!canEdit && (
               <span className="inline-flex items-center text-gray-400">
                 <LockClosedIcon className="mr-1 h-4 w-4" />
@@ -122,19 +131,7 @@ export default function DailyThoughtEditor({
           </div>
         </div>
       ) : (
-        <div className="relative">
-          <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur">
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !content.trim()}
-                className="rounded-md bg-purple-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-              >
-                {isSaving ? '保存中...' : '保存'}
-              </button>
-            </div>
-          </div>
-
+        <div>
           <div className="p-4">
             <textarea
               value={content}

@@ -32,14 +32,6 @@ const normalizeDate = (input: string): string => {
   return input.includes('T') ? input.slice(0, 10) : input;
 };
 
-const getLocalToday = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const ThoughtsList: React.FC<ThoughtsListProps> = ({
   selectedDate,
   onSelectDate,
@@ -51,7 +43,7 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
   const fetchThoughtsList = async () => {
     try {
       setLoading(true);
-      const data = await apiRequest<{ success: boolean; data: any[] }>('/api/thoughts?limit=30');
+      const data = await apiRequest('/api/thoughts?limit=30') as { success: boolean; data: any[] };
       setThoughts(data.data || []);
     } catch (error) {
       console.error('获取想法列表失败:', error);
@@ -65,27 +57,12 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
     fetchThoughtsList();
   }, []);
 
-  // 生成过去30天的日期（如果数据库中没有数据）
-  const generateLast30Days = () => {
-    const dates: string[] = [];
-    const base = new Date(getLocalToday());
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(base);
-      date.setDate(date.getDate() - i);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      dates.push(`${year}-${month}-${day}`);
-    }
-    return dates;
-  };
-
   const displayDates = (() => {
-    const last30Days = generateLast30Days();
-    const thoughtDates = thoughts.map((t) => normalizeDate(t.thought_date)).filter(Boolean);
-    // Always keep today visible while preserving recent-day browsing.
-    const merged = [...new Set([...last30Days, ...thoughtDates])];
-    return merged.sort((a, b) => b.localeCompare(a));
+    const thoughtDates = thoughts
+      .filter((t) => t.content && t.content.trim().length > 0)
+      .map((t) => normalizeDate(t.thought_date))
+      .filter(Boolean);
+    return [...new Set(thoughtDates)].sort((a, b) => b.localeCompare(a));
   })();
 
   const getPreviewText = (date: string): string => {
@@ -119,15 +96,12 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-          <CalendarDaysIcon className="h-5 w-5 mr-2 text-purple-600" />
-          日期列表
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          选择日期查看或编辑想法
-        </p>
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <CalendarDaysIcon className="h-5 w-5 text-purple-600" />
+          <h2 className="text-base font-semibold text-gray-900">日期列表</h2>
+        </div>
       </div>
 
       <div className="max-h-[600px] overflow-y-auto">

@@ -62,8 +62,8 @@ export default function ThoughtsTab() {
   }, [selectedDate]);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-      <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-24 lg:self-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+      <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
         <ThoughtsList selectedDate={selectedDate} onSelectDate={setSelectedDate} today={today} />
       </aside>
 

@@ -5,6 +5,7 @@
       "name": "OpenAI News",
       "type": "blog",
       "url": "https://openai.com/blog/",
+      "rss": "https://openai.com/news/rss.xml",
       "description": "OpenAI official announcements and research updates.",
       "tags": ["model", "product", "research", "safety"],
       "active": true,
@@ -35,6 +36,7 @@
       "name": "Google AI Blog",
       "type": "blog",
       "url": "https://blog.google/technology/ai/",
+      "rss": "https://blog.google/technology/ai/rss/",
       "description": "Google AI product and research updates.",
       "tags": ["model", "application", "research"],
       "active": true,
@@ -95,6 +97,7 @@
       "name": "NVIDIA Technical Blog (AI/ML Tag)",
       "type": "blog",
       "url": "https://developer.nvidia.com/blog/tag/machine-learning-and-artificial-intelligence/",
+      "rss": "https://developer.nvidia.com/blog/tag/machine-learning-and-artificial-intelligence/feed/",
       "description": "NVIDIA engineering and applied AI updates.",
       "tags": ["engineering", "application"],
       "active": true,
@@ -155,6 +158,7 @@
       "name": "GitHub Blog (AI Tag)",
       "type": "blog",
       "url": "https://github.blog/tag/ai/",
+      "rss": "https://github.blog/tag/ai/feed/",
       "description": "Engineering practices and AI tooling ecosystem.",
       "tags": ["engineering", "application"],
       "active": true,
@@ -284,6 +288,102 @@
         "engineering": 0.8,
         "research": 0.5,
         "safety": 0.3
+      }
+    },
+    {
+      "name": "AWS Machine Learning Blog",
+      "type": "blog",
+      "url": "https://aws.amazon.com/blogs/machine-learning/",
+      "rss": "https://aws.amazon.com/blogs/machine-learning/feed/",
+      "description": "Applied AI/ML engineering updates from AWS.",
+      "tags": ["engineering", "application", "product"],
+      "active": true,
+      "weights": {
+        "model": 0.5,
+        "application": 0.8,
+        "engineering": 0.9,
+        "research": 0.4,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "VentureBeat AI",
+      "type": "news",
+      "url": "https://venturebeat.com/category/ai/",
+      "rss": "https://venturebeat.com/category/ai/feed/",
+      "description": "Industry AI news and enterprise adoption updates.",
+      "tags": ["application", "industry", "product"],
+      "active": true,
+      "weights": {
+        "model": 0.5,
+        "application": 0.8,
+        "engineering": 0.6,
+        "research": 0.4,
+        "safety": 0.5
+      }
+    },
+    {
+      "name": "MIT Technology Review - AI",
+      "type": "news",
+      "url": "https://www.technologyreview.com/topic/artificial-intelligence/",
+      "rss": "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
+      "description": "AI industry, policy, and impact reporting.",
+      "tags": ["application", "safety", "research"],
+      "active": true,
+      "weights": {
+        "model": 0.5,
+        "application": 0.7,
+        "engineering": 0.4,
+        "research": 0.7,
+        "safety": 0.8
+      }
+    },
+    {
+      "name": "ScienceDaily - Artificial Intelligence",
+      "type": "news",
+      "url": "https://www.sciencedaily.com/news/computers_math/artificial_intelligence/",
+      "rss": "https://rss.sciencedaily.com/computers_math/artificial_intelligence.xml",
+      "description": "Daily AI research highlights and paper summaries.",
+      "tags": ["research", "model", "application"],
+      "active": true,
+      "weights": {
+        "model": 0.7,
+        "application": 0.6,
+        "engineering": 0.4,
+        "research": 0.9,
+        "safety": 0.4
+      }
+    },
+    {
+      "name": "One Useful Thing",
+      "type": "blog",
+      "url": "https://www.oneusefulthing.org/",
+      "rss": "https://www.oneusefulthing.org/feed",
+      "description": "Practical analysis on AI tools and societal impact.",
+      "tags": ["application", "safety", "industry"],
+      "active": true,
+      "weights": {
+        "model": 0.4,
+        "application": 0.8,
+        "engineering": 0.5,
+        "research": 0.6,
+        "safety": 0.7
+      }
+    },
+    {
+      "name": "Interconnects",
+      "type": "newsletter",
+      "url": "https://www.interconnects.ai/",
+      "rss": "https://www.interconnects.ai/feed",
+      "description": "Model evaluations, releases, and AI market analysis.",
+      "tags": ["model", "research", "industry"],
+      "active": true,
+      "weights": {
+        "model": 0.8,
+        "application": 0.6,
+        "engineering": 0.7,
+        "research": 0.8,
+        "safety": 0.5
       }
     }
   ]

@@ -29,7 +29,7 @@ const ThoughtsPage: React.FC = () => {
   const fetchThoughtByDate = async (date: string) => {
     try {
       setLoading(true);
-      const data = await apiRequest<{ success: boolean; data: DailyThought | null; canEdit: boolean }>(`/api/thoughts/${date}`);
+      const data = await apiRequest(`/api/thoughts/${date}`) as { success: boolean; data: DailyThought | null; canEdit: boolean };
       setCurrentThought(data.data);
       setCanEdit(data.canEdit);
     } catch (error) {
@@ -43,10 +43,10 @@ const ThoughtsPage: React.FC = () => {
   // 保存今天的想法
   const handleSaveToday = async (content: string) => {
     try {
-      const data = await apiRequest<{ success: boolean; data: DailyThought }>('/api/thoughts/today', {
+      const data = await apiRequest('/api/thoughts/today', {
         method: 'POST',
         body: JSON.stringify({ content })
-      });
+      }) as { success: boolean; data: DailyThought };
       setCurrentThought(data.data);
       toast.success('想法保存成功');
     } catch (error) {
@@ -98,9 +98,9 @@ const ThoughtsPage: React.FC = () => {
       </div>
 
       {/* 主内容区 */}
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-24 lg:self-start">
+      <div className="mx-auto max-w-7xl px-4 pt-2 pb-6 sm:px-6 lg:px-8 lg:pt-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+          <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
             <ThoughtsList
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
@@ -108,15 +108,15 @@ const ThoughtsPage: React.FC = () => {
             />
           </aside>
           <section className="lg:col-span-8 xl:col-span-9">
-            <DailyThoughtEditor
-              thought={currentThought}
-              selectedDate={selectedDate}
-              canEdit={canEdit}
-              loading={loading}
-              onSave={handleSaveToday}
-              today={today}
-            />
-          </section>
+        <DailyThoughtEditor
+          thought={currentThought}
+          selectedDate={selectedDate}
+          canEdit={canEdit}
+          loading={loading}
+          onSave={handleSaveToday}
+          today={today}
+        />
+      </section>
         </div>
       </div>
     </div>
