@@ -195,26 +195,42 @@ async function getSourceWeights(dbClient, sourceId) {
 }
 
 async function upsertItem(dbClient, sourceId, item) {
-  const result = await dbClient.query(
-    `INSERT INTO ai_source_items (source_id, title, url, summary, raw, published_at)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT (url) DO UPDATE SET
-       title = EXCLUDED.title,
-       summary = EXCLUDED.summary,
-       raw = EXCLUDED.raw,
-       published_at = EXCLUDED.published_at,
-       updated_at = NOW()
-     RETURNING id`,
-    [
-      sourceId,
-      item.title,
-      item.url,
-      item.summary || null,
-      item.raw || {},
-      item.publishedAt || null
-    ]
-  );
-  return result.rows[0].id;
+  const values = [
+    sourceId,
+    item.title,
+    item.url,
+    item.summary || null,
+    item.raw || {},
+    item.publishedAt || null
+  ];
+  const sql = `INSERT INTO ai_source_items (source_id, title, url, summary, raw, published_at)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT (url) DO UPDATE SET
+      title = EXCLUDED.title,
+      summary = EXCLUDED.summary,
+      raw = EXCLUDED.raw,
+      published_at = EXCLUDED.published_at,
+      updated_at = NOW()
+    RETURNING id`;
+
+  try {
+    const result = await dbClient.query(sql, values);
+    return result.rows[0].id;
+  } catch (error) {
+    // 自愈：当序列落后于现有最大 id 时，可能触发主键冲突
+    if (error?.code === '23505' && error?.constraint === 'ai_source_items_pkey') {
+      await dbClient.query(`
+        SELECT setval(
+          pg_get_serial_sequence('ai_source_items', 'id'),
+          COALESCE((SELECT MAX(id) FROM ai_source_items), 0) + 1,
+          false
+        )
+      `);
+      const retry = await dbClient.query(sql, values);
+      return retry.rows[0].id;
+    }
+    throw error;
+  }
 }
 
 function buildQuestion(types) {
