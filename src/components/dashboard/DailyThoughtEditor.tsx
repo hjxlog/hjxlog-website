@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   CalendarIcon,
@@ -62,7 +62,7 @@ export default function DailyThoughtEditor({
   const wordCount = content.length;
   const readContent = content || '暂无内容';
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!content.trim()) {
       toast.error('内容不能为空');
       return;
@@ -75,7 +75,27 @@ export default function DailyThoughtEditor({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [content, onSave]);
+
+  useEffect(() => {
+    if (!canEdit) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isSaveShortcut =
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === 's';
+
+      if (!isSaveShortcut) return;
+      event.preventDefault();
+
+      if (!isSaving && content.trim()) {
+        void handleSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canEdit, content, isSaving, handleSave]);
 
   if (loading) {
     return (
