@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Camera, MapPin, Calendar } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 import ImageModal from '../components/ImageModal';
 import PublicNav from '@/components/PublicNav';
@@ -8,15 +8,13 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import Empty from '@/components/Empty';
 import { toast } from 'sonner';
-import type { Photo, PhotosResponse, CategoriesResponse } from '@/types';
+import type { Photo, PhotosResponse } from '@/types';
 
 export default function Photos() {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedCategory, setSelectedCategory] = useState('全部');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -24,22 +22,6 @@ export default function Photos() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const limit = 20;
-
-  // 获取照片分类
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/photos/categories`);
-      const data: CategoriesResponse = await response.json();
-
-      if (data.success) {
-        setCategories(data.data);
-      } else {
-        console.error('获取分类失败:', data.message);
-      }
-    } catch (error) {
-      console.error('获取分类失败:', error);
-    }
-  }, []);
 
   // 获取照片列表
   const fetchPhotos = useCallback(async (pageNum: number = 1, reset: boolean = false) => {
@@ -56,12 +38,6 @@ export default function Photos() {
         limit: limit.toString(),
         published: 'true'
       });
-
-      if (selectedCategory && selectedCategory !== '全部') {
-        params.append('category', selectedCategory);
-      }
-
-
 
       const response = await fetch(`${API_BASE_URL}/api/photos?${params}`);
       const data: PhotosResponse = await response.json();
@@ -89,22 +65,12 @@ export default function Photos() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [selectedCategory, limit]);
+  }, [limit]);
 
   // 初始化数据
   useEffect(() => {
-    fetchCategories();
     fetchPhotos(1, true);
-  }, [fetchCategories, fetchPhotos]);
-
-  // 搜索和筛选变化时重新获取数据
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchPhotos(1, true);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedCategory, fetchPhotos]);
+  }, [fetchPhotos]);
 
   // 加载更多
   const loadMore = () => {
@@ -182,13 +148,6 @@ export default function Photos() {
               )}
 
               <div className="space-y-2">
-                {photo.category && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Camera className="w-3 h-3 mr-1" />
-                    <span>{photo.category}</span>
-                  </div>
-                )}
-
                 {photo.location && (
                   <div className="flex items-center text-xs text-gray-500">
                     <MapPin className="w-3 h-3 mr-1" />
@@ -226,24 +185,6 @@ export default function Photos() {
             记录生活中的美好瞬间，分享摄影路上的点点滴滴
           </p>
         </div>
-
-        {/* 分类筛选 */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-3 rounded-full transition-all duration-300 ${selectedCategory === category
-                ? 'bg-[#165DFF] text-white shadow-lg'
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-
 
         {/* 照片展示区域 */}
         {loading ? (
