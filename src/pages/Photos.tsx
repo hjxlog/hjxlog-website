@@ -142,7 +142,7 @@ export default function Photos() {
               </h3>
 
               {photo.description && (
-                <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+                <p className="text-gray-600 text-sm mb-3 line-clamp-1">
                   {photo.description}
                 </p>
               )}
