@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react";
 import { AuthContext, User } from '@/contexts/authContext';
 import { Toaster } from 'sonner';
@@ -53,6 +53,15 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const shouldShowAIAssistant = useMemo(() => {
+    const path = location.pathname;
+    return !(
+      path === '/dashboard' ||
+      path.startsWith('/admin/')
+    );
+  }, [location.pathname]);
 
   // 初始化时检查本地存储的认证状态
   useEffect(() => {
@@ -129,7 +138,7 @@ export default function App() {
       value={authContextValue}
     >
       <Toaster position="top-right" richColors />
-      <AIAssistant />
+      {shouldShowAIAssistant && <AIAssistant />}
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" text="加载页面资源中..." /></div>}>
         <Routes>
           <Route path="/" element={<Home />} />

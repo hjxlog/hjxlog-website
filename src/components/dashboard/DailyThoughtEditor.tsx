@@ -59,6 +59,7 @@ export default function DailyThoughtEditor({
 
   const displayDate = normalizeDate(thought?.thought_date) || selectedDate;
   const isToday = displayDate === today;
+  const isEditable = canEdit || isToday;
   const wordCount = content.length;
   const readContent = content || '暂无内容';
 
@@ -78,7 +79,7 @@ export default function DailyThoughtEditor({
   }, [content, onSave]);
 
   useEffect(() => {
-    if (!canEdit) return;
+    if (!isEditable) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const isSaveShortcut =
@@ -95,7 +96,7 @@ export default function DailyThoughtEditor({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canEdit, content, isSaving, handleSave]);
+  }, [isEditable, content, isSaving, handleSave]);
 
   if (loading) {
     return (
@@ -121,7 +122,7 @@ export default function DailyThoughtEditor({
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
             <span className="whitespace-nowrap">{wordCount} 字</span>
             <span className="whitespace-nowrap">更新于 {formatDateTime(thought?.updated_at)}</span>
-            {canEdit && (
+            {isEditable && (
               <button
                 onClick={handleSave}
                 disabled={isSaving || !content.trim()}
@@ -130,7 +131,7 @@ export default function DailyThoughtEditor({
                 {isSaving ? '保存中...' : '保存'}
               </button>
             )}
-            {!canEdit && (
+            {!isEditable && (
               <span className="inline-flex items-center whitespace-nowrap text-gray-400">
                 <LockClosedIcon className="mr-1 h-4 w-4" />
                 只读
@@ -140,7 +141,7 @@ export default function DailyThoughtEditor({
         </div>
       </div>
 
-      {!canEdit ? (
+      {!isEditable ? (
         <div className="p-5">
           <article className="min-h-[420px] whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 px-4 py-4 text-[15px] leading-7 text-gray-800">
             {readContent}

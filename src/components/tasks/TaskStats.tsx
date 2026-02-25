@@ -65,24 +65,46 @@ const TaskStats: React.FC<TaskStatsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-      {cards.map(card => {
-        const Icon = card.icon;
-        return (
-          <div key={card.title} className="bg-white rounded-lg shadow-sm p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-600">{card.title}</p>
-                <p className={`text-xl font-bold ${card.textColor} mt-1`}>{card.value}</p>
+    <>
+      <div className="mb-3 grid grid-cols-3 gap-2 md:hidden">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.title}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2"
+              >
+                <div className={`${card.color} rounded-md p-1`}>
+                  <Icon className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div className="leading-tight">
+                  <p className="text-[11px] text-slate-500">{card.title}</p>
+                  <p className={`text-sm font-semibold ${card.textColor}`}>{card.value}</p>
+                </div>
               </div>
-              <div className={`${card.color} p-1.5 rounded-lg`}>
-                <Icon className="h-4 w-4 text-white" />
+            );
+          })}
+      </div>
+
+      <div className="mb-4 hidden grid-cols-3 gap-3 lg:grid-cols-6 md:grid">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.title} className="rounded-lg bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-600">{card.title}</p>
+                  <p className={`mt-1 text-xl font-bold ${card.textColor}`}>{card.value}</p>
+                </div>
+                <div className={`${card.color} rounded-lg p-1.5`}>
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </>
   );
 };
 

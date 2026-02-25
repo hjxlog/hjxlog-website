@@ -253,27 +253,28 @@ export default function PromptManagementTab() {
 
   return (
     <div className="space-y-6">
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {stats.map((stat) => {
-          const scenarioInfo = scenarios.find(s => s.value === stat.scenario);
-          return (
-            <div key={stat.scenario} className="bg-white rounded-lg shadow-sm p-4 border border-slate-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">{scenarioInfo?.label || stat.scenario}</p>
-                  <p className="text-2xl font-bold text-slate-900">{stat.count}</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    启用: {stat.active_count} / 总计: {stat.count}
-                  </p>
-                </div>
-                <div className={`p-3 rounded-full ${scenarioInfo?.color || 'bg-gray-100'}`}>
-                  <i className={`fas ${scenarioInfo?.icon || 'fas fa-question'} text-xl`}></i>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* 类别统计（紧凑模式） */}
+      <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">类别统计</h3>
+          <span className="text-xs text-slate-500">共 {stats.length} 类</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {stats.map((stat) => {
+            const scenarioInfo = scenarios.find((s) => s.value === stat.scenario);
+            return (
+              <span
+                key={stat.scenario}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700"
+                title={`${scenarioInfo?.label || stat.scenario}: 启用 ${stat.active_count} / 总计 ${stat.count}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${scenarioInfo?.color || 'bg-gray-300'}`} />
+                <span>{scenarioInfo?.label || stat.scenario}</span>
+                <span className="font-semibold text-slate-900">{stat.active_count}/{stat.count}</span>
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {/* 操作栏 */}
@@ -329,21 +330,21 @@ export default function PromptManagementTab() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => openTestPanel(template)}
-                    className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                    className="whitespace-nowrap px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
                   >
                     <i className="fas fa-flask mr-1"></i>
                     测试
                   </button>
                   <button
                     onClick={() => openEditForm(template)}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    className="whitespace-nowrap px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                   >
                     <i className="fas fa-edit mr-1"></i>
                     编辑
                   </button>
                   <button
                     onClick={() => deleteTemplate(template.name)}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    className="whitespace-nowrap px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
                   >
                     <i className="fas fa-trash mr-1"></i>
                     删除

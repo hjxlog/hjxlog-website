@@ -67,7 +67,7 @@ export default function OpenClawReportsTab() {
       } else {
         toast.error(result.message || '获取 OpenClaw 汇报失败');
       }
-    } catch (error) {
+    } catch {
       toast.error('获取 OpenClaw 汇报失败');
     } finally {
       setLoading(false);
@@ -114,26 +114,26 @@ export default function OpenClawReportsTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-xs text-slate-500">最新汇报日期</div>
-          <div className="text-lg font-semibold text-slate-900">{latestDate}</div>
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:rounded-2xl md:p-4">
+          <div className="text-[11px] text-slate-500 md:text-xs">最新汇报日期</div>
+          <div className="text-sm font-semibold text-slate-900 md:text-lg">{latestDate}</div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-xs text-slate-500">总汇报数</div>
-          <div className="text-lg font-semibold text-slate-900">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:rounded-2xl md:p-4">
+          <div className="text-[11px] text-slate-500 md:text-xs">总汇报数</div>
+          <div className="text-sm font-semibold text-slate-900 md:text-lg">
             {statsLoading ? '-' : (stats?.total ?? 0)}
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-xs text-slate-500">近 7 天汇报</div>
-          <div className="text-lg font-semibold text-slate-900">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:rounded-2xl md:p-4">
+          <div className="text-[11px] text-slate-500 md:text-xs">近 7 天汇报</div>
+          <div className="text-sm font-semibold text-slate-900 md:text-lg">
             {statsLoading ? '-' : (stats?.last7Days ?? 0)}
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="text-xs text-slate-500">状态分布</div>
-          <div className="text-sm text-slate-700">
+        <div className="bg-white rounded-xl border border-slate-200 p-3 md:rounded-2xl md:p-4">
+          <div className="text-[11px] text-slate-500 md:text-xs">状态分布</div>
+          <div className="text-xs text-slate-700 md:text-sm">
             {statsLoading
               ? '-'
               : `正常 ${stats?.byStatus?.ok ?? 0} / 警告 ${stats?.byStatus?.warning ?? 0} / 异常 ${stats?.byStatus?.error ?? 0}`}

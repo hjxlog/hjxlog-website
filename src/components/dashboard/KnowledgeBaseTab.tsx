@@ -250,32 +250,32 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
       {activeSubTab === 'overview' && stats && (
         <div className="min-h-[400px]">
           {/* 统计卡片 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-6">
+          <div className="mb-6 grid grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+            <div className="overflow-hidden rounded-lg bg-white shadow">
+              <div className="p-3 sm:p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                    <DocumentTextIcon className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 rounded-md bg-indigo-500 p-1.5 sm:p-3">
+                    <DocumentTextIcon className="h-4 w-4 text-white sm:h-6 sm:w-6" />
                   </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-500">文档块总数</p>
-                    <p className="mt-1 text-3xl font-semibold text-gray-900">{stats.total}</p>
+                  <div className="ml-2.5 flex-1 sm:ml-4">
+                    <p className="text-xs font-medium text-gray-500 sm:text-sm">文档块总数</p>
+                    <p className="mt-0.5 text-xl font-semibold text-gray-900 sm:mt-1 sm:text-3xl">{stats.total}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-6">
+            <div className="overflow-hidden rounded-lg bg-white shadow">
+              <div className="p-3 sm:p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
-                    <BeakerIcon className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 rounded-md bg-green-500 p-1.5 sm:p-3">
+                    <BeakerIcon className="h-4 w-4 text-white sm:h-6 sm:w-6" />
                   </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-500">博客</p>
-                    <p className="mt-1 text-2xl font-semibold text-gray-900">
+                  <div className="ml-2.5 flex-1 sm:ml-4">
+                    <p className="text-xs font-medium text-gray-500 sm:text-sm">博客</p>
+                    <p className="mt-0.5 text-base font-semibold text-gray-900 sm:mt-1 sm:text-2xl">
                       {stats.byType.blog?.items || 0} 篇
-                      <span className="text-sm text-gray-500 ml-2">
+                      <span className="ml-1 text-[10px] text-gray-500 sm:ml-2 sm:text-sm">
                         ({stats.byType.blog?.chunks || 0} 块)
                       </span>
                     </p>
@@ -284,17 +284,17 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-6">
+            <div className="overflow-hidden rounded-lg bg-white shadow">
+              <div className="p-3 sm:p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                    <CubeIcon className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 rounded-md bg-purple-500 p-1.5 sm:p-3">
+                    <CubeIcon className="h-4 w-4 text-white sm:h-6 sm:w-6" />
                   </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-500">作品</p>
-                    <p className="mt-1 text-2xl font-semibold text-gray-900">
+                  <div className="ml-2.5 flex-1 sm:ml-4">
+                    <p className="text-xs font-medium text-gray-500 sm:text-sm">作品</p>
+                    <p className="mt-0.5 text-base font-semibold text-gray-900 sm:mt-1 sm:text-2xl">
                       {stats.byType.work?.items || 0} 个
-                      <span className="text-sm text-gray-500 ml-2">
+                      <span className="ml-1 text-[10px] text-gray-500 sm:ml-2 sm:text-sm">
                         ({stats.byType.work?.chunks || 0} 块)
                       </span>
                     </p>
@@ -303,17 +303,17 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-6">
+            <div className="overflow-hidden rounded-lg bg-white shadow">
+              <div className="p-3 sm:p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-pink-500 rounded-md p-3">
-                    <PhotoIcon className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 rounded-md bg-pink-500 p-1.5 sm:p-3">
+                    <PhotoIcon className="h-4 w-4 text-white sm:h-6 sm:w-6" />
                   </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-500">照片</p>
-                    <p className="mt-1 text-2xl font-semibold text-gray-900">
+                  <div className="ml-2.5 flex-1 sm:ml-4">
+                    <p className="text-xs font-medium text-gray-500 sm:text-sm">照片</p>
+                    <p className="mt-0.5 text-base font-semibold text-gray-900 sm:mt-1 sm:text-2xl">
                       {stats.byType.photo?.items || 0} 张
-                      <span className="text-sm text-gray-500 ml-2">
+                      <span className="ml-1 text-[10px] text-gray-500 sm:ml-2 sm:text-sm">
                         ({stats.byType.photo?.chunks || 0} 块)
                       </span>
                     </p>
