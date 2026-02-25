@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { API_BASE_URL } from '@/config/api';
+import { useCallback, useMemo, useEffect, useState } from 'react';
+import { API_BASE_URL, apiRequest } from '@/config/api';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
@@ -13,6 +13,7 @@ import {
   RssIcon
 } from '@heroicons/react/24/outline';
 import type { Blog, Moment, Work } from '@/types';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 interface TodayHubTabProps {
   username: string;
@@ -33,6 +34,14 @@ const toDisplayDate = (value?: string | null) => {
   return `${date.getMonth() + 1}-${date.getDate()}`;
 };
 
+const getLocalToday = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function TodayHubTab({
   username,
   totalViews,
@@ -44,6 +53,12 @@ export default function TodayHubTab({
   onOpenMomentForm,
   onGoMoments
 }: TodayHubTabProps) {
+  const [selectedReportDate] = useState<string>(getLocalToday());
+  const [reportContent, setReportContent] = useState('');
+  const [reportUpdatedAt, setReportUpdatedAt] = useState<string | null>(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+
   const totalContent = works.length + blogs.length + moments.length;
 
   const pieData = useMemo(
@@ -82,6 +97,41 @@ export default function TodayHubTab({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5);
   }, [blogs, moments, works]);
+
+  const fetchReportByDate = useCallback(async (date: string) => {
+    try {
+      setLoadingReport(true);
+      const data = await apiRequest(`/api/daily-reports/${date}`);
+      const report = data.data;
+      setReportContent(report?.content || '');
+      setReportUpdatedAt(report?.updated_at || null);
+    } catch (error) {
+      console.error('获取日报失败:', error);
+      toast.error('获取日报失败');
+    } finally {
+      setLoadingReport(false);
+    }
+  }, []);
+
+  const handleGenerateReport = useCallback(async () => {
+    try {
+      setGeneratingReport(true);
+      const data = await apiRequest('/api/daily-reports/today/generate', { method: 'POST' });
+      const report = data.data;
+      setReportContent(report?.content || '');
+      setReportUpdatedAt(report?.updated_at || null);
+      toast.success('今日日报已生成');
+    } catch (error) {
+      console.error('生成日报失败:', error);
+      toast.error('生成日报失败');
+    } finally {
+      setGeneratingReport(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReportByDate(selectedReportDate);
+  }, [selectedReportDate, fetchReportByDate]);
 
   const handleExportAll = useCallback(async () => {
     try {
@@ -214,6 +264,45 @@ export default function TodayHubTab({
                   {item.name}
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 flex items-center">
+                  <ClockIcon className="mr-2 h-5 w-5 text-slate-400" />
+                  今日日报
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">汇总当日任务与想法，生成简洁日报</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleGenerateReport}
+                  className="inline-flex items-center rounded-xl bg-[#165DFF] px-4 py-2 text-sm font-medium text-white hover:bg-[#0E4BA4] disabled:opacity-60"
+                  disabled={generatingReport}
+                >
+                  {generatingReport ? '生成中...' : '生成今日日报'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 min-h-[140px]">
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
+                  <span>日期：{selectedReportDate}</span>
+                  <span>{reportUpdatedAt ? `更新于 ${new Date(reportUpdatedAt).toLocaleString()}` : '尚未生成'}</span>
+                </div>
+                {loadingReport ? (
+                  <div className="text-sm text-slate-400">加载中...</div>
+                ) : reportContent ? (
+                  <div className="prose prose-sm max-w-none max-h-56 overflow-y-auto pr-1">
+                    <MarkdownRenderer content={reportContent} />
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400">暂无日报内容</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

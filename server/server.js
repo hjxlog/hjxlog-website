@@ -37,6 +37,8 @@ import {
 import memoryRouter from './routes/memoryRouter.js';
 import { setMemoryDbClientGetter } from './services/MemoryService.js';
 import { setTaskDbClientGetter } from './services/TaskService.js';
+import dailyReportRouter from './routes/dailyReportRouter.js';
+import { setDailyReportDbClientGetter } from './services/DailyReportService.js';
 
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -200,6 +202,7 @@ const getDbClient = () => dbClient;
 const getLogger = () => logger;
 setMemoryDbClientGetter(getDbClient);
 setTaskDbClientGetter(getDbClient);
+setDailyReportDbClientGetter(getDbClient);
 
 // 添加日志中间件
 app.use((req, res, next) => {
@@ -322,6 +325,8 @@ app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
 
 // 每日想法 API
 app.use('/api', memoryRouter);
+// 每日工作总结 API
+app.use('/api', dailyReportRouter);
 
 // Task Force API (任务/项目管理)
 import taskRouter from './routes/taskRouter.js';

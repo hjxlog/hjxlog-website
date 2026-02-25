@@ -25,6 +25,7 @@ export default function ThoughtsTab() {
   const [currentThought, setCurrentThought] = useState<DailyThought | null>(null);
   const [canEdit, setCanEdit] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isListCollapsed, setIsListCollapsed] = useState<boolean>(true);
 
   const fetchThoughtByDate = async (date: string) => {
     try {
@@ -62,21 +63,35 @@ export default function ThoughtsTab() {
   }, [selectedDate]);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
-      <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
-        <ThoughtsList selectedDate={selectedDate} onSelectDate={setSelectedDate} today={today} />
-      </aside>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500">历史记录</span>
+        <button
+          onClick={() => setIsListCollapsed((prev) => !prev)}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+        >
+          {isListCollapsed ? '展开' : '收起'}
+        </button>
+      </div>
 
-      <section className="lg:col-span-8 xl:col-span-9">
-        <DailyThoughtEditor
-          thought={currentThought}
-          selectedDate={selectedDate}
-          canEdit={canEdit}
-          loading={loading}
-          onSave={handleSaveToday}
-          today={today}
-        />
-      </section>
+      <div className={`grid grid-cols-1 gap-4 ${isListCollapsed ? '' : 'lg:grid-cols-12'} items-start`}>
+        {!isListCollapsed && (
+          <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-0">
+            <ThoughtsList selectedDate={selectedDate} onSelectDate={setSelectedDate} today={today} />
+          </aside>
+        )}
+
+        <section className={isListCollapsed ? '' : 'lg:col-span-8 xl:col-span-9'}>
+          <DailyThoughtEditor
+            thought={currentThought}
+            selectedDate={selectedDate}
+            canEdit={canEdit}
+            loading={loading}
+            onSave={handleSaveToday}
+            today={today}
+          />
+        </section>
+      </div>
     </div>
   );
 }

@@ -24,6 +24,7 @@ import ExternalTokensTab from '@/components/dashboard/ExternalTokensTab';
 import ThoughtsTab from '@/components/dashboard/ThoughtsTab';
 import TasksTab from '@/components/dashboard/TasksTab';
 import TodayHubTab from '@/components/dashboard/TodayHubTab';
+import DailyReportsTab from '@/components/dashboard/DailyReportsTab';
 import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
@@ -725,6 +726,13 @@ export default function Dashboard() {
             {activeTab === 'thoughts' && (
               <div className="animate-fade-in">
                 <ThoughtsTab />
+              </div>
+            )}
+
+            {/* 日报记录页面 */}
+            {activeTab === 'daily-reports' && (
+              <div className="animate-fade-in">
+                <DailyReportsTab />
               </div>
             )}
 
