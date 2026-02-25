@@ -67,10 +67,10 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
       draggable
       onDragStart={() => handleDragStart(task)}
       onClick={() => setSelectedTask(task)}
-      className="bg-white rounded-lg shadow-sm p-4 mb-3 cursor-move hover:shadow-md transition-shadow border border-gray-200"
+      className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-3 cursor-move hover:shadow-md transition-shadow border border-gray-200 overflow-hidden"
     >
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="text-sm font-medium text-gray-900 flex-1">{task.title}</h4>
+      <div className="flex items-start justify-between mb-2 gap-2">
+        <h4 className="text-sm font-medium text-gray-900 flex-1 min-w-0 break-words line-clamp-2">{task.title}</h4>
         <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(task.priority)}`}>
           {task.priority}
         </span>
@@ -85,7 +85,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
           {task.tags.slice(0, 3).map((tag, index) => (
             <span
               key={index}
-              className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
+              className="max-w-full truncate px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
             >
               {tag}
             </span>
@@ -93,20 +93,20 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <div className="flex items-center">
+      <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
+        <div className="flex min-w-0 items-center">
           {task.project_name && (
             <>
               <span
                 className="w-2 h-2 rounded-full mr-1"
                 style={{ backgroundColor: task.project_color }}
               />
-              {task.project_name}
+              <span className="truncate">{task.project_name}</span>
             </>
           )}
         </div>
         {task.due_date && (
-          <span>{formatTaskDateZhCN(task.due_date)}</span>
+          <span className="shrink-0">{formatTaskDateZhCN(task.due_date)}</span>
         )}
       </div>
     </div>
@@ -115,7 +115,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
   return (
     <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-2 xl:grid-cols-4 md:overflow-visible md:snap-none">
       {columns.map(column => (
-        <div key={column.id} className="min-w-[80vw] shrink-0 snap-start md:min-w-0">
+        <div key={column.id} className="min-w-[72vw] max-w-[72vw] shrink-0 snap-start md:min-w-0 md:max-w-none">
           <div className={`bg-white rounded-t-lg p-4 border border-b-0 border-gray-200 border-t-4 ${column.color}`}>
             <h3 className="font-semibold text-gray-900 flex items-center justify-between">
               {column.title}

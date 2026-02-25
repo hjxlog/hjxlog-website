@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/authContext';
-import AdminNav from '@/components/AdminNav';
+import AdminNav, { dashboardTabGroups } from '@/components/AdminNav';
 import DashboardSidebar from '@/components/DashboardSidebar';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
@@ -76,6 +76,15 @@ export default function Dashboard() {
 
 
   // 表单数据状态
+  const validDashboardTabs = useMemo(
+    () => new Set(dashboardTabGroups.flatMap((group) => group.tabs.map((tab) => tab.key))),
+    []
+  );
+
+  const handleTabChange = useCallback((tab: string) => {
+    const nextTab = validDashboardTabs.has(tab) ? tab : 'today';
+    setActiveTab(nextTab);
+  }, [validDashboardTabs]);
 
   // API调用函数
   const fetchWorks = useCallback(async () => {
@@ -390,13 +399,13 @@ export default function Dashboard() {
   // URL参数处理
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
+    const tabFromUrl = urlParams.get('tab');
+    if (tabFromUrl && validDashboardTabs.has(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
     } else {
       setActiveTab('today');
     }
-  }, []);
+  }, [validDashboardTabs]);
 
   // 事件处理函数
   const handleDeleteWork = useCallback(async (id: number) => {
@@ -581,7 +590,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col">
-        <AdminNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <AdminNav activeTab={activeTab} setActiveTab={handleTabChange} />
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -596,11 +605,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <AdminNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <AdminNav activeTab={activeTab} setActiveTab={handleTabChange} />
       
       <div className="flex flex-1 max-w-[1920px] mx-auto w-full">
         {/* 左侧边栏 */}
-        <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <DashboardSidebar activeTab={activeTab} setActiveTab={handleTabChange} />
         
         {/* 右侧主内容区域 */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
@@ -617,7 +626,7 @@ export default function Dashboard() {
                   onOpenWorkForm={() => openWorkForm()}
                   onOpenBlogForm={() => openBlogForm()}
                   onOpenMomentForm={() => openMomentForm()}
-                  onGoMoments={() => setActiveTab('moments')}
+                  onGoMoments={() => handleTabChange('moments')}
                 />
               </div>
             )}

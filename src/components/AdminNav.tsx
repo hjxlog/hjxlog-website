@@ -1,4 +1,4 @@
-import { useContext, useState, useCallback, useMemo } from 'react';
+import { useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '@/contexts/authContext';
 
@@ -50,6 +50,8 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
   const location = useLocation();
   const { user, logout } = useContext(AuthContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileTabsContainerRef = useRef<HTMLDivElement | null>(null);
+  const mobileTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const isDashboard = location.pathname === '/dashboard';
   const allTabs = useMemo(
@@ -83,17 +85,50 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
     setIsMobileMenuOpen(false);
   }, [logout]);
 
+  const scrollMobileTabIntoView = useCallback((tabKey: string) => {
+    const container = mobileTabsContainerRef.current;
+    const target = mobileTabRefs.current[tabKey];
+    if (!container || !target) return;
+
+    const targetCenter = target.offsetLeft + target.offsetWidth / 2;
+    const containerCenter = container.clientWidth / 2;
+    const nextScrollLeft = Math.max(0, targetCenter - containerCenter);
+
+    container.scrollTo({
+      left: nextScrollLeft,
+      behavior: 'auto',
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!activeTab) return;
+    const id = window.requestAnimationFrame(() => {
+      scrollMobileTabIntoView(activeTab);
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [activeTab, scrollMobileTabIntoView]);
+
   // 移动端Dashboard页签
   const MobileDashboardTabs = () => {
     if (!isDashboard || !activeTab || !setActiveTab) return null;
 
     return (
       <div className="lg:hidden border-t border-gray-200 bg-white">
-        <div className="flex overflow-x-auto px-4 py-3 gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <div
+          ref={mobileTabsContainerRef}
+          className="flex overflow-x-auto px-4 py-3 gap-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+        >
           {allTabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              ref={(el) => {
+                mobileTabRefs.current[tab.key] = el;
+              }}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.key);
+                scrollMobileTabIntoView(tab.key);
+              }}
               className={`flex-shrink-0 flex items-center px-4 py-2 rounded-full text-xs font-medium transition-all ${
                 activeTab === tab.key
                   ? 'text-white bg-[#165DFF] shadow-md shadow-blue-100'
