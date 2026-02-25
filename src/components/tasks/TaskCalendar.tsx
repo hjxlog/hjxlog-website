@@ -91,14 +91,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     return { year, month, daysInMonth, startDayOfWeek };
   };
 
-  const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => {
-      const range = getTaskRange(task);
-      if (!range) return false;
-      return isDateInRange(date, range.start, range.end);
-    });
-  };
-
   const isToday = (date: Date) => {
     const today = new Date();
     return date.getDate() === today.getDate() &&
@@ -139,7 +131,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   const laneHeight = 18;
   const laneTopOffset = 30;
   const laneGap = 2;
-  const maxVisibleLanes = 3;
   const totalDateCells = startDayOfWeek + daysInMonth;
   const totalRows = Math.ceil(totalDateCells / 7);
 
@@ -225,44 +216,66 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     return segments;
   };
 
-  const overlayBars = monthTasksWithRange
-    .filter(item => (taskLaneMap.get(item.task.id) ?? 0) < maxVisibleLanes)
-    .flatMap(item => {
-      const lane = taskLaneMap.get(item.task.id) ?? 0;
-      return buildRangeSegments(item.range, lane).map(segment => ({
-        task: item.task,
-        range: item.range,
-        lane,
-        ...segment
-      }));
-    });
+  const overlayBars = monthTasksWithRange.flatMap(item => {
+    const lane = taskLaneMap.get(item.task.id) ?? 0;
+    return buildRangeSegments(item.range, lane).map(segment => ({
+      task: item.task,
+      range: item.range,
+      lane,
+      ...segment
+    }));
+  });
 
-  const overlayPreviewBars = previewRange && previewLane < maxVisibleLanes
+  const overlayPreviewBars = previewRange
     ? buildRangeSegments(previewRange, previewLane).map(segment => ({
         ...segment,
         mode: previewRange.mode
       }))
     : [];
 
+  const rowLaneCounts = Array.from({ length: totalRows }, () => 0);
+  for (const item of monthTasksWithRange) {
+    const lane = taskLaneMap.get(item.task.id) ?? 0;
+    const segments = buildRangeSegments(item.range, lane);
+    for (const segment of segments) {
+      rowLaneCounts[segment.row] = Math.max(rowLaneCounts[segment.row], lane + 1);
+    }
+  }
+
+  const rowHeights = rowLaneCounts.map((count) => {
+    const laneCount = Math.max(1, count);
+    const computed = laneTopOffset + laneCount * (laneHeight + laneGap) + 12;
+    return Math.max(cellHeight, computed);
+  });
+
+  const rowOffsets: number[] = [];
+  for (let i = 0; i < rowHeights.length; i++) {
+    rowOffsets[i] = i === 0 ? 0 : rowOffsets[i - 1] + rowHeights[i - 1];
+  }
+
   // 生成日历底层格子
   const calendarDays = [];
 
   // 空白格子（月初）
   for (let i = 0; i < startDayOfWeek; i++) {
-    calendarDays.push(<div key={`empty-${i}`} className="h-28 bg-gray-50 border border-gray-100" />);
+    const rowIndex = Math.floor(i / 7);
+    calendarDays.push(
+      <div
+        key={`empty-${i}`}
+        className="bg-gray-50 border border-gray-100"
+        style={{ height: rowHeights[rowIndex] || cellHeight }}
+      />
+    );
   }
 
   // 日期格子
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
     const dateKey = getLocalDateString(date);
-    const dayTasks = getTasksForDate(date);
-    const hiddenTaskCount = dayTasks.filter(task => {
-      const lane = taskLaneMap.get(task.id);
-      return lane !== undefined && lane >= maxVisibleLanes;
-    }).length;
     const today = isToday(date);
     const past = isPast(date);
+    const rowIndex = Math.floor((startDayOfWeek + day - 1) / 7);
+    const laneCount = Math.max(1, rowLaneCounts[rowIndex] || 0);
 
     calendarDays.push(
       <div
@@ -297,9 +310,10 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             setDragNavDirection(null);
           }
         }}
-        className={`h-28 p-2 border border-gray-100 ${
+        className={`p-2 border border-gray-100 ${
           today ? 'bg-blue-50' : 'bg-white'
         } ${past ? 'bg-gray-50' : ''} ${dragOverDate === dateKey ? 'ring-2 ring-[#165DFF] ring-inset' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
+        style={{ height: rowHeights[rowIndex] || cellHeight }}
       >
         <div className="flex items-center justify-between mb-1">
           <button
@@ -319,14 +333,9 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
           </div>
         </div>
         <div className="space-y-0.5">
-          {Array.from({ length: maxVisibleLanes }).map((_, lane) => (
+          {Array.from({ length: laneCount }).map((_, lane) => (
             <div key={`lane-empty-${day}-${lane}`} className="h-[18px]" />
           ))}
-          {hiddenTaskCount > 0 && (
-            <div className="text-xs text-gray-500">
-              +{hiddenTaskCount} 更多
-            </div>
-          )}
         </div>
       </div>
     );
@@ -449,7 +458,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 key={`preview-bar-${index}`}
                 className={`absolute text-[10px] h-[18px] leading-[18px] px-1 border border-[#165DFF]/40 bg-[#165DFF]/18 text-[#165DFF] ${segmentShapeClass}`}
                 style={{
-                  top: segment.row * cellHeight + laneTopOffset + segment.lane * (laneHeight + laneGap),
+                  top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
                   left: `calc(${left}% + 4px)`,
                   width: `calc(${width}% - 8px)`
                 }}
@@ -516,7 +525,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                   segment.task.status === 'done' ? 'line-through' : ''
                 } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
                 style={{
-                  top: segment.row * cellHeight + laneTopOffset + segment.lane * (laneHeight + laneGap),
+                  top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
                   left: `calc(${left}% + 4px)`,
                   width: `calc(${width}% - 8px)`,
                   ...projectTintStyle
