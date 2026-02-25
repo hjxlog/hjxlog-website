@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { XMarkIcon, EyeIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, EyeIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
 import { Project, Task } from '../../types/task';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import {
   uploadImageToOSS,
   validateImageType,
@@ -26,6 +27,8 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
   const [savingNotes, setSavingNotes] = useState(false);
   const [isPreview, setIsPreview] = useState(false); // false means "Live/Preview Mode", true means "Source Mode" (user logic inverted)
   const [dragOver, setDragOver] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [meta, setMeta] = useState({
     status: task.status,
     priority: task.priority,
@@ -244,6 +247,23 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     }
   };
 
+  const handleDeleteTask = async () => {
+    if (deleting) return;
+    try {
+      setDeleting(true);
+      await apiRequest(`/api/tasks/${task.id}`, { method: 'DELETE' });
+      toast.success('任务已删除');
+      setShowDeleteConfirm(false);
+      onClose();
+      onUpdate();
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      toast.error('删除失败');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (value?: string | null) => {
     if (!value) return '-';
     const date = new Date(value);
@@ -309,6 +329,13 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
                     <span>预览</span>
                   </div>
                 )}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                title="删除任务"
+              >
+                <TrashIcon className="h-5 w-5" />
               </button>
               <div className="h-4 w-px bg-slate-200 mx-1" />
               <button
@@ -465,6 +492,18 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
 
         </div>
       </aside>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="删除任务"
+        message="确定要删除该任务吗？此操作无法撤销。"
+        confirmText={deleting ? '删除中...' : '删除'}
+        cancelText="取消"
+        onConfirm={handleDeleteTask}
+        onCancel={() => setShowDeleteConfirm(false)}
+        confirmButtonClass="bg-rose-500 hover:bg-rose-600 text-white"
+        cancelButtonClass="bg-slate-500 hover:bg-slate-600 text-white"
+      />
     </>
   );
 };
