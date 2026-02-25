@@ -98,7 +98,7 @@ export default function OverviewTab({
   }, []);
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fade-in max-w-full mx-auto">
       {/* 顶部欢迎卡片 - 更加简约现代 */}
       <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
         <div className="z-10">

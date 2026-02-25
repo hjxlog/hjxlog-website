@@ -603,7 +603,7 @@ export default function Dashboard() {
         
         {/* 右侧主内容区域 */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="mx-auto space-y-6 max-w-full">
             {/* 今日中心页面 */}
             {activeTab === 'today' && (
               <div className="animate-fade-in">
