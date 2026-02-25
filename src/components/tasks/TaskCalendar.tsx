@@ -521,7 +521,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 }}
                 onMouseEnter={() => setHoveredTaskId(segment.task.id)}
                 onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
-                className={`absolute pointer-events-auto z-[1] text-[10px] h-[18px] leading-[18px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
+                className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-[10px] h-[18px] leading-[18px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
                   segment.task.status === 'done' ? 'line-through' : ''
                 } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
                 style={{
