@@ -121,7 +121,7 @@ export default function DailyReportsTab() {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
-          <span>日期：{selectedReport?.report_date || '-'}</span>
+          <span>日期：{selectedReport?.report_date ? formatDate(normalizeDate(selectedReport.report_date)) : '-'}</span>
           <span>{selectedReport?.updated_at ? `更新于 ${new Date(selectedReport.updated_at).toLocaleString()}` : ''}</span>
         </div>
         {selectedReport?.content ? (

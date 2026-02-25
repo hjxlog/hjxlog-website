@@ -98,7 +98,7 @@ export default function OpenClawReportsTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 flex items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-slate-900">OpenClaw 每日汇报</h2>
           <p className="text-sm text-slate-500">独立接收 OpenClaw 每日任务回报，不与动态混用。</p>
         </div>
@@ -108,7 +108,7 @@ export default function OpenClawReportsTab() {
             loadStats();
           }}
           disabled={loading || statsLoading}
-          className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+          className="shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
         >
           {loading ? '刷新中...' : '刷新'}
         </button>

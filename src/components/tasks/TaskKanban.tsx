@@ -113,9 +113,9 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-2 xl:grid-cols-4 md:overflow-visible md:snap-none">
       {columns.map(column => (
-        <div key={column.id}>
+        <div key={column.id} className="min-w-[80vw] shrink-0 snap-start md:min-w-0">
           <div className={`bg-white rounded-t-lg p-4 border border-b-0 border-gray-200 border-t-4 ${column.color}`}>
             <h3 className="font-semibold text-gray-900 flex items-center justify-between">
               {column.title}

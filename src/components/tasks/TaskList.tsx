@@ -34,7 +34,51 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
+      <div className="md:hidden space-y-3 p-3">
+        {tasks.length === 0 && (
+          <div className="text-center py-6 text-gray-500">暂无任务</div>
+        )}
+        {tasks.map(task => {
+          const statusBadge = getStatusBadge(task.status);
+          const StatusIcon = statusBadge.icon;
+          return (
+            <button
+              key={task.id}
+              onClick={() => setSelectedTask(task)}
+              className="w-full text-left rounded-xl border border-gray-200 bg-white p-3 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 truncate">{task.title}</div>
+                  {task.description && (
+                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      {task.description}
+                    </div>
+                  )}
+                </div>
+                <span className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded ${getPriorityColor(task.priority)}`}>
+                  {task.priority}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded ${statusBadge.color}`}>
+                  <StatusIcon className="h-3 w-3 mr-1" />
+                  {statusBadge.label}
+                </span>
+                {task.project_name && (
+                  <span className="inline-flex items-center">
+                    <span className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: task.project_color }} />
+                    {task.project_name}
+                  </span>
+                )}
+                {task.due_date && <span>{formatTaskDateZhCN(task.due_date)}</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <table className="hidden md:table min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -118,7 +162,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
         </tbody>
       </table>
       {tasks.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="hidden md:block text-center py-12 text-gray-500">
           暂无任务
         </div>
       )}

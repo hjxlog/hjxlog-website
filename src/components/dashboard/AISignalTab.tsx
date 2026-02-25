@@ -244,7 +244,7 @@ export default function AISignalTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">AI 情报雷达</h2>
           <p className="text-sm text-slate-500">每日 8 点自动生成，最多 5 条精选信号。</p>
@@ -252,19 +252,19 @@ export default function AISignalTab() {
         <button
           onClick={handleRunNow}
           disabled={running}
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#165DFF] hover:bg-[#0E4BA4] disabled:opacity-60"
+          className="whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#165DFF] hover:bg-[#0E4BA4] disabled:opacity-60"
         >
           {running ? '生成中...' : '立即生成'}
         </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">今日采集列表</h3>
             <p className="text-sm text-slate-500">展示最近 3 天采集到的原始条目。</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={listLimit}
               onChange={(event) => setListLimit(Number(event.target.value))}
@@ -277,7 +277,7 @@ export default function AISignalTab() {
             <button
               onClick={loadCollected}
               disabled={listLoading}
-              className="px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="whitespace-nowrap px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {listLoading ? '加载中...' : '刷新列表'}
             </button>

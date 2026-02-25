@@ -112,26 +112,26 @@ export default function DailyThoughtEditor({
   return (
     <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-gray-400" />
             <h2 className="text-base font-semibold text-gray-900">{displayDate}</h2>
             {isToday && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">今天</span>}
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <span>{wordCount} 字</span>
-            <span>更新于 {formatDateTime(thought?.updated_at)}</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span className="whitespace-nowrap">{wordCount} 字</span>
+            <span className="whitespace-nowrap">更新于 {formatDateTime(thought?.updated_at)}</span>
             {canEdit && (
               <button
                 onClick={handleSave}
                 disabled={isSaving || !content.trim()}
-                className="rounded-md bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                className="whitespace-nowrap rounded-md bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
                 {isSaving ? '保存中...' : '保存'}
               </button>
             )}
             {!canEdit && (
-              <span className="inline-flex items-center text-gray-400">
+              <span className="inline-flex items-center whitespace-nowrap text-gray-400">
                 <LockClosedIcon className="mr-1 h-4 w-4" />
                 只读
               </span>

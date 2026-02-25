@@ -229,10 +229,10 @@ export default function TasksTab() {
           </div>
 
           <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
-            <div className="flex items-center flex-wrap gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto">
               <button
                 onClick={() => setView('kanban')}
-                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'kanban'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -242,7 +242,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'list'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -252,7 +252,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('calendar')}
-                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'calendar'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -262,7 +262,7 @@ export default function TasksTab() {
               </button>
               <button
                 onClick={() => setView('today')}
-                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'today'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'

@@ -299,12 +299,11 @@ export default function PhotosTab() {
   return (
     <div className="space-y-6">
       {/* 页面标题和操作按钮 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-nowrap">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">摄影管理</h2>
-          <p className="text-slate-600 mt-1">管理您的摄影作品</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
           {selectedPhotos.length > 0 && (
             <button
               onClick={() => {
@@ -318,14 +317,14 @@ export default function PhotosTab() {
                   }
                 });
               }}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="whitespace-nowrap px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               删除选中 ({selectedPhotos.length})
             </button>
           )}
           <button
             onClick={() => openForm()}
-            className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
+            className="whitespace-nowrap px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
           >
             <i className="fas fa-plus mr-2"></i>
             添加照片

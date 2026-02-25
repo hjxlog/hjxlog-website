@@ -56,7 +56,7 @@ export default function BlogsTab({
 
   const renderBlogStatusBadge = (published: boolean) => {
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+      <span className={`whitespace-nowrap px-2 py-1 rounded-full text-xs font-medium ${
         published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
       }`}>
         {published ? '已发布' : '草稿'}

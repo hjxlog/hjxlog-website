@@ -121,7 +121,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
           </div>
 
           {/* 项目和优先级 */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 项目
@@ -155,7 +155,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
           </div>
 
           {/* 标签和时间 */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 标签

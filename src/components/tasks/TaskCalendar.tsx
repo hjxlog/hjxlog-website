@@ -17,6 +17,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [draggingPayload, setDraggingPayload] = useState<{ taskId: number; mode: 'move' | 'resize' } | null>(null);
   const [dragNavDirection, setDragNavDirection] = useState<'prev' | 'next' | null>(null);
+  const [isCompact, setIsCompact] = useState(false);
 
   const getLocalDateString = (date: Date) => {
     const year = date.getFullYear();
@@ -91,6 +92,14 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     return { year, month, daysInMonth, startDayOfWeek };
   };
 
+  const getTasksForDate = (date: Date) => {
+    return tasks.filter(task => {
+      const range = getTaskRange(task);
+      if (!range) return false;
+      return isDateInRange(date, range.start, range.end);
+    });
+  };
+
   const isToday = (date: Date) => {
     const today = new Date();
     return date.getDate() === today.getDate() &&
@@ -123,14 +132,27 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     return () => clearInterval(timer);
   }, [draggingPayload, dragNavDirection]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 640px)');
+    const handleChange = () => setIsCompact(media.matches);
+    handleChange();
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', handleChange);
+      return () => media.removeEventListener('change', handleChange);
+    }
+    media.addListener(handleChange);
+    return () => media.removeListener(handleChange);
+  }, []);
+
   const { year, month, daysInMonth, startDayOfWeek } = getMonthData(currentDate);
   const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月',
                       '七月', '八月', '九月', '十月', '十一月', '十二月'];
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-  const cellHeight = 112;
-  const laneHeight = 18;
-  const laneTopOffset = 30;
-  const laneGap = 2;
+  const cellHeight = isCompact ? 72 : 112;
+  const laneHeight = isCompact ? 14 : 18;
+  const laneTopOffset = isCompact ? 24 : 30;
+  const laneGap = isCompact ? 1 : 2;
   const totalDateCells = startDayOfWeek + daysInMonth;
   const totalRows = Math.ceil(totalDateCells / 7);
 
@@ -234,19 +256,23 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     : [];
 
   const rowLaneCounts = Array.from({ length: totalRows }, () => 0);
-  for (const item of monthTasksWithRange) {
-    const lane = taskLaneMap.get(item.task.id) ?? 0;
-    const segments = buildRangeSegments(item.range, lane);
-    for (const segment of segments) {
-      rowLaneCounts[segment.row] = Math.max(rowLaneCounts[segment.row], lane + 1);
+  if (!isCompact) {
+    for (const item of monthTasksWithRange) {
+      const lane = taskLaneMap.get(item.task.id) ?? 0;
+      const segments = buildRangeSegments(item.range, lane);
+      for (const segment of segments) {
+        rowLaneCounts[segment.row] = Math.max(rowLaneCounts[segment.row], lane + 1);
+      }
     }
   }
 
-  const rowHeights = rowLaneCounts.map((count) => {
-    const laneCount = Math.max(1, count);
-    const computed = laneTopOffset + laneCount * (laneHeight + laneGap) + 12;
-    return Math.max(cellHeight, computed);
-  });
+  const rowHeights = isCompact
+    ? Array.from({ length: totalRows }, () => cellHeight)
+    : rowLaneCounts.map((count) => {
+        const laneCount = Math.max(1, count);
+        const computed = laneTopOffset + laneCount * (laneHeight + laneGap) + 12;
+        return Math.max(cellHeight, computed);
+      });
 
   const rowOffsets: number[] = [];
   for (let i = 0; i < rowHeights.length; i++) {
@@ -276,6 +302,8 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     const past = isPast(date);
     const rowIndex = Math.floor((startDayOfWeek + day - 1) / 7);
     const laneCount = Math.max(1, rowLaneCounts[rowIndex] || 0);
+    const dayTasks = isCompact ? getTasksForDate(date) : [];
+    const dayTaskCount = dayTasks.length;
 
     calendarDays.push(
       <div
@@ -333,9 +361,20 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
           </div>
         </div>
         <div className="space-y-0.5">
-          {Array.from({ length: laneCount }).map((_, lane) => (
-            <div key={`lane-empty-${day}-${lane}`} className="h-[18px]" />
-          ))}
+          {isCompact ? (
+            <div className="flex flex-wrap items-center gap-1">
+              {Array.from({ length: Math.min(3, dayTaskCount) }).map((_, index) => (
+                <span key={`dot-${day}-${index}`} className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+              ))}
+              {dayTaskCount > 3 && (
+                <span className="text-[10px] text-slate-400">+{dayTaskCount - 3}</span>
+              )}
+            </div>
+          ) : (
+            Array.from({ length: laneCount }).map((_, lane) => (
+              <div key={`lane-empty-${day}-${lane}`} className="h-[18px]" />
+            ))
+          )}
         </div>
       </div>
     );
@@ -440,12 +479,13 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
           {calendarDays}
         </div>
 
-        <div className="absolute inset-0 pointer-events-none">
-          {overlayPreviewBars.map((segment, index) => {
-            const left = (segment.colStart / 7) * 100;
-            const width = ((segment.colEnd - segment.colStart + 1) / 7) * 100;
-            const segmentShapeClass =
-              segment.kind === 'single'
+        {!isCompact && (
+          <div className="absolute inset-0 pointer-events-none">
+            {overlayPreviewBars.map((segment, index) => {
+              const left = (segment.colStart / 7) * 100;
+              const width = ((segment.colEnd - segment.colStart + 1) / 7) * 100;
+              const segmentShapeClass =
+                segment.kind === 'single'
                 ? 'rounded'
                 : segment.kind === 'start'
                 ? 'rounded-l rounded-r-none'
@@ -453,24 +493,24 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 ? 'rounded-none'
                 : 'rounded-r rounded-l-none';
 
-            return (
-              <div
-                key={`preview-bar-${index}`}
-                className={`absolute text-[10px] h-[18px] leading-[18px] px-1 border border-[#165DFF]/40 bg-[#165DFF]/18 text-[#165DFF] ${segmentShapeClass}`}
-                style={{
-                  top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
-                  left: `calc(${left}% + 4px)`,
-                  width: `calc(${width}% - 8px)`
-                }}
-              >
-                {segment.kind === 'start' || segment.kind === 'single'
-                  ? (segment.mode === 'move' ? '移动预览' : '延长预览')
-                  : ''}
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={`preview-bar-${index}`}
+                  className={`absolute text-[10px] h-[18px] leading-[18px] px-1 border border-[#165DFF]/40 bg-[#165DFF]/18 text-[#165DFF] ${segmentShapeClass}`}
+                  style={{
+                    top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
+                    left: `calc(${left}% + 4px)`,
+                    width: `calc(${width}% - 8px)`
+                  }}
+                >
+                  {segment.kind === 'start' || segment.kind === 'single'
+                    ? (segment.mode === 'move' ? '移动预览' : '延长预览')
+                    : ''}
+                </div>
+              );
+            })}
 
-          {overlayBars.map((segment, index) => {
+            {overlayBars.map((segment, index) => {
             const left = (segment.colStart / 7) * 100;
             const width = ((segment.colEnd - segment.colStart + 1) / 7) * 100;
             const segmentShapeClass =
@@ -500,68 +540,69 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             const showLabel = segment.kind === 'single' || segment.kind === 'start';
             const span = getDaysSpan(segment.range.start, segment.range.end);
 
-            return (
-              <div
-                key={`task-bar-${segment.task.id}-${index}`}
-                draggable
-                onDragStart={(e) => {
-                  const payload = { taskId: segment.task.id, mode: 'move' as const };
-                  e.dataTransfer.setData('text/plain', JSON.stringify(payload));
-                  e.dataTransfer.effectAllowed = 'move';
-                  setDraggingPayload(payload);
-                }}
-                onDragEnd={() => {
-                  setDraggingPayload(null);
-                  setDragOverDate(null);
-                  setDragNavDirection(null);
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTaskClick?.(segment.task);
-                }}
-                onMouseEnter={() => setHoveredTaskId(segment.task.id)}
-                onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
-                className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-[10px] h-[18px] leading-[18px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
-                  segment.task.status === 'done' ? 'line-through' : ''
-                } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
-                style={{
-                  top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
-                  left: `calc(${left}% + 4px)`,
-                  width: `calc(${width}% - 8px)`,
-                  ...projectTintStyle
-                }}
-              >
-                <div className="flex items-center justify-between gap-1 px-1">
-                  <span className="truncate">
-                    {showLabel ? `${segment.task.title}${span > 1 ? ` (${span}天)` : ''}` : ''}
-                  </span>
-                  {(segment.kind === 'end' || segment.kind === 'single') && onResizeTask ? (
-                    <span
-                      draggable
-                      onDragStart={(e) => {
-                        e.stopPropagation();
-                        const payload = { taskId: segment.task.id, mode: 'resize' as const };
-                        e.dataTransfer.setData('text/plain', JSON.stringify(payload));
-                        e.dataTransfer.effectAllowed = 'move';
-                        setDraggingPayload(payload);
-                      }}
-                      onDragEnd={(e) => {
-                        e.stopPropagation();
-                        setDraggingPayload(null);
-                        setDragOverDate(null);
-                        setDragNavDirection(null);
-                      }}
-                      title="拖拽到目标日期以延长截止"
-                      className="text-[10px] px-1 rounded bg-black/10 hover:bg-black/20"
-                    >
-                      ⇢
+              return (
+                <div
+                  key={`task-bar-${segment.task.id}-${index}`}
+                  draggable
+                  onDragStart={(e) => {
+                    const payload = { taskId: segment.task.id, mode: 'move' as const };
+                    e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDraggingPayload(payload);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingPayload(null);
+                    setDragOverDate(null);
+                    setDragNavDirection(null);
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTaskClick?.(segment.task);
+                  }}
+                  onMouseEnter={() => setHoveredTaskId(segment.task.id)}
+                  onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
+                  className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-[10px] h-[18px] leading-[18px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
+                    segment.task.status === 'done' ? 'line-through' : ''
+                  } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
+                  style={{
+                    top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
+                    left: `calc(${left}% + 4px)`,
+                    width: `calc(${width}% - 8px)`,
+                    ...projectTintStyle
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-1 px-1">
+                    <span className="truncate">
+                      {showLabel ? `${segment.task.title}${span > 1 ? ` (${span}天)` : ''}` : ''}
                     </span>
-                  ) : null}
+                    {(segment.kind === 'end' || segment.kind === 'single') && onResizeTask ? (
+                      <span
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          const payload = { taskId: segment.task.id, mode: 'resize' as const };
+                          e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggingPayload(payload);
+                        }}
+                        onDragEnd={(e) => {
+                          e.stopPropagation();
+                          setDraggingPayload(null);
+                          setDragOverDate(null);
+                          setDragNavDirection(null);
+                        }}
+                        title="拖拽到目标日期以延长截止"
+                        className="text-[10px] px-1 rounded bg-black/10 hover:bg-black/20"
+                      >
+                        ⇢
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
     </div>

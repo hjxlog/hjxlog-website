@@ -90,21 +90,21 @@ export default function ExternalTokensTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h3 className="text-base font-semibold text-slate-900">API Key列表</h3>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="text-sm text-slate-500">总计 {tokens.length} · 启用 {activeCount}</div>
             <button
               onClick={handleCreateKey}
               disabled={submitting}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#165DFF] hover:bg-[#0E4BA4] disabled:opacity-60"
+              className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#165DFF] hover:bg-[#0E4BA4] disabled:opacity-60"
             >
               {submitting ? '创建中...' : '创建 Key'}
             </button>
             <button
               onClick={loadTokens}
               disabled={loading}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {loading ? '刷新中...' : '刷新'}
             </button>

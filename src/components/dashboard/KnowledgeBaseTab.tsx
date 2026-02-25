@@ -197,15 +197,15 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
   return (
     <div className={className}>
       {/* 标题和操作 */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">知识库管理</h2>
           <p className="text-sm text-gray-500 mt-1">管理 AI 助手的向量知识库</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={fetchStats}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             <ArrowPathIcon className="h-5 w-5 mr-2" />
             刷新
@@ -213,7 +213,7 @@ const KnowledgeBaseTab: React.FC<KnowledgeBaseTabProps> = ({ className = '' }) =
           <button
             onClick={handleRebuild}
             disabled={rebuilding}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
+            className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
           >
             <ArrowPathIcon className={`h-5 w-5 mr-2 ${rebuilding ? 'animate-spin' : ''}`} />
             {rebuilding ? '重建中...' : '重建知识库'}

@@ -158,18 +158,18 @@ const KnowledgeBase: React.FC = () => {
       {/* 头部 */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">知识库管理</h1>
               <p className="mt-1 text-sm text-gray-500">
                 管理 AI 助手的向量知识库
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={fetchStats}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <ArrowPathIcon className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 刷新
@@ -177,7 +177,7 @@ const KnowledgeBase: React.FC = () => {
               <button
                 onClick={handleRebuild}
                 disabled={rebuilding}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
+                className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
               >
                 <ArrowPathIcon className={`h-5 w-5 mr-2 ${rebuilding ? 'animate-spin' : ''}`} />
                 {rebuilding ? '重建中...' : '重建知识库'}

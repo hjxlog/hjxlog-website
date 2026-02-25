@@ -24,14 +24,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
   };
   const hasActiveFilters = Boolean(filters.project_id || filters.status || filters.priority || filters.search);
 
+  const selectBaseClass = 'appearance-none w-full sm:w-auto min-w-[140px] px-3 pr-9 py-2.5 text-sm sm:text-sm text-slate-700 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
+
   return (
-    <div className="flex items-center space-x-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:space-x-3">
       {/* 项目筛选 */}
-      <div className="relative">
+      <div className="relative sm:inline-flex">
         <select
           value={filters.project_id || ''}
           onChange={(e) => updateFilter('project_id', e.target.value ? parseInt(e.target.value) : null)}
-          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className={selectBaseClass}
         >
           <option value="">所有项目</option>
           {projects.map(project => (
@@ -42,11 +44,11 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
       </div>
 
       {/* 状态筛选 */}
-      <div className="relative">
+      <div className="relative sm:inline-flex">
         <select
           value={filters.status || ''}
           onChange={(e) => updateFilter('status', e.target.value || null)}
-          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className={selectBaseClass}
         >
           <option value="">所有状态</option>
           <option value="todo">待办</option>
@@ -58,11 +60,11 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
       </div>
 
       {/* 优先级筛选 */}
-      <div className="relative">
+      <div className="relative sm:inline-flex">
         <select
           value={filters.priority || ''}
           onChange={(e) => updateFilter('priority', e.target.value || null)}
-          className="appearance-none px-3 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className={selectBaseClass}
         >
           <option value="">所有优先级</option>
           <option value="P0">P0 - 紧急</option>
@@ -74,14 +76,14 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
       </div>
 
       {/* 搜索框 */}
-      <div className="relative">
+      <div className="relative sm:inline-flex">
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
           type="text"
           placeholder="搜索任务..."
           value={filters.search}
           onChange={(e) => updateFilter('search', e.target.value)}
-          className="pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-64"
+          className="pl-10 pr-4 py-2.5 text-sm sm:text-sm text-slate-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full sm:w-64"
         />
       </div>
 
@@ -97,7 +99,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({ projects, filters, onFiltersC
           });
         }}
         disabled={!hasActiveFilters}
-        className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+        className={`w-full sm:w-auto px-3 py-2 text-sm rounded-lg border transition-colors ${
           hasActiveFilters
             ? 'text-slate-700 border-slate-300 hover:bg-slate-50'
             : 'text-slate-400 border-slate-200 bg-slate-50 cursor-not-allowed'
