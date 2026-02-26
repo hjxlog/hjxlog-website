@@ -38,7 +38,7 @@ function getLocalDateString(date = new Date()) {
 export async function getDailyThoughtByDate(date) {
   const client = getDbClient();
   const query = `
-    SELECT id, thought_date, content, created_at, updated_at
+    SELECT id, thought_date, content, optimized_content, created_at, updated_at
     FROM daily_thoughts
     WHERE thought_date = $1
   `;
@@ -59,11 +59,13 @@ export async function getTodayThought() {
  * 创建或更新今天的想法
  * @param {Object} data - 想法数据
  * @param {string} data.content - 想法内容
+ * @param {string} [data.optimizedContent] - AI优化结果
  * @returns {Object} 创建或更新后的想法
  */
-export async function createOrUpdateTodayThought({ content }) {
+export async function createOrUpdateTodayThought({ content, optimizedContent }) {
   const client = getDbClient();
   const today = getLocalDateString();
+  const hasOptimizedContent = typeof optimizedContent === 'string';
 
   const existingQuery = `
     SELECT id
@@ -75,22 +77,37 @@ export async function createOrUpdateTodayThought({ content }) {
   const exists = existingResult.rows.length > 0;
 
   if (exists) {
-    const query = `
-      UPDATE daily_thoughts
-      SET content = $1, updated_at = CURRENT_TIMESTAMP
-      WHERE thought_date = $2
-      RETURNING id, thought_date, content, created_at, updated_at
-    `;
-    const result = await client.query(query, [content, today]);
+    const query = hasOptimizedContent
+      ? `
+          UPDATE daily_thoughts
+          SET content = $1, optimized_content = $2, updated_at = CURRENT_TIMESTAMP
+          WHERE thought_date = $3
+          RETURNING id, thought_date, content, optimized_content, created_at, updated_at
+        `
+      : `
+          UPDATE daily_thoughts
+          SET content = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE thought_date = $2
+          RETURNING id, thought_date, content, optimized_content, created_at, updated_at
+        `;
+    const params = hasOptimizedContent ? [content, optimizedContent, today] : [content, today];
+    const result = await client.query(query, params);
     return result.rows[0];
   }
 
-  const query = `
-    INSERT INTO daily_thoughts (thought_date, content)
-    VALUES ($1, $2)
-    RETURNING id, thought_date, content, created_at, updated_at
-  `;
-  const result = await client.query(query, [today, content]);
+  const query = hasOptimizedContent
+    ? `
+        INSERT INTO daily_thoughts (thought_date, content, optimized_content)
+        VALUES ($1, $2, $3)
+        RETURNING id, thought_date, content, optimized_content, created_at, updated_at
+      `
+    : `
+        INSERT INTO daily_thoughts (thought_date, content)
+        VALUES ($1, $2)
+        RETURNING id, thought_date, content, optimized_content, created_at, updated_at
+      `;
+  const params = hasOptimizedContent ? [today, content, optimizedContent] : [today, content];
+  const result = await client.query(query, params);
   return result.rows[0];
 }
 
@@ -109,7 +126,7 @@ export async function getThoughtsList(page = 1, limit = 30) {
   const total = parseInt(countResult.rows[0].total, 10);
 
   const dataQuery = `
-    SELECT id, thought_date, content, created_at, updated_at
+    SELECT id, thought_date, content, optimized_content, created_at, updated_at
     FROM daily_thoughts
     ORDER BY thought_date DESC
     LIMIT $1 OFFSET $2
@@ -173,10 +190,18 @@ export async function optimizeThoughtForMoment({ date, content }) {
   };
 
   const llm = new LLMService();
-  const optimizedContent = await llm.chat(prompt);
+  const optimizedContent = (await llm.chat(prompt)).trim();
+
+  // 为当天记录落库优化结果，便于后续继续编辑与回看
+  if (canEditThought(date)) {
+    await createOrUpdateTodayThought({
+      content: thoughtContent,
+      optimizedContent
+    });
+  }
 
   return {
     source_content: thoughtContent,
-    optimized_content: (optimizedContent || '').trim()
+    optimized_content: optimizedContent
   };
 }

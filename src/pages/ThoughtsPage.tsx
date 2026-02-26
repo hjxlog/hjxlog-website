@@ -14,6 +14,7 @@ interface DailyThought {
   id: number;
   thought_date: string;
   content: string;
+  optimized_content?: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,11 +42,14 @@ const ThoughtsPage: React.FC = () => {
   };
 
   // 保存今天的想法
-  const handleSaveToday = async (content: string) => {
+  const handleSaveToday = async ({ content, optimizedContent }: { content: string; optimizedContent: string }) => {
     try {
       const data = await apiRequest('/api/thoughts/today', {
         method: 'POST',
-        body: JSON.stringify({ content })
+        body: JSON.stringify({
+          content,
+          optimized_content: optimizedContent
+        })
       }) as { success: boolean; data: DailyThought };
       setCurrentThought(data.data);
       toast.success('想法保存成功');

@@ -13,6 +13,13 @@ psql "$DATABASE_URL" -f database/dbschema/hw_1.0_create_table.sql
 
 This script creates extensions, functions, tables, indexes, and triggers.
 
+## Schema Upgrade Scripts
+For existing databases, run incremental schema scripts as needed:
+
+```bash
+psql "$DATABASE_URL" -f database/dbschema/hw_1.2_add_daily_thought_optimized_content.sql
+```
+
 ## Optional Data Scripts
 - Required baseline seed data:
 

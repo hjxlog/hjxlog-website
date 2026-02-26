@@ -96,7 +96,7 @@ router.get('/thoughts/:date', async (req, res) => {
  */
 router.post('/thoughts/today', async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, optimized_content: optimizedContent } = req.body;
 
     if (!content) {
       return res.status(400).json({
@@ -105,7 +105,7 @@ router.post('/thoughts/today', async (req, res) => {
       });
     }
 
-    const thought = await createOrUpdateTodayThought({ content });
+    const thought = await createOrUpdateTodayThought({ content, optimizedContent });
 
     res.json({
       success: true,

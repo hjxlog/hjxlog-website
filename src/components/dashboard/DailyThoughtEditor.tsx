@@ -11,6 +11,7 @@ interface DailyThought {
   id: number;
   thought_date: string;
   content: string;
+  optimized_content?: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,7 +21,7 @@ interface DailyThoughtEditorProps {
   selectedDate: string;
   canEdit: boolean;
   loading: boolean;
-  onSave: (content: string) => Promise<void>;
+  onSave: (payload: { content: string; optimizedContent: string }) => Promise<void>;
   onOptimize: (content: string) => Promise<string>;
   today: string;
 }
@@ -61,8 +62,8 @@ export default function DailyThoughtEditor({
 
   useEffect(() => {
     setContent(thought?.content || '');
-    setOptimizedContent('');
-  }, [thought?.id, selectedDate, thought?.content, canEdit]);
+    setOptimizedContent(thought?.optimized_content || '');
+  }, [thought?.id, selectedDate, thought?.content, thought?.optimized_content, canEdit]);
 
   const displayDate = normalizeDate(thought?.thought_date) || selectedDate;
   const isToday = displayDate === today;
@@ -77,13 +78,16 @@ export default function DailyThoughtEditor({
     }
     setIsSaving(true);
     try {
-      await onSave(content);
+      await onSave({
+        content,
+        optimizedContent
+      });
     } catch {
       // error handled by parent
     } finally {
       setIsSaving(false);
     }
-  }, [content, onSave]);
+  }, [content, onSave, optimizedContent]);
 
   const handleOptimize = useCallback(async () => {
     if (!content.trim()) {
@@ -219,9 +223,12 @@ export default function DailyThoughtEditor({
                 复制
               </button>
             </div>
-            <article className="min-h-[140px] whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-800">
-              {optimizedContent || '点击上方“AI优化动态文案”后，这里会显示优化结果。'}
-            </article>
+            <textarea
+              value={optimizedContent}
+              onChange={(e) => setOptimizedContent(e.target.value)}
+              placeholder="点击上方“AI优化动态文案”后，这里会显示优化结果；你也可以继续编辑。"
+              className="min-h-[140px] w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-[#165DFF] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#165DFF]"
+            />
           </div>
         </div>
       )}
