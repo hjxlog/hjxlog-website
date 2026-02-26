@@ -12,8 +12,10 @@ interface TaskKanbanProps {
 }
 
 const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) => {
+  const DEFAULT_VISIBLE_COUNT = 8;
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [expandedColumns, setExpandedColumns] = useState<Record<string, boolean>>({});
 
   const columns = [
     { id: 'todo', title: '待办', color: 'border-t-gray-300' },
@@ -147,16 +149,37 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
               </span>
             </h3>
           </div>
-          <div
-            className={`bg-gray-50 rounded-b-lg p-4 min-h-96 border border-t-0 border-gray-200 ${column.color}`}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(column.id)}
-          >
-            {tasks
+          {(() => {
+            const columnTasks = tasks
               .filter(t => t.status === column.id)
-              .sort(compareTaskForKanban)
-              .map(getTaskCard)}
-          </div>
+              .sort(compareTaskForKanban);
+            const isExpanded = Boolean(expandedColumns[column.id]);
+            const hasMore = columnTasks.length > DEFAULT_VISIBLE_COUNT;
+            const visibleTasks = isExpanded ? columnTasks : columnTasks.slice(0, DEFAULT_VISIBLE_COUNT);
+            const hiddenCount = Math.max(0, columnTasks.length - visibleTasks.length);
+
+            return (
+              <div
+                className={`bg-gray-50 rounded-b-lg p-4 min-h-96 border border-t-0 border-gray-200 ${column.color}`}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(column.id)}
+              >
+                {visibleTasks.map(getTaskCard)}
+
+                {hasMore && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedColumns(prev => ({ ...prev, [column.id]: !isExpanded }))}
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      {isExpanded ? '收起' : `展开更多（还有 ${hiddenCount} 条）`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       ))}
 
