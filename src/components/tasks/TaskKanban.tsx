@@ -61,6 +61,29 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
     return colors[priority as keyof typeof colors] || colors.P3;
   };
 
+  const getDateTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return Number.NEGATIVE_INFINITY;
+    const value = new Date(dateStr).getTime();
+    return Number.isNaN(value) ? Number.NEGATIVE_INFINITY : value;
+  };
+
+  const compareTaskForKanban = (a: Task, b: Task) => {
+    const aHasDue = Boolean(a.due_date);
+    const bHasDue = Boolean(b.due_date);
+
+    if (!aHasDue && bHasDue) return -1;
+    if (aHasDue && !bHasDue) return 1;
+
+    if (!aHasDue && !bHasDue) {
+      return getDateTime(b.start_date) - getDateTime(a.start_date);
+    }
+
+    const dueDiff = getDateTime(b.due_date) - getDateTime(a.due_date);
+    if (dueDiff !== 0) return dueDiff;
+
+    return getDateTime(b.start_date) - getDateTime(a.start_date);
+  };
+
   const getTaskCard = (task: Task) => (
     <div
       key={task.id}
@@ -131,7 +154,7 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
           >
             {tasks
               .filter(t => t.status === column.id)
-              .sort((a, b) => (a.position || 0) - (b.position || 0))
+              .sort(compareTaskForKanban)
               .map(getTaskCard)}
           </div>
         </div>
