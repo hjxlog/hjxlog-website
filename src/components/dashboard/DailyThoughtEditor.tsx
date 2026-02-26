@@ -2,7 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   CalendarIcon,
-  LockClosedIcon
+  ClipboardDocumentIcon,
+  LockClosedIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 interface DailyThought {
@@ -19,6 +21,7 @@ interface DailyThoughtEditorProps {
   canEdit: boolean;
   loading: boolean;
   onSave: (content: string) => Promise<void>;
+  onOptimize: (content: string) => Promise<string>;
   today: string;
 }
 
@@ -48,13 +51,17 @@ export default function DailyThoughtEditor({
   canEdit,
   loading,
   onSave,
+  onOptimize,
   today
 }: DailyThoughtEditorProps) {
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizedContent, setOptimizedContent] = useState('');
 
   useEffect(() => {
     setContent(thought?.content || '');
+    setOptimizedContent('');
   }, [thought?.id, selectedDate, thought?.content, canEdit]);
 
   const displayDate = normalizeDate(thought?.thought_date) || selectedDate;
@@ -77,6 +84,35 @@ export default function DailyThoughtEditor({
       setIsSaving(false);
     }
   }, [content, onSave]);
+
+  const handleOptimize = useCallback(async () => {
+    if (!content.trim()) {
+      toast.error('想法内容不能为空');
+      return;
+    }
+    setIsOptimizing(true);
+    try {
+      const result = await onOptimize(content);
+      setOptimizedContent(result);
+      toast.success('优化完成');
+    } catch {
+      // error handled by parent
+    } finally {
+      setIsOptimizing(false);
+    }
+  }, [content, onOptimize]);
+
+  const handleCopyOptimized = useCallback(async () => {
+    if (!optimizedContent.trim()) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(optimizedContent);
+      toast.success('已复制优化结果');
+    } catch {
+      toast.error('复制失败，请手动复制');
+    }
+  }, [optimizedContent]);
 
   useEffect(() => {
     if (!isEditable) return;
@@ -123,13 +159,23 @@ export default function DailyThoughtEditor({
             <span className="whitespace-nowrap">{wordCount} 字</span>
             <span className="whitespace-nowrap">更新于 {formatDateTime(thought?.updated_at)}</span>
             {isEditable && (
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !content.trim()}
-                className="whitespace-nowrap rounded-md bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-              >
-                {isSaving ? '保存中...' : '保存'}
-              </button>
+              <>
+                <button
+                  onClick={handleOptimize}
+                  disabled={isOptimizing || !content.trim()}
+                  className="inline-flex items-center whitespace-nowrap rounded-md bg-sky-600 px-3 py-1 text-xs font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                  <SparklesIcon className="mr-1 h-3.5 w-3.5" />
+                  {isOptimizing ? '优化中...' : 'AI优化动态文案'}
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || !content.trim()}
+                  className="whitespace-nowrap rounded-md bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                  {isSaving ? '保存中...' : '保存'}
+                </button>
+              </>
             )}
             {!isEditable && (
               <span className="inline-flex items-center whitespace-nowrap text-gray-400">
@@ -160,6 +206,22 @@ export default function DailyThoughtEditor({
               placeholder="写下今天的想法..."
               className="min-h-[460px] w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#165DFF] focus:outline-none focus:ring-2 focus:ring-[#165DFF] lg:min-h-[calc(100vh-300px)]"
             />
+          </div>
+          <div className="border-t border-gray-100 px-4 pb-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-800">AI 优化结果（用于发动态）</h3>
+              <button
+                onClick={handleCopyOptimized}
+                disabled={!optimizedContent.trim()}
+                className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300"
+              >
+                <ClipboardDocumentIcon className="mr-1 h-3.5 w-3.5" />
+                复制
+              </button>
+            </div>
+            <article className="min-h-[140px] whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-800">
+              {optimizedContent || '点击上方“AI优化动态文案”后，这里会显示优化结果。'}
+            </article>
           </div>
         </div>
       )}

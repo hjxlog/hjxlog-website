@@ -2,6 +2,8 @@
  * 每日想法功能 - 核心服务层
  * 功能：每日想法记录与历史查询
  */
+import LLMService from './LLMService.js';
+import PromptService from './PromptService.js';
 
 let dbClientGetter = null;
 
@@ -130,4 +132,51 @@ export async function getThoughtsList(page = 1, limit = 30) {
 export function canEditThought(date) {
   const today = getLocalDateString();
   return date === today;
+}
+
+/**
+ * 优化当天想法为可发布动态文案
+ * @param {Object} data
+ * @param {string} data.date - 日期 YYYY-MM-DD
+ * @param {string} [data.content] - 可选，传入最新想法文本；不传则读取数据库当天想法
+ * @returns {Object} 优化结果
+ */
+export async function optimizeThoughtForMoment({ date, content }) {
+  const sourceContent = (content || '').trim();
+  let thoughtContent = sourceContent;
+
+  if (!thoughtContent) {
+    const thought = await getDailyThoughtByDate(date);
+    thoughtContent = (thought?.content || '').trim();
+  }
+
+  if (!thoughtContent) {
+    throw new Error('暂无可优化的想法内容，请先填写并保存当天想法。');
+  }
+
+  const db = getDbClient();
+  const promptService = new PromptService(db);
+  const templateResult = await promptService.getTemplate('thought_moment_polish');
+
+  if (!templateResult.success || !templateResult.data) {
+    throw new Error('提示词模板 thought_moment_polish 缺失，请先初始化 prompt_templates 数据。');
+  }
+
+  const template = templateResult.data;
+  const userPrompt = template.user_prompt_template
+    .replace('{date}', date)
+    .replace('{thought_content}', thoughtContent);
+
+  const prompt = {
+    system: template.system_prompt,
+    messages: [{ role: 'user', content: userPrompt }]
+  };
+
+  const llm = new LLMService();
+  const optimizedContent = await llm.chat(prompt);
+
+  return {
+    source_content: thoughtContent,
+    optimized_content: (optimizedContent || '').trim()
+  };
 }

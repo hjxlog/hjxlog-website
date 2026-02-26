@@ -9,7 +9,8 @@ import {
   getTodayThought,
   createOrUpdateTodayThought,
   getThoughtsList,
-  canEditThought
+  canEditThought,
+  optimizeThoughtForMoment
 } from '../services/MemoryService.js';
 
 const router = express.Router();
@@ -112,6 +113,46 @@ router.post('/thoughts/today', async (req, res) => {
     });
   } catch (error) {
     console.error('Error saving thought:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 优化指定日期想法为动态文案（仅当天可用）
+ * POST /api/thoughts/:date/optimize
+ * Body: { content? }
+ */
+router.post('/thoughts/:date/optimize', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const { content } = req.body || {};
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format. Use YYYY-MM-DD'
+      });
+    }
+
+    if (!canEditThought(date)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only today thought can be optimized'
+      });
+    }
+
+    const result = await optimizeThoughtForMoment({ date, content });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error optimizing thought:', error.message);
     res.status(500).json({
       success: false,
       error: error.message

@@ -20,6 +20,15 @@ This script creates extensions, functions, tables, indexes, and triggers.
 psql "$DATABASE_URL" -f database/preset/hw_1.0_preset_data.sql
 ```
 
+- Incremental prompt/template preset updates:
+
+```bash
+psql "$DATABASE_URL" -f database/preset/hw_1.1_preset_data.sql
+psql "$DATABASE_URL" -f database/preset/hw_1.2_preset_data.sql
+```
+
+`hw_1.2_preset_data.sql` uses upsert update for `thought_moment_polish`, so re-running it will refresh the prompt content.
+
 - Local test data:
 
 ```bash

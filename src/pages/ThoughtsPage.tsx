@@ -56,6 +56,24 @@ const ThoughtsPage: React.FC = () => {
     }
   };
 
+  const handleOptimizeThought = async (content: string) => {
+    try {
+      const data = await apiRequest(`/api/thoughts/${selectedDate}/optimize`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      }) as { success: boolean; data: { optimized_content?: string } };
+      const optimizedContent = data?.data?.optimized_content || '';
+      if (!optimizedContent) {
+        throw new Error('AI 返回内容为空');
+      }
+      return optimizedContent;
+    } catch (error) {
+      console.error('优化想法失败:', error);
+      toast.error('优化想法失败');
+      throw error;
+    }
+  };
+
   // 初始化加载
   useEffect(() => {
     fetchThoughtByDate(selectedDate);
@@ -114,6 +132,7 @@ const ThoughtsPage: React.FC = () => {
           canEdit={canEdit}
           loading={loading}
           onSave={handleSaveToday}
+          onOptimize={handleOptimizeThought}
           today={today}
         />
       </section>

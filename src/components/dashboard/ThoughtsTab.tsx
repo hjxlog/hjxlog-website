@@ -56,6 +56,24 @@ export default function ThoughtsTab() {
     }
   };
 
+  const handleOptimizeThought = async (content: string) => {
+    try {
+      const data = await apiRequest(`/api/thoughts/${selectedDate}/optimize`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+      });
+      const optimizedContent = data?.data?.optimized_content || '';
+      if (!optimizedContent) {
+        throw new Error('AI 返回内容为空');
+      }
+      return optimizedContent;
+    } catch (error) {
+      console.error('优化想法失败:', error);
+      toast.error('优化想法失败');
+      throw error;
+    }
+  };
+
   const today = getLocalToday();
 
   useEffect(() => {
@@ -88,6 +106,7 @@ export default function ThoughtsTab() {
             canEdit={canEdit}
             loading={loading}
             onSave={handleSaveToday}
+            onOptimize={handleOptimizeThought}
             today={today}
           />
         </section>
