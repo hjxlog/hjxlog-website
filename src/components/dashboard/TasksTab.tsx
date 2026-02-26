@@ -33,6 +33,7 @@ export default function TasksTab() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
+  const [lastSelectedProjectId, setLastSelectedProjectId] = useState<number | null>(null);
 
   const parseLocalDate = (value: string) => {
     const [year, month, day] = value.split('-').map(Number);
@@ -321,8 +322,23 @@ export default function TasksTab() {
             setShowCreateTask(false);
             setCreateTaskInitialData(null);
           }}
-          onSubmit={handleCreateTask}
-          initialTask={createTaskInitialData || undefined}
+          onSubmit={(taskData) => {
+            if (typeof taskData.project_id === 'number') {
+              setLastSelectedProjectId(taskData.project_id);
+            }
+            handleCreateTask(taskData);
+          }}
+          onProjectChange={(projectId) => {
+            if (typeof projectId === 'number' && !Number.isNaN(projectId)) {
+              setLastSelectedProjectId(projectId);
+            }
+          }}
+          initialTask={{
+            ...createTaskInitialData,
+            project_id: projects.some(project => project.id === lastSelectedProjectId)
+              ? lastSelectedProjectId ?? undefined
+              : undefined
+          }}
         />
       )}
 

@@ -13,6 +13,7 @@ interface CreateTaskModalProps {
   projects: Project[];
   onClose: () => void;
   onSubmit: (task: any) => void;
+  onProjectChange?: (projectId: number | '') => void;
   initialTask?: {
     title?: string;
     description?: string;
@@ -24,7 +25,7 @@ interface CreateTaskModalProps {
   };
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, initialTask }) => {
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, onProjectChange, initialTask }) => {
   const todayDate = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -128,7 +129,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
               </label>
               <select
                 value={formData.project_id}
-                onChange={(e) => setFormData({ ...formData, project_id: parseInt(e.target.value) })}
+                onChange={(e) => {
+                  const nextValue = Number(e.target.value);
+                  setFormData({ ...formData, project_id: nextValue });
+                  onProjectChange?.(nextValue);
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 {projects.map(project => (
