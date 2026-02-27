@@ -33,7 +33,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
       <div className="md:hidden space-y-3 p-3">
         {tasks.length === 0 && (
           <div className="text-center py-6 text-gray-500">暂无任务</div>
@@ -78,22 +78,22 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
         })}
       </div>
 
-      <table className="hidden md:table min-w-full divide-y divide-gray-200">
+      <table className="hidden md:table min-w-[820px] w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               任务
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               项目
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               优先级
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               状态
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               截止日期
             </th>
           </tr>
@@ -131,29 +131,29 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap">
                   {task.project_name && (
-                    <div className="flex items-center">
+                    <div className="flex items-center min-w-0">
                       <span
                         className="w-2 h-2 rounded-full mr-2"
                         style={{ backgroundColor: task.project_color }}
                       />
-                      <span className="text-sm text-gray-900">{task.project_name}</span>
+                      <span className="text-sm text-gray-900 truncate">{task.project_name}</span>
                     </div>
                   )}
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs font-medium rounded ${getPriorityColor(task.priority)}`}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center whitespace-nowrap px-2 py-1 text-xs font-medium rounded ${getPriorityColor(task.priority)}`}>
                     {task.priority}
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${statusBadge.color}`}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center whitespace-nowrap px-2 py-1 text-xs font-medium rounded ${statusBadge.color}`}>
                     <StatusIcon className="h-3 w-3 mr-1" />
                     {statusBadge.label}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                   {formatTaskDateZhCN(task.due_date)}
                 </td>
               </tr>

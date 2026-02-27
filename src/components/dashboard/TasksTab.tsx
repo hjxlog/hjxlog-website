@@ -6,7 +6,6 @@ import { useShortcut } from '@/hooks/useShortcut';
 import TaskKanban from '@/components/tasks/TaskKanban';
 import TaskList from '@/components/tasks/TaskList';
 import TaskFilters from '@/components/tasks/TaskFilters';
-import TaskStats from '@/components/tasks/TaskStats';
 import CreateTaskModal from '@/components/tasks/CreateTaskModal';
 import CreateProjectModal from '@/components/tasks/CreateProjectModal';
 import QuickAddModal from '@/components/tasks/QuickAddModal';
@@ -23,16 +22,6 @@ type ProjectPayload = {
   icon: string;
   start_date: string | null;
   end_date: string | null;
-};
-
-type TaskStatsData = {
-  total: number;
-  todo: number;
-  in_progress: number;
-  done: number;
-  p0: number;
-  p1: number;
-  overdue: number;
 };
 
 type TaskInputPayload = {
@@ -55,7 +44,6 @@ export default function TasksTab() {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showEditProject, setShowEditProject] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
-  const [stats, setStats] = useState<TaskStatsData | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
@@ -116,18 +104,8 @@ export default function TasksTab() {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const data = await apiRequest('/api/tasks/stats/overview') as { success: boolean; data: TaskStatsData };
-      setStats(data.data);
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
-
   useEffect(() => {
     fetchProjects();
-    fetchStats();
   }, []);
 
   useEffect(() => {
@@ -150,8 +128,8 @@ export default function TasksTab() {
   });
 
   const refreshTaskAndStats = useCallback(async () => {
-    await Promise.all([fetchTasks(false), fetchStats()]);
-  }, [fetchTasks, fetchStats]);
+    await fetchTasks(false);
+  }, [fetchTasks]);
 
   const handleCreateTask = async (taskData: TaskInputPayload) => {
     try {
@@ -166,7 +144,6 @@ export default function TasksTab() {
       toast.success('任务创建成功');
       setShowCreateTask(false);
       fetchTasks(false);
-      fetchStats();
     } catch (error) {
       console.error('Failed to create task:', error);
       toast.error('创建任务失败');
@@ -202,7 +179,7 @@ export default function TasksTab() {
       });
       toast.success('项目已更新');
       setShowEditProject(false);
-      await Promise.all([fetchProjects(), fetchTasks(false), fetchStats()]);
+      await Promise.all([fetchProjects(), fetchTasks(false)]);
     } catch (error) {
       console.error('Failed to update project:', error);
       toast.error('更新项目失败');
@@ -230,7 +207,6 @@ export default function TasksTab() {
       });
       toast.success('任务日期已更新');
       fetchTasks();
-      fetchStats();
     } catch (error) {
       console.error('Failed to move task:', error);
       toast.error('移动任务失败');
@@ -254,7 +230,6 @@ export default function TasksTab() {
       });
       toast.success('任务截止日期已更新');
       fetchTasks();
-      fetchStats();
     } catch (error) {
       console.error('Failed to resize task:', error);
       toast.error('调整截止日期失败');
@@ -265,7 +240,7 @@ export default function TasksTab() {
     <div className="space-y-4">
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4">
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+          <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-slate-900">待办事项</h3>
               <p className="text-xs sm:text-sm text-slate-500">任务与项目管理</p>
@@ -338,8 +313,6 @@ export default function TasksTab() {
           </div>
         </div>
       </div>
-
-      {stats && <TaskStats stats={stats} />}
 
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 min-h-[300px] relative">
         {loading && tasks.length === 0 ? (

@@ -13,7 +13,9 @@ import {
   RssIcon
 } from '@heroicons/react/24/outline';
 import type { Blog, Moment, Work } from '@/types';
+import type { TaskOverviewStats } from '@/types/task';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import TaskPulsePanel from '@/components/dashboard/TaskPulsePanel';
 
 interface TodayHubTabProps {
   username: string;
@@ -21,10 +23,12 @@ interface TodayHubTabProps {
   works: Work[];
   blogs: Blog[];
   moments: Moment[];
+  taskStats: TaskOverviewStats | null;
   onOpenWorkForm: () => void;
   onOpenBlogForm: () => void;
   onOpenMomentForm: () => void;
   onGoMoments: () => void;
+  onGoTasks?: () => void;
 }
 
 const toDisplayDate = (value?: string | null) => {
@@ -48,10 +52,12 @@ export default function TodayHubTab({
   works,
   blogs,
   moments,
+  taskStats,
   onOpenWorkForm,
   onOpenBlogForm,
   onOpenMomentForm,
-  onGoMoments
+  onGoMoments,
+  onGoTasks
 }: TodayHubTabProps) {
   const [selectedReportDate] = useState<string>(getLocalToday());
   const [reportContent, setReportContent] = useState('');
@@ -307,7 +313,9 @@ export default function TodayHubTab({
           </div>
         </div>
 
-        <div className="xl:col-span-4">
+        <div className="space-y-4 xl:col-span-4">
+          <TaskPulsePanel stats={taskStats} onGoTasks={onGoTasks} />
+
           <div className="rounded-xl border border-slate-200 bg-white p-4 sm:rounded-2xl sm:p-6">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="inline-flex items-center text-base font-semibold text-slate-800 sm:text-lg">

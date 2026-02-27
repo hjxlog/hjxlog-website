@@ -62,4 +62,14 @@ export interface TaskTimeLog {
   created_at: string;
 }
 
+export interface TaskOverviewStats {
+  total: number;
+  todo: number;
+  in_progress: number;
+  done: number;
+  p0: number;
+  p1: number;
+  overdue: number;
+}
+
 export type ViewType = 'kanban' | 'list' | 'calendar' | 'today';

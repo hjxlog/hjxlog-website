@@ -28,6 +28,7 @@ import DailyReportsTab from '@/components/dashboard/DailyReportsTab';
 import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
+import type { TaskOverviewStats } from '@/types/task';
 
 const DASHBOARD_TAB_STORAGE_KEY = 'dashboard.activeTab';
 const DASHBOARD_DEFAULT_TAB = 'today';
@@ -55,6 +56,7 @@ export default function Dashboard() {
   const [currentWork, setCurrentWork] = useState<Work | null>(null);
   const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
   const [totalViews, setTotalViews] = useState(0);
+  const [taskStats, setTaskStats] = useState<TaskOverviewStats | null>(null);
 
   // 动态管理相关状态
   const [moments, setMoments] = useState<Array<Moment & { views?: number }>>([]);
@@ -280,6 +282,17 @@ export default function Dashboard() {
     }
   }, []);
 
+  const fetchTaskOverviewStats = useCallback(async () => {
+    try {
+      const response = await apiRequest('/api/tasks/stats/overview');
+      if (response.success && response.data) {
+        setTaskStats(response.data);
+      }
+    } catch (error) {
+      console.error('获取任务统计失败:', error);
+    }
+  }, []);
+
   const createMoment = useCallback(async (momentData: { content: string; visibility: 'public' | 'private' }) => {
     try {
       const result = await apiRequest('/api/moments', {
@@ -398,14 +411,20 @@ export default function Dashboard() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments(), fetchStats()]);
+      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments(), fetchStats(), fetchTaskOverviewStats()]);
       setLoading(false);
     };
     
     if (user) {
       initData();
     }
-  }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats]);
+  }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats, fetchTaskOverviewStats]);
+
+  useEffect(() => {
+    if (activeTab === 'today') {
+      fetchTaskOverviewStats();
+    }
+  }, [activeTab, fetchTaskOverviewStats]);
 
   // 当本地存储为无效值时，兜底默认tab
   useEffect(() => {
@@ -637,10 +656,12 @@ export default function Dashboard() {
                   works={works}
                   blogs={blogs}
                   moments={moments}
+                  taskStats={taskStats}
                   onOpenWorkForm={() => openWorkForm()}
                   onOpenBlogForm={() => openBlogForm()}
                   onOpenMomentForm={() => openMomentForm()}
                   onGoMoments={() => handleTabChange('moments')}
+                  onGoTasks={() => handleTabChange('tasks')}
                 />
               </div>
             )}
