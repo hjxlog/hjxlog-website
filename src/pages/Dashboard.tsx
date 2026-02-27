@@ -29,10 +29,24 @@ import LogManagement from '@/pages/LogManagement';
 
 import { Work, Blog, Moment } from '@/types';
 
+const DASHBOARD_TAB_STORAGE_KEY = 'dashboard.activeTab';
+const DASHBOARD_DEFAULT_TAB = 'today';
+const DASHBOARD_VALID_TABS = new Set(
+  dashboardTabGroups.flatMap((group) => group.tabs.map((tab) => tab.key))
+);
+
+function getInitialDashboardTab() {
+  if (typeof window === 'undefined') return DASHBOARD_DEFAULT_TAB;
+  const tabFromStorage = localStorage.getItem(DASHBOARD_TAB_STORAGE_KEY);
+  return tabFromStorage && DASHBOARD_VALID_TABS.has(tabFromStorage)
+    ? tabFromStorage
+    : DASHBOARD_DEFAULT_TAB;
+}
+
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('today');
+  const [activeTab, setActiveTab] = useState(getInitialDashboardTab);
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
 
@@ -76,13 +90,10 @@ export default function Dashboard() {
 
 
   // 表单数据状态
-  const validDashboardTabs = useMemo(
-    () => new Set(dashboardTabGroups.flatMap((group) => group.tabs.map((tab) => tab.key))),
-    []
-  );
+  const validDashboardTabs = DASHBOARD_VALID_TABS;
 
   const handleTabChange = useCallback((tab: string) => {
-    const nextTab = validDashboardTabs.has(tab) ? tab : 'today';
+    const nextTab = validDashboardTabs.has(tab) ? tab : DASHBOARD_DEFAULT_TAB;
     setActiveTab(nextTab);
   }, [validDashboardTabs]);
 
@@ -396,16 +407,19 @@ export default function Dashboard() {
     }
   }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats]);
 
-  // URL参数处理
+  // 当本地存储为无效值时，兜底默认tab
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabFromUrl = urlParams.get('tab');
-    if (tabFromUrl && validDashboardTabs.has(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
-    } else {
-      setActiveTab('today');
+    if (!validDashboardTabs.has(activeTab)) {
+      setActiveTab(DASHBOARD_DEFAULT_TAB);
     }
-  }, [validDashboardTabs]);
+  }, [activeTab, validDashboardTabs]);
+
+  // 持久化当前 tab（不写入 URL）
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!validDashboardTabs.has(activeTab)) return;
+    localStorage.setItem(DASHBOARD_TAB_STORAGE_KEY, activeTab);
+  }, [activeTab, validDashboardTabs]);
 
   // 事件处理函数
   const handleDeleteWork = useCallback(async (id: number) => {
