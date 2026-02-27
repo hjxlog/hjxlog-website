@@ -149,9 +149,9 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月',
                       '七月', '八月', '九月', '十月', '十一月', '十二月'];
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-  const cellHeight = isCompact ? 72 : 112;
-  const laneHeight = isCompact ? 14 : 18;
-  const laneTopOffset = isCompact ? 24 : 30;
+  const cellHeight = isCompact ? 92 : 144;
+  const laneHeight = isCompact ? 16 : 26;
+  const laneTopOffset = isCompact ? 28 : 40;
   const laneGap = isCompact ? 1 : 2;
   const totalDateCells = startDayOfWeek + daysInMonth;
   const totalRows = Math.ceil(totalDateCells / 7);
@@ -352,9 +352,9 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             className="p-0.5 rounded text-gray-400 hover:text-[#165DFF] hover:bg-blue-100 transition-colors"
             title={`为 ${getLocalDateString(date)} 添加任务`}
           >
-            <PlusIcon className="h-3.5 w-3.5" />
+            <PlusIcon className="h-5 w-5" />
           </button>
-          <div className={`text-sm font-medium ${
+          <div className={`text-lg font-bold ${
             today ? 'text-blue-600' : past ? 'text-gray-400' : 'text-gray-700'
           }`}>
             {day}
@@ -367,12 +367,12 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 <span key={`dot-${day}-${index}`} className="h-1.5 w-1.5 rounded-full bg-slate-400" />
               ))}
               {dayTaskCount > 3 && (
-                <span className="text-[10px] text-slate-400">+{dayTaskCount - 3}</span>
+                <span className="text-sm font-semibold text-slate-500">+{dayTaskCount - 3}</span>
               )}
             </div>
           ) : (
             Array.from({ length: laneCount }).map((_, lane) => (
-              <div key={`lane-empty-${day}-${lane}`} className="h-[18px]" />
+              <div key={`lane-empty-${day}-${lane}`} className="h-[26px]" />
             ))
           )}
         </div>
@@ -496,7 +496,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
               return (
                 <div
                   key={`preview-bar-${index}`}
-                  className={`absolute text-[10px] h-[18px] leading-[18px] px-1 border border-[#165DFF]/40 bg-[#165DFF]/18 text-[#165DFF] ${segmentShapeClass}`}
+                  className={`absolute text-sm h-[26px] leading-[26px] px-2 border border-[#165DFF]/40 bg-[#165DFF]/18 text-[#165DFF] ${segmentShapeClass}`}
                   style={{
                     top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
                     left: `calc(${left}% + 4px)`,
@@ -561,7 +561,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                   }}
                   onMouseEnter={() => setHoveredTaskId(segment.task.id)}
                   onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
-                  className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-[10px] h-[18px] leading-[18px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
+                  className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-sm h-[26px] leading-[26px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
                     segment.task.status === 'done' ? 'line-through' : ''
                   } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
                   style={{
@@ -571,7 +571,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                     ...projectTintStyle
                   }}
                 >
-                  <div className="flex items-center justify-between gap-1 px-1">
+                  <div className="flex items-center justify-between gap-1.5 px-2">
                     <span className="truncate">
                       {showLabel ? `${segment.task.title}${span > 1 ? ` (${span}天)` : ''}` : ''}
                     </span>
@@ -592,7 +592,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                           setDragNavDirection(null);
                         }}
                         title="拖拽到目标日期以延长截止"
-                        className="text-[10px] px-1 rounded bg-black/10 hover:bg-black/20"
+                        className="text-sm px-1 rounded bg-black/10 hover:bg-black/20"
                       >
                         ⇢
                       </span>

@@ -17,7 +17,7 @@ import { Task, Project, ViewType } from '@/types/task';
 import { parseTaskDate } from '@/utils/taskDate';
 
 export default function TasksTab() {
-  const [view, setView] = useState<ViewType>('kanban');
+  const [view, setView] = useState<ViewType>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -232,6 +232,16 @@ export default function TasksTab() {
           <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5">
             <div className="flex items-center gap-2 overflow-x-auto">
               <button
+                onClick={() => setView('calendar')}
+                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  view === 'calendar'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                日历
+              </button>
+              <button
                 onClick={() => setView('kanban')}
                 className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   view === 'kanban'
@@ -250,16 +260,6 @@ export default function TasksTab() {
                 }`}
               >
                 列表
-              </button>
-              <button
-                onClick={() => setView('calendar')}
-                className={`shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  view === 'calendar'
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                日历
               </button>
               <button
                 onClick={() => setView('today')}
