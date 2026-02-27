@@ -25,7 +25,19 @@ const COLORS = [
   { name: 'Pink', value: '#ec4899' },
   { name: 'Orange', value: '#f59e0b' },
   { name: 'Red', value: '#ef4444' },
-  { name: 'Teal', value: '#14b8a6' }
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'Crimson', value: '#dc2626' },
+  { name: 'Rose', value: '#e11d48' },
+  { name: 'Fuchsia', value: '#c026d3' },
+  { name: 'Violet', value: '#7c3aed' },
+  { name: 'Sky', value: '#0ea5e9' },
+  { name: 'Cyan', value: '#06b6d4' },
+  { name: 'Emerald', value: '#059669' },
+  { name: 'Lime', value: '#84cc16' },
+  { name: 'Amber', value: '#f59e0b' },
+  { name: 'Coral', value: '#fb7185' },
+  { name: 'Slate', value: '#64748b' },
+  { name: 'Stone', value: '#78716c' }
 ];
 
 const ICONS = [

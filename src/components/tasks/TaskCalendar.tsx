@@ -35,14 +35,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     return parseTaskDate(value);
   };
 
-  const isSameDate = (left: Date, right: Date) => {
-    return (
-      left.getFullYear() === right.getFullYear() &&
-      left.getMonth() === right.getMonth() &&
-      left.getDate() === right.getDate()
-    );
-  };
-
   const getTaskRange = (task: Task) => {
     const rawStart = task.start_date || task.due_date;
     const rawEnd = task.due_date || task.start_date;
@@ -59,13 +51,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
 
   const isDateInRange = (date: Date, start: Date, end: Date) => {
     return date >= start && date <= end;
-  };
-
-  const getRangeSegment = (date: Date, start: Date, end: Date) => {
-    if (isSameDate(start, end)) return 'single';
-    if (isSameDate(date, start)) return 'start';
-    if (isSameDate(date, end)) return 'end';
-    return 'middle';
   };
 
   const getDaysSpan = (start: Date, end: Date) => {
@@ -330,7 +315,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             } else {
               onResizeTask?.(task, dateKey);
             }
-          } catch (error) {
+          } catch {
             console.error('Invalid calendar drag payload');
           } finally {
             setDragOverDate(null);

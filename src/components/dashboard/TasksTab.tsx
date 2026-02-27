@@ -25,6 +25,21 @@ type ProjectPayload = {
   end_date: string | null;
 };
 
+type TaskStatsData = {
+  total: number;
+  todo: number;
+  in_progress: number;
+  done: number;
+  p0: number;
+  p1: number;
+  overdue: number;
+};
+
+type TaskInputPayload = {
+  project_id?: number | null;
+  [key: string]: unknown;
+};
+
 export default function TasksTab() {
   const [view, setView] = useState<ViewType>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,7 +55,7 @@ export default function TasksTab() {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showEditProject, setShowEditProject] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<TaskStatsData | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
@@ -103,7 +118,7 @@ export default function TasksTab() {
 
   const fetchStats = async () => {
     try {
-      const data = await apiRequest('/api/tasks/stats/overview') as { success: boolean; data: any };
+      const data = await apiRequest('/api/tasks/stats/overview') as { success: boolean; data: TaskStatsData };
       setStats(data.data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -138,7 +153,7 @@ export default function TasksTab() {
     await Promise.all([fetchTasks(false), fetchStats()]);
   }, [fetchTasks, fetchStats]);
 
-  const handleCreateTask = async (taskData: any) => {
+  const handleCreateTask = async (taskData: TaskInputPayload) => {
     try {
       const cleanedData = {
         ...taskData,

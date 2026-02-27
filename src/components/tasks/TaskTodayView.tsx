@@ -93,7 +93,7 @@ const TaskTodayView: React.FC<TaskTodayViewProps> = ({ tasks, onTaskClick }) => 
 
   const TaskSection: React.FC<{
     title: string;
-    icon: any;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     tasks: Task[];
     color: string;
     bgColor: string;
