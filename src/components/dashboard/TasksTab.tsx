@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, PlusIcon, SwatchIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { apiRequest } from '@/config/api';
 import { useShortcut } from '@/hooks/useShortcut';
 import TaskKanban from '@/components/tasks/TaskKanban';
@@ -16,6 +16,15 @@ import TaskDetailSidebar from '@/components/tasks/TaskDetailSidebar';
 import { Task, Project, ViewType } from '@/types/task';
 import { parseTaskDate } from '@/utils/taskDate';
 
+type ProjectPayload = {
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  start_date: string | null;
+  end_date: string | null;
+};
+
 export default function TasksTab() {
   const [view, setView] = useState<ViewType>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,11 +38,14 @@ export default function TasksTab() {
   });
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [showProjectManager, setShowProjectManager] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<number | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
 
   const parseLocalDate = (value: string) => {
     const [year, month, day] = value.split('-').map(Number);
@@ -104,6 +116,17 @@ export default function TasksTab() {
   }, []);
 
   useEffect(() => {
+    if (!projects.length) {
+      setEditingProjectId(null);
+      return;
+    }
+
+    if (!projects.some((project) => project.id === editingProjectId)) {
+      setEditingProjectId(projects[0].id);
+    }
+  }, [projects, editingProjectId]);
+
+  useEffect(() => {
     fetchTasks();
   }, [filters]);
 
@@ -135,20 +158,43 @@ export default function TasksTab() {
     }
   };
 
-  const handleCreateProject = async (projectData: any) => {
+  const handleCreateProject = async (projectData: ProjectPayload) => {
     try {
-      await apiRequest('/api/tasks/projects', {
+      const created = await apiRequest('/api/tasks/projects', {
         method: 'POST',
         body: JSON.stringify(projectData)
-      });
+      }) as { success: boolean; data: Project };
       toast.success('项目创建成功');
       setShowCreateProject(false);
+      setEditingProjectId(created?.data?.id || null);
       fetchProjects();
     } catch (error) {
       console.error('Failed to create project:', error);
       toast.error('创建项目失败');
     }
   };
+
+  const handleUpdateProject = async (projectData: ProjectPayload) => {
+    if (!editingProjectId) {
+      toast.error('请选择要编辑的项目');
+      return;
+    }
+
+    try {
+      await apiRequest(`/api/tasks/projects/${editingProjectId}`, {
+        method: 'PUT',
+        body: JSON.stringify(projectData)
+      });
+      toast.success('项目已更新');
+      setShowEditProject(false);
+      await Promise.all([fetchProjects(), fetchTasks(false), fetchStats()]);
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      toast.error('更新项目失败');
+    }
+  };
+
+  const editingProject = projects.find((project) => project.id === editingProjectId) || null;
 
   const handleMoveTask = async (task: Task, targetDate: string) => {
     try {
@@ -211,10 +257,11 @@ export default function TasksTab() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowCreateProject(true)}
-                className="px-2.5 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                onClick={() => setShowProjectManager(true)}
+                className="px-2.5 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors flex items-center"
               >
-                新建项目
+                <SwatchIcon className="h-4 w-4 mr-1" />
+                项目管理
               </button>
               <button
                 onClick={() => {
@@ -347,6 +394,91 @@ export default function TasksTab() {
           onClose={() => setShowCreateProject(false)}
           onSubmit={handleCreateProject}
         />
+      )}
+
+      {showEditProject && editingProject && (
+        <CreateProjectModal
+          mode="edit"
+          initialProject={editingProject}
+          onClose={() => setShowEditProject(false)}
+          onSubmit={handleUpdateProject}
+        />
+      )}
+
+      {showProjectManager && (
+        <div className="fixed inset-0 z-50 flex">
+          <button
+            className="flex-1 bg-black/35"
+            onClick={() => setShowProjectManager(false)}
+            aria-label="关闭项目管理面板"
+          />
+          <div className="w-full max-w-md bg-white h-full shadow-2xl border-l border-slate-200 flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">项目管理</h3>
+                <p className="text-xs text-slate-500 mt-0.5">统一管理项目名称、颜色和图标</p>
+              </div>
+              <button
+                onClick={() => setShowProjectManager(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-slate-200">
+              <button
+                onClick={() => {
+                  setShowProjectManager(false);
+                  setShowCreateProject(true);
+                }}
+                className="w-full px-3 py-2 text-sm font-medium text-white bg-[#165DFF] rounded-lg hover:bg-[#0E4BA4] transition-colors flex items-center justify-center"
+              >
+                <PlusIcon className="h-4 w-4 mr-1.5" />
+                新建项目
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {projects.length === 0 ? (
+                <div className="px-3 py-8 text-sm text-slate-500 text-center">暂无项目</div>
+              ) : (
+                projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="rounded-xl border border-slate-200 px-3 py-2.5 hover:border-slate-300 hover:bg-slate-50/70 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: project.color || '#6366f1' }}
+                          />
+                          <div className="truncate text-sm font-medium text-slate-800">{project.name}</div>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          任务 {project.task_count || 0} · 完成 {project.completed_count || 0}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEditingProjectId(project.id);
+                          setShowProjectManager(false);
+                          setShowEditProject(true);
+                        }}
+                        className="shrink-0 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors flex items-center"
+                      >
+                        <PencilSquareIcon className="h-3.5 w-3.5 mr-1" />
+                        编辑
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {showQuickAdd && (

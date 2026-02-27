@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
+import { Project } from '@/types/task';
 
 interface CreateProjectModalProps {
   onClose: () => void;
-  onSubmit: (project: any) => void;
+  onSubmit: (project: {
+    name: string;
+    description: string;
+    color: string;
+    icon: string;
+    start_date: string | null;
+    end_date: string | null;
+  }) => void;
+  mode?: 'create' | 'edit';
+  initialProject?: Project | null;
 }
 
 const COLORS = [
@@ -27,15 +37,26 @@ const ICONS = [
   { name: 'Briefcase', value: 'briefcase' }
 ];
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    color: COLORS[0].value,
-    icon: ICONS[0].value,
-    start_date: '',
-    end_date: ''
-  });
+const toFormData = (project?: Project | null) => ({
+  name: project?.name || '',
+  description: project?.description || '',
+  color: project?.color || COLORS[0].value,
+  icon: project?.icon || ICONS[0].value,
+  start_date: project?.start_date || '',
+  end_date: project?.end_date || ''
+});
+
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
+  onClose,
+  onSubmit,
+  mode = 'create',
+  initialProject = null
+}) => {
+  const [formData, setFormData] = useState(toFormData(initialProject));
+
+  useEffect(() => {
+    setFormData(toFormData(initialProject));
+  }, [initialProject]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,10 +79,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubm
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">新建项目</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-xl w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b shrink-0">
+          <h2 className="text-xl font-semibold text-gray-900">{mode === 'edit' ? '编辑项目' : '新建项目'}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -70,7 +91,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubm
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] px-4 sm:px-6 py-4">
           {/* 项目名称 */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -145,7 +167,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubm
           </div>
 
           {/* 日期范围 */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 开始日期
@@ -171,8 +193,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubm
             </div>
           </div>
 
+          </div>
+
           {/* 按钮 */}
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-3 px-4 sm:px-6 py-3 border-t shrink-0 bg-white">
             <button
               type="button"
               onClick={onClose}
@@ -184,7 +208,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onSubm
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              创建项目
+              {mode === 'edit' ? '保存修改' : '创建项目'}
             </button>
           </div>
         </form>
