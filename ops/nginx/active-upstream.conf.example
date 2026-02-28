@@ -1,0 +1,2 @@
+set $frontend_target "hjxlog-frontend-blue:80";
+set $backend_target "hjxlog-backend-blue:3006";

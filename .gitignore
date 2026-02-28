@@ -200,3 +200,7 @@ config/local.js
 *.tar.gz
 *.rar
 *.7z
+
+# Deployment runtime state
+.deploy_active_slot
+ops/nginx/active-upstream.runtime.conf

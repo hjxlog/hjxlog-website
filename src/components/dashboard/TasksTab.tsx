@@ -245,7 +245,7 @@ export default function TasksTab() {
               <h3 className="text-base sm:text-lg font-semibold text-slate-900">待办事项</h3>
               <p className="text-xs sm:text-sm text-slate-500">任务与项目管理</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 xl:ml-auto">
               <button
                 onClick={() => setShowProjectManager(true)}
                 className="px-2.5 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors flex items-center"

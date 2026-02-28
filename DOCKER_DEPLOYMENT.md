@@ -135,6 +135,35 @@ docker-compose logs -f database
 
 ## 生产环境部署
 
+### 蓝绿无停机部署（推荐）
+
+仓库已提供蓝绿部署文件与脚本：
+
+- `docker-compose.bluegreen.yml`
+- `deploy.sh`
+- `ops/nginx/gateway.conf`
+
+执行：
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+流程：
+
+1. 启动基础设施（`database` + `gateway`）
+2. 在非活跃槽位（`blue/green`）启动新版本
+3. 等待 `backend` 与 `frontend` 健康检查通过
+4. 网关切流到新槽位并验证 `/api/health`
+5. 停止并清理旧槽位容器
+
+说明：
+
+- 对外访问端口固定为 `3001`（由 `gateway` 统一暴露）
+- 蓝绿容器不直接暴露宿主机端口
+- 运行时切流文件：`ops/nginx/active-upstream.runtime.conf`（已加入 `.gitignore`）
+
 ### 1. 修改配置
 
 生产环境部署前，请修改以下配置：
