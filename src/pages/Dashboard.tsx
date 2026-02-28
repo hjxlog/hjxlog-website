@@ -30,6 +30,17 @@ import LogManagement from '@/pages/LogManagement';
 import { Work, Blog, Moment } from '@/types';
 import type { TaskOverviewStats } from '@/types/task';
 
+type ViewStatsSimple = {
+  todayViews: number;
+  yesterdayViews: number;
+  last7DaysViews: number;
+  totalViews: number;
+  topLocations: Array<{
+    location: string;
+    count: number;
+  }>;
+};
+
 const DASHBOARD_TAB_STORAGE_KEY = 'dashboard.activeTab';
 const DASHBOARD_DEFAULT_TAB = 'today';
 const DASHBOARD_VALID_TABS = new Set(
@@ -56,6 +67,7 @@ export default function Dashboard() {
   const [currentWork, setCurrentWork] = useState<Work | null>(null);
   const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
   const [totalViews, setTotalViews] = useState(0);
+  const [viewStatsSimple, setViewStatsSimple] = useState<ViewStatsSimple | null>(null);
   const [taskStats, setTaskStats] = useState<TaskOverviewStats | null>(null);
 
   // 动态管理相关状态
@@ -293,6 +305,31 @@ export default function Dashboard() {
     }
   }, []);
 
+  const fetchViewStatsSimple = useCallback(async () => {
+    try {
+      const response = await apiRequest('/api/admin/view-stats/simple');
+      if (response.success && response.data) {
+        setViewStatsSimple({
+          todayViews: Number(response.data.todayViews || 0),
+          yesterdayViews: Number(response.data.yesterdayViews || 0),
+          last7DaysViews: Number(response.data.last7DaysViews || 0),
+          totalViews: Number(response.data.totalViews || 0),
+          topLocations: Array.isArray(response.data.topLocations)
+            ? response.data.topLocations.map((item: { location?: string; count?: number }) => ({
+                location: String(item.location || ''),
+                count: Number(item.count || 0)
+              }))
+            : []
+        });
+      } else {
+        setViewStatsSimple(null);
+      }
+    } catch (error) {
+      console.error('获取轻量访问统计失败:', error);
+      setViewStatsSimple(null);
+    }
+  }, []);
+
   const createMoment = useCallback(async (momentData: { content: string; visibility: 'public' | 'private' }) => {
     try {
       const result = await apiRequest('/api/moments', {
@@ -411,14 +448,21 @@ export default function Dashboard() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      await Promise.all([fetchWorks(), fetchBlogs(), fetchMoments(), fetchStats(), fetchTaskOverviewStats()]);
+      await Promise.all([
+        fetchWorks(),
+        fetchBlogs(),
+        fetchMoments(),
+        fetchStats(),
+        fetchTaskOverviewStats(),
+        fetchViewStatsSimple()
+      ]);
       setLoading(false);
     };
     
     if (user) {
       initData();
     }
-  }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats, fetchTaskOverviewStats]);
+  }, [user, fetchWorks, fetchBlogs, fetchMoments, fetchStats, fetchTaskOverviewStats, fetchViewStatsSimple]);
 
   useEffect(() => {
     if (activeTab === 'today') {
@@ -653,6 +697,7 @@ export default function Dashboard() {
                 <TodayHubTab
                   username={user.username}
                   totalViews={totalViews}
+                  viewStatsSimple={viewStatsSimple}
                   works={works}
                   blogs={blogs}
                   moments={moments}

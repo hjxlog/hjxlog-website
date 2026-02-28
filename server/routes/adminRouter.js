@@ -41,6 +41,60 @@ export function createAdminRouter(getDbClient, getLogger) {
         }
     });
 
+    // 获取轻量访问统计（Dashboard 首页）
+    router.get('/view-stats/simple', async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) {
+                throw new Error('数据库未连接');
+            }
+
+            const result = await dbClient.query(
+                `SELECT
+                    COUNT(*)::int AS total_views,
+                    COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE)::int AS today_views,
+                    COUNT(*) FILTER (
+                        WHERE created_at >= CURRENT_DATE - INTERVAL '1 day'
+                          AND created_at < CURRENT_DATE
+                    )::int AS yesterday_views,
+                    COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '6 days')::int AS last7_days_views
+                 FROM view_logs`
+            );
+
+            const row = result.rows[0] || {};
+
+            const locationResult = await dbClient.query(
+                `SELECT ip_location AS location, COUNT(*)::int AS count
+                 FROM view_logs
+                 WHERE ip_location IS NOT NULL
+                   AND BTRIM(ip_location) <> ''
+                 GROUP BY ip_location
+                 ORDER BY count DESC, ip_location ASC
+                 LIMIT 6`
+            );
+
+            res.json({
+                success: true,
+                data: {
+                    todayViews: Number(row.today_views || 0),
+                    yesterdayViews: Number(row.yesterday_views || 0),
+                    last7DaysViews: Number(row.last7_days_views || 0),
+                    totalViews: Number(row.total_views || 0),
+                    topLocations: locationResult.rows.map((item) => ({
+                        location: item.location,
+                        count: Number(item.count || 0)
+                    }))
+                }
+            });
+        } catch (error) {
+            console.error('❌ [API] 获取轻量访问统计失败:', error.message);
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    });
+
     // 获取浏览记录列表
     router.get('/view-logs', async (req, res) => {
         try {

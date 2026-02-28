@@ -20,6 +20,16 @@ import TaskPulsePanel from '@/components/dashboard/TaskPulsePanel';
 interface TodayHubTabProps {
   username: string;
   totalViews: number;
+  viewStatsSimple?: {
+    todayViews: number;
+    yesterdayViews: number;
+    last7DaysViews: number;
+    totalViews: number;
+    topLocations?: Array<{
+      location: string;
+      count: number;
+    }>;
+  } | null;
   works: Work[];
   blogs: Blog[];
   moments: Moment[];
@@ -49,6 +59,7 @@ const getLocalToday = () => {
 export default function TodayHubTab({
   username,
   totalViews,
+  viewStatsSimple,
   works,
   blogs,
   moments,
@@ -214,11 +225,11 @@ export default function TodayHubTab({
         <div className="space-y-4 xl:col-span-8">
           <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
             <StatCard
-              icon={<EyeIcon className="h-6 w-6" />}
+              icon={<CircleStackIcon className="h-6 w-6" />}
               iconBg="bg-blue-100"
               iconColor="text-blue-600"
-              value={String(totalViews)}
-              label="总浏览量"
+              value={String(works.length)}
+              label="作品"
             />
             <StatCard
               icon={<RssIcon className="h-6 w-6" />}
@@ -355,8 +366,49 @@ export default function TodayHubTab({
               查看更多动态 {'->'}
             </button>
           </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:rounded-2xl sm:p-6">
+            <h3 className="mb-3 inline-flex items-center text-base font-semibold text-slate-800 sm:mb-4 sm:text-lg">
+              <EyeIcon className="mr-1.5 h-5 w-5 text-slate-400 sm:mr-2" />
+              访问统计
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <MiniMetric label="今日" value={viewStatsSimple?.todayViews} />
+              <MiniMetric label="昨日" value={viewStatsSimple?.yesterdayViews} />
+              <MiniMetric label="近7天" value={viewStatsSimple?.last7DaysViews} />
+              <MiniMetric label="累计" value={viewStatsSimple?.totalViews ?? totalViews} />
+            </div>
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <h4 className="text-xs font-semibold tracking-wide text-slate-500">地区统计（IP 归属）</h4>
+              <div className="mt-2 space-y-1.5">
+                {(viewStatsSimple?.topLocations || []).length > 0 ? (
+                  (viewStatsSimple?.topLocations || []).map((item) => (
+                    <div key={item.location} className="flex items-center justify-between text-sm">
+                      <span className="line-clamp-1 text-slate-600">{item.location}</span>
+                      <span className="ml-3 rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-slate-400">暂无地区数据</div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value?: number }) {
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3 text-center sm:rounded-xl">
+      <div className="text-xl font-bold text-slate-800 sm:text-2xl">
+        {typeof value === 'number' ? value.toLocaleString() : '-'}
+      </div>
+      <div className="mt-1 text-xs text-slate-500">{label}</div>
     </div>
   );
 }
