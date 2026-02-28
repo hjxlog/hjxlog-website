@@ -2,46 +2,10 @@
  * 统一客户端 IP 解析工具
  */
 
-const DEFAULT_TRUSTED_PROXY_CIDRS = [
-  '127.0.0.0/8',
-  '10.0.0.0/8',
-  '172.16.0.0/12',
-  '192.168.0.0/16'
-];
-
 function readHeader(req, name) {
   const value = req.headers?.[name];
   if (Array.isArray(value)) return value[0] || '';
   return value || '';
-}
-
-function ipToUint32(ip) {
-  const parts = ip.split('.');
-  if (parts.length !== 4) return null;
-  let result = 0;
-  for (const part of parts) {
-    const n = Number(part);
-    if (!Number.isInteger(n) || n < 0 || n > 255) return null;
-    result = (result << 8) + n;
-  }
-  return result >>> 0;
-}
-
-function matchIpv4Cidr(ip, cidr) {
-  const [base, prefixRaw] = cidr.split('/');
-  const prefix = Number(prefixRaw);
-  if (!base || !Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
-  const ipNum = ipToUint32(ip);
-  const baseNum = ipToUint32(base);
-  if (ipNum === null || baseNum === null) return false;
-  const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
-  return (ipNum & mask) === (baseNum & mask);
-}
-
-function getTrustedProxyCidrs() {
-  const fromEnv = process.env.TRUSTED_PROXY_CIDRS;
-  if (!fromEnv || !fromEnv.trim()) return DEFAULT_TRUSTED_PROXY_CIDRS;
-  return fromEnv.split(',').map((item) => item.trim()).filter(Boolean);
 }
 
 export function normalizeIpForDb(rawIp) {
@@ -76,34 +40,41 @@ export function normalizeIpForDb(rawIp) {
   return ip || null;
 }
 
-function isTrustedProxy(remoteIp) {
-  if (!remoteIp) return false;
-  if (remoteIp === '::1') return true;
+function parseForwardedForList(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(',')
+    .map((item) => normalizeIpForDb(item))
+    .filter(Boolean);
+}
 
-  const normalized = normalizeIpForDb(remoteIp);
-  if (!normalized) return false;
-
-  // 常见 docker/k8s 场景的 IPv6 本地链路
-  if (normalized === 'fe80::1' || normalized.startsWith('fd')) {
-    return true;
-  }
-
-  const cidrs = getTrustedProxyCidrs();
-  return cidrs.some((cidr) => matchIpv4Cidr(normalized, cidr));
+function getProxyHops() {
+  const hops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '2', 10);
+  if (Number.isNaN(hops) || hops < 1) return 1;
+  return hops;
 }
 
 export function getClientIp(req) {
-  const remoteIp = normalizeIpForDb(req.socket?.remoteAddress || req.connection?.remoteAddress || req.ip);
-  const trustedProxy = isTrustedProxy(remoteIp);
-
-  const forwardedFor = readHeader(req, 'x-forwarded-for');
+  const forwardedForList = parseForwardedForList(readHeader(req, 'x-forwarded-for'));
   const cfConnectingIp = readHeader(req, 'cf-connecting-ip');
   const xRealIp = readHeader(req, 'x-real-ip');
+  const proxyHops = getProxyHops();
+
+  if (forwardedForList.length > 0) {
+    // 以代理跳数推断真实来源：list 最右是最近代理，向左回溯 proxyHops
+    const indexFromLeft = Math.max(0, forwardedForList.length - proxyHops);
+    const fromForwardedFor = forwardedForList[indexFromLeft];
+    if (fromForwardedFor) return fromForwardedFor;
+  }
+
+  // 某些链路不会传 x-forwarded-for，仅传 x-real-ip
+  const normalizedXRealIp = normalizeIpForDb(xRealIp);
+  if (normalizedXRealIp) return normalizedXRealIp;
+
+  const normalizedCfIp = normalizeIpForDb(cfConnectingIp);
+  if (normalizedCfIp) return normalizedCfIp;
 
   const candidates = [
-    trustedProxy ? forwardedFor : '',
-    trustedProxy ? cfConnectingIp : '',
-    trustedProxy ? xRealIp : '',
     req.ip,
     req.socket?.remoteAddress,
     req.connection?.remoteAddress
