@@ -42,6 +42,12 @@ function shouldCountBot() {
   return String(process.env.VIEW_COUNT_BOTS || 'false').toLowerCase() === 'true';
 }
 
+function isSchemaCompatibilityError(error) {
+  // 42703: undefined_column
+  // 42P10: invalid_column_reference (e.g. ON CONFLICT target without unique index)
+  return error?.code === '42703' || error?.code === '42P10';
+}
+
 async function updateCounter(dbClient, targetType, targetId) {
   let tableName = '';
   if (targetType === 'blog') tableName = 'blogs';
@@ -61,6 +67,64 @@ async function updateCounter(dbClient, targetType, targetId) {
 }
 
 export function createViewTrackingService(getDbClient) {
+  async function fallbackTrackWithLegacySchema(dbClient, normalized, ipContext, userAgent, ipLocation, isBot) {
+    const cooldownMinutes = Number.parseInt(process.env.VIEW_DEDUPE_WINDOW_MINUTES || '30', 10);
+    const safeCooldown = Number.isNaN(cooldownMinutes) || cooldownMinutes <= 0 ? 30 : cooldownMinutes;
+
+    const recent = await dbClient.query(
+      `SELECT id
+       FROM view_logs
+       WHERE target_type = $1
+         AND target_id = $2
+         AND ip_address = $3
+         AND created_at > NOW() - ($4 || ' minutes')::interval
+       LIMIT 1`,
+      [normalized.targetType, normalized.targetId, ipContext.storableIp, String(safeCooldown)]
+    );
+
+    if (recent.rows.length > 0) {
+      return {
+        accepted: false,
+        duplicate: true,
+        type: normalized.targetType,
+        id: normalized.targetId,
+        ip: ipContext.storableIp,
+        ip_quality: ipContext.ipQuality,
+        is_bot: isBot
+      };
+    }
+
+    await dbClient.query(
+      `INSERT INTO view_logs (
+         target_type, target_id, ip_address, ip_location, user_agent, path
+       ) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        normalized.targetType,
+        normalized.targetId,
+        ipContext.storableIp,
+        ipLocation,
+        userAgent || null,
+        normalized.path || null
+      ]
+    );
+
+    let views = null;
+    if (!isBot || shouldCountBot()) {
+      views = await updateCounter(dbClient, normalized.targetType, normalized.targetId);
+    }
+
+    return {
+      accepted: true,
+      duplicate: false,
+      type: normalized.targetType,
+      id: normalized.targetId,
+      ip: ipContext.storableIp,
+      ip_quality: ipContext.ipQuality,
+      is_bot: isBot,
+      views
+    };
+  }
+
   async function trackOne(item, req, res) {
     const dbClient = getDbClient();
     if (!dbClient) throw new Error('数据库未连接');
@@ -89,30 +153,40 @@ export function createViewTrackingService(getDbClient) {
       visitorIdentity: visitor.visitorIdentity
     });
 
-    const insertResult = await dbClient.query(
-      `INSERT INTO view_logs (
-         target_type, target_id, ip_address, ip_location, user_agent, path,
-         visitor_id, visitor_fallback_hash, ip_quality, is_bot, dedupe_key, accepted
-       ) VALUES (
-         $1, $2, $3, $4, $5, $6,
-         $7, $8, $9, $10, $11, true
-       )
-       ON CONFLICT (dedupe_key) DO NOTHING
-       RETURNING id`,
-      [
-        normalized.targetType,
-        normalized.targetId,
-        ipContext.storableIp,
-        ipLocation,
-        userAgent || null,
-        normalized.path || null,
-        visitor.visitorId || null,
-        visitor.visitorFallbackHash || null,
-        ipContext.ipQuality,
-        isBot,
-        dedupeKey
-      ]
-    );
+    let insertResult;
+    try {
+      insertResult = await dbClient.query(
+        `INSERT INTO view_logs (
+           target_type, target_id, ip_address, ip_location, user_agent, path,
+           visitor_id, visitor_fallback_hash, ip_quality, is_bot, dedupe_key, accepted
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6,
+           $7, $8, $9, $10, $11, true
+         )
+         ON CONFLICT (dedupe_key) DO NOTHING
+         RETURNING id`,
+        [
+          normalized.targetType,
+          normalized.targetId,
+          ipContext.storableIp,
+          ipLocation,
+          userAgent || null,
+          normalized.path || null,
+          visitor.visitorId || null,
+          visitor.visitorFallbackHash || null,
+          ipContext.ipQuality,
+          isBot,
+          dedupeKey
+        ]
+      );
+    } catch (error) {
+      if (!isSchemaCompatibilityError(error)) {
+        throw error;
+      }
+
+      console.warn('[ViewTracking] 检测到旧版 view_logs 结构，使用兼容写入模式:', error.message);
+      return fallbackTrackWithLegacySchema(dbClient, normalized, ipContext, userAgent, ipLocation, isBot);
+    }
 
     const inserted = insertResult.rows.length > 0;
     if (!inserted) {
