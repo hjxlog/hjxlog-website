@@ -15,7 +15,6 @@ import {
 import type { Blog, Moment, Work } from '@/types';
 import type { TaskOverviewStats } from '@/types/task';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
-import TaskPulsePanel from '@/components/dashboard/TaskPulsePanel';
 
 interface TodayHubTabProps {
   username: string;
@@ -38,7 +37,6 @@ interface TodayHubTabProps {
   onOpenBlogForm: () => void;
   onOpenMomentForm: () => void;
   onGoMoments: () => void;
-  onGoTasks?: () => void;
 }
 
 const toDisplayDate = (value?: string | null) => {
@@ -67,8 +65,7 @@ export default function TodayHubTab({
   onOpenWorkForm,
   onOpenBlogForm,
   onOpenMomentForm,
-  onGoMoments,
-  onGoTasks
+  onGoMoments
 }: TodayHubTabProps) {
   const [selectedReportDate] = useState<string>(getLocalToday());
   const [reportContent, setReportContent] = useState('');
@@ -78,13 +75,14 @@ export default function TodayHubTab({
 
   const totalContent = works.length + blogs.length + moments.length;
 
-  const pieData = useMemo(
+  const taskPieData = useMemo(
     () => [
-      { name: '博客文章', value: blogs.length, color: '#10b981' },
-      { name: '生活动态', value: moments.length, color: '#6366f1' },
-      { name: '作品项目', value: works.length, color: '#3b82f6' }
+      { name: '待办', value: taskStats?.todo || 0, color: '#94a3b8' },
+      { name: '进行中', value: taskStats?.in_progress || 0, color: '#3b82f6' },
+      { name: '已完成', value: taskStats?.done || 0, color: '#10b981' },
+      { name: '已取消', value: taskStats?.cancelled || 0, color: '#f59e0b' }
     ].filter((item) => item.value > 0),
-    [blogs.length, moments.length, works.length]
+    [taskStats]
   );
 
   const recentActivities = useMemo(() => {
@@ -250,16 +248,16 @@ export default function TodayHubTab({
           <div className="rounded-xl border border-slate-200 bg-white p-4 sm:rounded-2xl sm:p-6">
             <h3 className="mb-3 inline-flex items-center text-base font-semibold text-slate-800 sm:mb-4 sm:text-lg">
               <ChartPieIcon className="mr-1.5 h-5 w-5 text-slate-400 sm:mr-2" />
-              内容分布
+              任务概况
             </h3>
             <div className="h-52 sm:h-64">
-              {pieData.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-slate-500">暂无内容数据</div>
+              {taskPieData.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-slate-500">暂无任务数据</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={pieData}
+                      data={taskPieData}
                       cx="50%"
                       cy="50%"
                       innerRadius="52%"
@@ -267,7 +265,7 @@ export default function TodayHubTab({
                       paddingAngle={4}
                       dataKey="value"
                     >
-                      {pieData.map((item) => (
+                      {taskPieData.map((item) => (
                         <Cell key={item.name} fill={item.color} />
                       ))}
                     </Pie>
@@ -277,7 +275,7 @@ export default function TodayHubTab({
               )}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs sm:gap-4 sm:text-sm">
-              {pieData.map((item) => (
+              {taskPieData.map((item) => (
                 <div key={item.name} className="inline-flex items-center text-slate-600">
                   <span className="mr-1.5 h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                   {item.name}
@@ -325,8 +323,6 @@ export default function TodayHubTab({
         </div>
 
         <div className="space-y-4 xl:col-span-4">
-          <TaskPulsePanel stats={taskStats} onGoTasks={onGoTasks} />
-
           <div className="rounded-xl border border-slate-200 bg-white p-4 sm:rounded-2xl sm:p-6">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="inline-flex items-center text-base font-semibold text-slate-800 sm:text-lg">

@@ -67,6 +67,7 @@ export interface TaskOverviewStats {
   todo: number;
   in_progress: number;
   done: number;
+  cancelled: number;
   p0: number;
   p1: number;
   overdue: number;

@@ -298,7 +298,16 @@ export default function Dashboard() {
     try {
       const response = await apiRequest('/api/tasks/stats/overview');
       if (response.success && response.data) {
-        setTaskStats(response.data);
+        setTaskStats({
+          total: Number(response.data.total || 0),
+          todo: Number(response.data.todo || 0),
+          in_progress: Number(response.data.in_progress || 0),
+          done: Number(response.data.done || 0),
+          cancelled: Number(response.data.cancelled || 0),
+          p0: Number(response.data.p0 || 0),
+          p1: Number(response.data.p1 || 0),
+          overdue: Number(response.data.overdue || 0)
+        });
       }
     } catch (error) {
       console.error('获取任务统计失败:', error);
@@ -706,7 +715,6 @@ export default function Dashboard() {
                   onOpenBlogForm={() => openBlogForm()}
                   onOpenMomentForm={() => openMomentForm()}
                   onGoMoments={() => handleTabChange('moments')}
-                  onGoTasks={() => handleTabChange('tasks')}
                 />
               </div>
             )}
