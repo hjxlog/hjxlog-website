@@ -39,7 +39,17 @@ const flushQueue = async () => {
   reportTimer = null;
 
   try {
-    const token = localStorage.getItem('token');
+    let token = '';
+    const authRaw = localStorage.getItem('auth') || sessionStorage.getItem('auth');
+    if (authRaw) {
+      try {
+        const auth = JSON.parse(authRaw) as { token?: string };
+        token = auth?.token || '';
+      } catch (error) {
+        token = '';
+      }
+    }
+
     await fetch(VIEW_API_URL, {
       method: 'POST',
       headers: {

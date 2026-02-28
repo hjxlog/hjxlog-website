@@ -4,6 +4,7 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useBackToTop } from '@/hooks/useBackToTop';
+import { useViewTracker } from '@/hooks/useViewTracker';
 import { apiRequest } from '../config/api';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 interface WorkDetail {
@@ -26,6 +27,8 @@ interface WorkDetail {
 
 export default function WorkDetail() {
   const { id } = useParams<{ id: string }>();
+  useViewTracker('work', Number(id), !!id);
+
   const navigate = useNavigate();
   const [work, setWork] = useState<WorkDetail | null>(null);
   const [relatedWorks, setRelatedWorks] = useState<WorkDetail[]>([]);

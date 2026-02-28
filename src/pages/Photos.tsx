@@ -9,8 +9,11 @@ import ErrorMessage from '@/components/ErrorMessage';
 import Empty from '@/components/Empty';
 import { toast } from 'sonner';
 import type { Photo, PhotosResponse } from '@/types';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 export default function Photos() {
+  useViewTracker('photos_page');
+
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

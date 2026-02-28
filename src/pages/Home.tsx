@@ -3,6 +3,7 @@ import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import HeroApple from '@/components/home/HeroApple';
 import { apiRequest } from '@/config/api';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 // 懒加载非首屏组件
 const AppleWorksScroll = lazy(() => import('@/components/home/AppleWorksScroll'));
@@ -10,6 +11,8 @@ const AppleBlogList = lazy(() => import('@/components/home/AppleBlogList'));
 
 // 主页面组件
 export default function Home() {
+  useViewTracker('home_page');
+
   type FeaturedWork = {
     id: number | string;
     title: string;

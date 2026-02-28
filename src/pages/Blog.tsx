@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { API_BASE_URL } from '@/config/api';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 interface BlogPost {
   id: number;
@@ -36,6 +37,8 @@ const BLOG_GRADIENTS = [
 const getGradient = (id: number) => BLOG_GRADIENTS[id % BLOG_GRADIENTS.length];
 
 const Blog: React.FC = () => {
+  useViewTracker('blogs_list');
+
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');

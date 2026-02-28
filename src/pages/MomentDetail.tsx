@@ -4,6 +4,7 @@ import { Calendar, Eye, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import PublicNav from '@/components/PublicNav';
 import { apiRequest } from '@/config/api';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 interface MomentImage {
   id: number;
@@ -25,6 +26,8 @@ interface Moment {
 
 export default function MomentDetail() {
   const { id } = useParams<{ id: string }>();
+  useViewTracker('moment', Number(id), !!id);
+
   const navigate = useNavigate();
   const [moment, setMoment] = useState<Moment | null>(null);
   const [loading, setLoading] = useState(true);

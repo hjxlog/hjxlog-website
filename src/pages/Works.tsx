@@ -5,6 +5,7 @@ import { Github, ExternalLink, FolderOpen, ArrowRight, Layers } from 'lucide-rea
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '../config/api';
+import { useViewTracker } from '@/hooks/useViewTracker';
 
 interface Work {
   id: number;
@@ -20,6 +21,8 @@ interface Work {
 }
 
 export default function Works() {
+  useViewTracker('works_list');
+
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("全部");
   const [works, setWorks] = useState<Work[]>([]);
