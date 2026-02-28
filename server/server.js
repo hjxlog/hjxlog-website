@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
-import { getClientIpDebug, getStorableClientIp, getPublicClientIp } from './utils/clientIp.js';
+import { getClientIp } from './utils/clientIp.js';
+import { createViewTrackingRouter } from './routes/viewTrackingRouter.js';
 import {
   uploadToOSS,
   uploadMultipleToOSS,
@@ -85,70 +86,6 @@ const upload = multer({
   }
 });
 
-// 获取IP归属地
-async function getIpLocation(ip) {
-  if (!ip || ip === '::1' || ip === '127.0.0.1') return '本地内网';
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-    const response = await fetch(`http://ip-api.com/json/${ip}?lang=zh-CN`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    const data = await response.json();
-    if (data.status === 'success') {
-      return [data.country, data.regionName, data.city].filter(Boolean).join(' ');
-    }
-    return '未知位置';
-  } catch (error) {
-    return '未知位置';
-  }
-}
-
-// 通用浏览记录处理函数
-async function recordView(targetType, targetId, ip, userAgent, path, ipLocation) {
-  const VIEW_COOLDOWN_HOURS = 1;
-
-  try {
-    const checkResult = await dbClient.query(
-      `SELECT id FROM view_logs 
-       WHERE target_type = $1 AND target_id = $2 AND ip_address = $3 
-       AND created_at > NOW() - INTERVAL '${VIEW_COOLDOWN_HOURS} hour'`,
-      [targetType, targetId || 0, ip]
-    );
-
-    if (checkResult.rows.length === 0) {
-      await dbClient.query(
-        'INSERT INTO view_logs (target_type, target_id, ip_address, ip_location, user_agent, path) VALUES ($1, $2, $3, $4, $5, $6)',
-        [targetType, targetId || 0, ip, ipLocation, userAgent, path]
-      );
-
-      let tableName = '';
-      if (targetType === 'blog') tableName = 'blogs';
-      else if (targetType === 'work') tableName = 'works';
-
-      if (tableName) {
-        try {
-          const updateResult = await dbClient.query(
-            `UPDATE ${tableName} SET views = COALESCE(views, 0) + 1 WHERE id = $1 RETURNING views`,
-            [targetId]
-          );
-          return updateResult.rows[0]?.views;
-        } catch (updateErr) {
-          // 忽略字段不存在的错误
-        }
-      }
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error(`记录浏览失败 [${targetType}:${targetId}]:`, error.message);
-    throw error;
-  }
-}
-
 // 添加multer错误处理中间件
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -205,6 +142,7 @@ connectDatabase();
 // 获取数据库客户端的工厂函数
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
+const viewTrackingRouter = createViewTrackingRouter(getDbClient);
 setMemoryDbClientGetter(getDbClient);
 setTaskDbClientGetter(getDbClient);
 setDailyReportDbClientGetter(getDbClient);
@@ -228,48 +166,11 @@ app.use((error, req, res, next) => {
 });
 
 // ==================== 统一浏览上报接口 ====================
-app.post('/api/view/report', async (req, res) => {
-  try {
-    if (!dbClient) throw new Error('数据库未连接');
-
-    const { items } = req.body;
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.json({ success: true, message: '无有效数据' });
-    }
-
-    const publicIp = getPublicClientIp(req);
-    const ip = publicIp || getStorableClientIp(req);
-    const hasPublicIp = Boolean(publicIp);
-    const userAgent = req.headers['user-agent'] || 'Unknown';
-    const ipLocation = hasPublicIp ? await getIpLocation(ip) : '未知位置';
-
-    if (String(process.env.LOG_CLIENT_IP_DEBUG || 'false').toLowerCase() === 'true') {
-      const ipDebug = getClientIpDebug(req);
-      console.log('🧭 [IP Debug] /api/view/report', ipDebug);
-    }
-
-    console.log('👀 [API] 批量上报浏览:', { count: items.length, ip, location: ipLocation, public: hasPublicIp });
-
-    const results = [];
-    await Promise.all(items.map(async (item) => {
-      try {
-        const { type, id, path } = item;
-        if (!type) return;
-
-        const views = await recordView(type, id, ip, userAgent, path, ipLocation);
-        if (views !== false && views !== true) {
-          results.push({ type, id, views });
-        }
-      } catch (err) {
-        console.error('单条记录处理失败:', err.message);
-      }
-    }));
-
-    res.json({ success: true, data: results });
-  } catch (error) {
-    console.error('❌ [API] 上报浏览失败:', error.message);
-    res.status(500).json({ success: false, message: error.message });
+app.use('/api/view', (req, res, next) => {
+  if (!dbClient) {
+    return res.status(503).json({ success: false, message: 'Database not connected' });
   }
+  viewTrackingRouter(req, res, next);
 });
 
 // ==================== 挂载模块化路由 ====================

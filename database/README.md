@@ -18,6 +18,7 @@ For existing databases, run incremental schema scripts as needed:
 
 ```bash
 psql "$DATABASE_URL" -f database/dbschema/hw_1.2_add_daily_thought_optimized_content.sql
+psql "$DATABASE_URL" -f database/dbschema/hw_1.3_view_logs_refactor.sql
 ```
 
 ## Optional Data Scripts

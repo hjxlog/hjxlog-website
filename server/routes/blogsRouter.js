@@ -1,9 +1,10 @@
 import express from 'express';
-import { getStorableClientIp } from '../utils/clientIp.js';
+import { createViewTrackingService } from '../modules/view-tracking/viewTrackingService.js';
 
 // 创建博客路由的工厂函数
 export function createBlogsRouter(getDbClient) {
     const router = express.Router();
+    const trackingService = createViewTrackingService(getDbClient);
 
     // 获取博客列表
     router.get('/', async (req, res) => {
@@ -184,49 +185,36 @@ export function createBlogsRouter(getDbClient) {
             }
 
             const { id } = req.params;
-            const clientIP = getStorableClientIp(req);
-            const userAgent = req.get('User-Agent') || '';
-
-            console.log('👁️ [API] 增加博客阅读次数:', { blog_id: id, ip: clientIP });
-
-            // 检查该IP在5分钟内是否已经浏览过该博客
-            const recentView = await dbClient.query(
-                'SELECT id FROM blog_views WHERE blog_id = $1 AND ip_address = $2 AND created_at > CURRENT_TIMESTAMP - INTERVAL \'5 minutes\'',
-                [id, clientIP]
-            );
-
-            if (recentView.rows.length > 0) {
-                console.log('⚠️ [API] IP限制：该IP在5分钟内已浏览过该博客');
-                const currentViews = await dbClient.query('SELECT views FROM blogs WHERE id = $1', [id]);
-                return res.status(200).json({
-                    success: true,
-                    data: { views: currentViews.rows[0]?.views || 0 },
-                    message: '浏览记录已存在'
-                });
-            }
-
-            // 记录浏览
-            await dbClient.query(
-                'INSERT INTO blog_views (blog_id, ip_address, user_agent) VALUES ($1, $2, $3)',
-                [id, clientIP, userAgent]
-            );
-
-            const result = await dbClient.query(
-                'UPDATE blogs SET views = COALESCE(views, 0) + 1 WHERE id = $1 RETURNING views',
-                [id]
-            );
-
-            if (result.rows.length === 0) {
+            const exists = await dbClient.query('SELECT id FROM blogs WHERE id = $1', [id]);
+            if (exists.rows.length === 0) {
                 return res.status(404).json({
                     success: false,
                     message: '博客不存在'
                 });
             }
 
-            console.log('✅ [API] 阅读次数增加成功，当前浏览数:', result.rows[0].views);
+            const tracking = await trackingService.trackOne({
+                type: 'blog',
+                id: Number(id),
+                path: req.path
+            }, req, res);
+
+            const currentViews = await dbClient.query('SELECT views FROM blogs WHERE id = $1', [id]);
+            const views = Number(currentViews.rows[0]?.views || 0);
+
+            if (tracking.duplicate) {
+                console.log('⚠️ [API] 浏览记录已存在（去重命中）:', { blog_id: id, ip: tracking.ip });
+                return res.status(200).json({
+                    success: true,
+                    data: { views },
+                    message: '浏览记录已存在'
+                });
+            }
+
+            console.log('✅ [API] 阅读次数增加成功，当前浏览数:', views);
             res.json({
                 success: true,
-                data: { views: result.rows[0].views }
+                data: { views }
             });
 
         } catch (error) {
