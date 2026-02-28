@@ -78,6 +78,19 @@ function parseXForwardedFor(req) {
     .filter(Boolean);
 }
 
+function parseForwarded(req) {
+  const raw = readHeader(req, 'forwarded');
+  if (!raw) return [];
+
+  return String(raw)
+    .split(',')
+    .map((part) => {
+      const match = part.match(/for=([^;,\s]+)/i);
+      return normalizeIp(match ? match[1] : null);
+    })
+    .filter(Boolean);
+}
+
 function firstPublicIp(ips) {
   for (const ip of ips) {
     if (isPublicIp(ip)) return ip;
@@ -87,15 +100,37 @@ function firstPublicIp(ips) {
 
 export function resolveClientIp(req) {
   const forwardedIps = parseXForwardedFor(req);
+  const forwardedStdIps = parseForwarded(req);
   const cfConnectingIp = normalizeIp(readHeader(req, 'cf-connecting-ip'));
+  const trueClientIp = normalizeIp(readHeader(req, 'true-client-ip'));
+  const xClientIp = normalizeIp(readHeader(req, 'x-client-ip'));
+  const xOriginalForwardedFor = normalizeIp(readHeader(req, 'x-original-forwarded-for'));
   const xRealIp = normalizeIp(readHeader(req, 'x-real-ip'));
   const reqIp = normalizeIp(req.ip);
   const socketIp = normalizeIp(req.socket?.remoteAddress);
   const connectionIp = normalizeIp(req.connection?.remoteAddress);
 
+  // 头部优先，避免在代理场景下被 req.ip/socket 的服务器地址覆盖
+  const headerPreferred =
+    cfConnectingIp ||
+    trueClientIp ||
+    xClientIp ||
+    xOriginalForwardedFor ||
+    forwardedIps[0] ||
+    forwardedStdIps[0] ||
+    xRealIp ||
+    null;
+
   const publicIp =
-    (cfConnectingIp && isPublicIp(cfConnectingIp) ? cfConnectingIp : null) ||
-    firstPublicIp(forwardedIps) ||
+    firstPublicIp([
+      cfConnectingIp,
+      trueClientIp,
+      xClientIp,
+      xOriginalForwardedFor,
+      ...forwardedIps,
+      ...forwardedStdIps,
+      xRealIp
+    ]) ||
     (xRealIp && isPublicIp(xRealIp) ? xRealIp : null) ||
     (reqIp && isPublicIp(reqIp) ? reqIp : null) ||
     (socketIp && isPublicIp(socketIp) ? socketIp : null) ||
@@ -103,7 +138,7 @@ export function resolveClientIp(req) {
     null;
 
   const placeholderIp = normalizeIp(process.env.CLIENT_IP_PLACEHOLDER) || DEFAULT_PLACEHOLDER_IP;
-  const storableIp = publicIp || placeholderIp;
+  const storableIp = headerPreferred || publicIp || reqIp || socketIp || connectionIp || placeholderIp;
 
   return {
     publicIp,
@@ -111,7 +146,11 @@ export function resolveClientIp(req) {
     ipQuality: publicIp ? 'public' : 'placeholder',
     debug: {
       forwardedIps,
+      forwardedStdIps,
       cfConnectingIp,
+      trueClientIp,
+      xClientIp,
+      xOriginalForwardedFor,
       xRealIp,
       reqIp,
       socketIp,
