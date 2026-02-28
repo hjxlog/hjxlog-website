@@ -96,6 +96,7 @@ environment:
   NODE_ENV: production
   TRUST_PROXY: true
   TRUST_PROXY_HOPS: 2
+  CLIENT_IP_PLACEHOLDER: 0.0.0.0
 ```
 
 ## 数据持久化

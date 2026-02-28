@@ -48,42 +48,110 @@ function parseForwardedForList(raw) {
     .filter(Boolean);
 }
 
-function getProxyHops() {
-  const hops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '2', 10);
-  if (Number.isNaN(hops) || hops < 1) return 1;
-  return hops;
+function isIpv4(ip) {
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(ip);
+}
+
+function isIpv6(ip) {
+  return ip.includes(':');
+}
+
+function isPrivateIpv4(ip) {
+  const parts = ip.split('.').map((n) => Number(n));
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return false;
+  if (parts[0] === 10) return true;
+  if (parts[0] === 127) return true;
+  if (parts[0] === 192 && parts[1] === 168) return true;
+  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+  if (parts[0] === 169 && parts[1] === 254) return true;
+  return false;
+}
+
+function isPrivateIpv6(ip) {
+  const lower = ip.toLowerCase();
+  if (lower === '::1') return true;
+  if (lower.startsWith('fe80:')) return true; // link-local
+  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // unique local
+  return false;
+}
+
+function isPublicIp(ip) {
+  if (!ip) return false;
+  if (isIpv4(ip)) return !isPrivateIpv4(ip);
+  if (isIpv6(ip)) return !isPrivateIpv6(ip);
+  return false;
+}
+
+function pickFirstPublic(ips) {
+  for (const ip of ips) {
+    if (isPublicIp(ip)) return ip;
+  }
+  return null;
+}
+
+export function isPublicClientIp(ip) {
+  return isPublicIp(normalizeIpForDb(ip));
+}
+
+export function getClientIpDebug(req) {
+  const forwardedForList = parseForwardedForList(readHeader(req, 'x-forwarded-for'));
+  const cfConnectingIp = normalizeIpForDb(readHeader(req, 'cf-connecting-ip'));
+  const xRealIp = normalizeIpForDb(readHeader(req, 'x-real-ip'));
+  const reqIp = normalizeIpForDb(req.ip);
+  const socketIp = normalizeIpForDb(req.socket?.remoteAddress);
+  const connectionIp = normalizeIpForDb(req.connection?.remoteAddress);
+
+  const publicFromForwarded = pickFirstPublic(forwardedForList);
+  const anyFromForwarded = forwardedForList[0] || null;
+  const selected =
+    (cfConnectingIp && isPublicIp(cfConnectingIp) ? cfConnectingIp : null) ||
+    publicFromForwarded ||
+    (xRealIp && isPublicIp(xRealIp) ? xRealIp : null) ||
+    cfConnectingIp ||
+    anyFromForwarded ||
+    xRealIp ||
+    reqIp ||
+    socketIp ||
+    connectionIp ||
+    null;
+
+  return {
+    selected,
+    forwardedForList,
+    cfConnectingIp,
+    xRealIp,
+    reqIp,
+    socketIp,
+    connectionIp
+  };
 }
 
 export function getClientIp(req) {
-  const forwardedForList = parseForwardedForList(readHeader(req, 'x-forwarded-for'));
-  const cfConnectingIp = readHeader(req, 'cf-connecting-ip');
-  const xRealIp = readHeader(req, 'x-real-ip');
-  const proxyHops = getProxyHops();
+  return getClientIpDebug(req).selected;
+}
 
-  if (forwardedForList.length > 0) {
-    // 以代理跳数推断真实来源：list 最右是最近代理，向左回溯 proxyHops
-    const indexFromLeft = Math.max(0, forwardedForList.length - proxyHops);
-    const fromForwardedFor = forwardedForList[indexFromLeft];
-    if (fromForwardedFor) return fromForwardedFor;
-  }
-
-  // 某些链路不会传 x-forwarded-for，仅传 x-real-ip
-  const normalizedXRealIp = normalizeIpForDb(xRealIp);
-  if (normalizedXRealIp) return normalizedXRealIp;
-
-  const normalizedCfIp = normalizeIpForDb(cfConnectingIp);
-  if (normalizedCfIp) return normalizedCfIp;
+export function getPublicClientIp(req) {
+  const debug = getClientIpDebug(req);
 
   const candidates = [
-    req.ip,
-    req.socket?.remoteAddress,
-    req.connection?.remoteAddress
+    debug.cfConnectingIp,
+    ...debug.forwardedForList,
+    debug.xRealIp,
+    debug.reqIp,
+    debug.socketIp,
+    debug.connectionIp
   ];
 
-  for (const candidate of candidates) {
-    const normalized = normalizeIpForDb(candidate);
-    if (normalized) return normalized;
-  }
+  const publicIp = pickFirstPublic(candidates);
+  return publicIp || null;
+}
 
-  return null;
+function getPlaceholderIp() {
+  const fromEnv = normalizeIpForDb(process.env.CLIENT_IP_PLACEHOLDER || '');
+  if (fromEnv) return fromEnv;
+  return '0.0.0.0';
+}
+
+export function getStorableClientIp(req) {
+  return getPublicClientIp(req) || getPlaceholderIp();
 }

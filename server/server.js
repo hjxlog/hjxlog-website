@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
-import { getClientIp } from './utils/clientIp.js';
+import { getClientIpDebug, getStorableClientIp, getPublicClientIp } from './utils/clientIp.js';
 import {
   uploadToOSS,
   uploadMultipleToOSS,
@@ -237,11 +237,18 @@ app.post('/api/view/report', async (req, res) => {
       return res.json({ success: true, message: '无有效数据' });
     }
 
-    const ip = getClientIp(req) || '127.0.0.1';
+    const publicIp = getPublicClientIp(req);
+    const ip = publicIp || getStorableClientIp(req);
+    const hasPublicIp = Boolean(publicIp);
     const userAgent = req.headers['user-agent'] || 'Unknown';
-    const ipLocation = await getIpLocation(ip);
+    const ipLocation = hasPublicIp ? await getIpLocation(ip) : '未知位置';
 
-    console.log('👀 [API] 批量上报浏览:', { count: items.length, ip, location: ipLocation });
+    if (String(process.env.LOG_CLIENT_IP_DEBUG || 'false').toLowerCase() === 'true') {
+      const ipDebug = getClientIpDebug(req);
+      console.log('🧭 [IP Debug] /api/view/report', ipDebug);
+    }
+
+    console.log('👀 [API] 批量上报浏览:', { count: items.length, ip, location: ipLocation, public: hasPublicIp });
 
     const results = [];
     await Promise.all(items.map(async (item) => {

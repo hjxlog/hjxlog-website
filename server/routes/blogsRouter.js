@@ -1,5 +1,5 @@
 import express from 'express';
-import { getClientIp } from '../utils/clientIp.js';
+import { getStorableClientIp } from '../utils/clientIp.js';
 
 // 创建博客路由的工厂函数
 export function createBlogsRouter(getDbClient) {
@@ -184,7 +184,7 @@ export function createBlogsRouter(getDbClient) {
             }
 
             const { id } = req.params;
-            const clientIP = getClientIp(req) || '127.0.0.1';
+            const clientIP = getStorableClientIp(req);
             const userAgent = req.get('User-Agent') || '';
 
             console.log('👁️ [API] 增加博客阅读次数:', { blog_id: id, ip: clientIP });
