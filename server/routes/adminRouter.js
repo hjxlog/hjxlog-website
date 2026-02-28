@@ -73,6 +73,27 @@ export function createAdminRouter(getDbClient, getLogger) {
                  LIMIT 6`
             );
 
+            const locationTodayResult = await dbClient.query(
+                `SELECT ip_location AS location, COUNT(*)::int AS count
+                 FROM view_logs
+                 WHERE ip_location IS NOT NULL
+                   AND BTRIM(ip_location) <> ''
+                   AND created_at >= CURRENT_DATE
+                 GROUP BY ip_location
+                 ORDER BY count DESC, ip_location ASC`
+            );
+
+            const locationYesterdayResult = await dbClient.query(
+                `SELECT ip_location AS location, COUNT(*)::int AS count
+                 FROM view_logs
+                 WHERE ip_location IS NOT NULL
+                   AND BTRIM(ip_location) <> ''
+                   AND created_at >= CURRENT_DATE - INTERVAL '1 day'
+                   AND created_at < CURRENT_DATE
+                 GROUP BY ip_location
+                 ORDER BY count DESC, ip_location ASC`
+            );
+
             res.json({
                 success: true,
                 data: {
@@ -81,6 +102,14 @@ export function createAdminRouter(getDbClient, getLogger) {
                     last7DaysViews: Number(row.last7_days_views || 0),
                     totalViews: Number(row.total_views || 0),
                     topLocations: locationResult.rows.map((item) => ({
+                        location: item.location,
+                        count: Number(item.count || 0)
+                    })),
+                    topLocationsToday: locationTodayResult.rows.map((item) => ({
+                        location: item.location,
+                        count: Number(item.count || 0)
+                    })),
+                    topLocationsYesterday: locationYesterdayResult.rows.map((item) => ({
                         location: item.location,
                         count: Number(item.count || 0)
                     }))

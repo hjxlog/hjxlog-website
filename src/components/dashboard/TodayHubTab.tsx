@@ -28,6 +28,14 @@ interface TodayHubTabProps {
       location: string;
       count: number;
     }>;
+    topLocationsToday?: Array<{
+      location: string;
+      count: number;
+    }>;
+    topLocationsYesterday?: Array<{
+      location: string;
+      count: number;
+    }>;
   } | null;
   works: Work[];
   blogs: Blog[];
@@ -110,7 +118,7 @@ export default function TodayHubTab({
       }))
     ]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
+      .slice(0, 7);
   }, [blogs, moments, works]);
 
   const fetchReportByDate = useCallback(async (date: string) => {
@@ -375,20 +383,16 @@ export default function TodayHubTab({
               <MiniMetric label="累计" value={viewStatsSimple?.totalViews ?? totalViews} />
             </div>
             <div className="mt-4 border-t border-slate-100 pt-3">
-              <h4 className="text-xs font-semibold tracking-wide text-slate-500">地区统计（IP 归属）</h4>
-              <div className="mt-2 space-y-1.5">
-                {(viewStatsSimple?.topLocations || []).length > 0 ? (
-                  (viewStatsSimple?.topLocations || []).map((item) => (
-                    <div key={item.location} className="flex items-center justify-between text-sm">
-                      <span className="line-clamp-1 text-slate-600">{item.location}</span>
-                      <span className="ml-3 rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                        {item.count}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-sm text-slate-400">暂无地区数据</div>
-                )}
+              <h4 className="text-xs font-semibold tracking-wide text-slate-500">地区统计（今日 / 昨日）</h4>
+              <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                <LocationList
+                  title="今日地区访问次数"
+                  items={viewStatsSimple?.topLocationsToday || []}
+                />
+                <LocationList
+                  title="昨日地区访问次数"
+                  items={viewStatsSimple?.topLocationsYesterday || []}
+                />
               </div>
             </div>
           </div>
@@ -405,6 +409,28 @@ function MiniMetric({ label, value }: { label: string; value?: number }) {
         {typeof value === 'number' ? value.toLocaleString() : '-'}
       </div>
       <div className="mt-1 text-xs text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+function LocationList({ title, items }: { title: string; items: Array<{ location: string; count: number }> }) {
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50/40 p-2.5">
+      <div className="mb-1.5 text-xs font-medium text-slate-500">{title}</div>
+      <div className="max-h-52 space-y-1.5 overflow-y-auto pr-1">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <div key={item.location} className="flex items-center justify-between text-sm">
+              <span className="line-clamp-1 text-slate-600">{item.location}</span>
+              <span className="ml-3 rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                {item.count}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="text-sm text-slate-400">暂无数据</div>
+        )}
+      </div>
     </div>
   );
 }

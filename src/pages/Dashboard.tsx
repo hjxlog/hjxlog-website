@@ -39,6 +39,14 @@ type ViewStatsSimple = {
     location: string;
     count: number;
   }>;
+  topLocationsToday?: Array<{
+    location: string;
+    count: number;
+  }>;
+  topLocationsYesterday?: Array<{
+    location: string;
+    count: number;
+  }>;
 };
 
 const DASHBOARD_TAB_STORAGE_KEY = 'dashboard.activeTab';
@@ -325,6 +333,18 @@ export default function Dashboard() {
           totalViews: Number(response.data.totalViews || 0),
           topLocations: Array.isArray(response.data.topLocations)
             ? response.data.topLocations.map((item: { location?: string; count?: number }) => ({
+                location: String(item.location || ''),
+                count: Number(item.count || 0)
+              }))
+            : [],
+          topLocationsToday: Array.isArray(response.data.topLocationsToday)
+            ? response.data.topLocationsToday.map((item: { location?: string; count?: number }) => ({
+                location: String(item.location || ''),
+                count: Number(item.count || 0)
+              }))
+            : [],
+          topLocationsYesterday: Array.isArray(response.data.topLocationsYesterday)
+            ? response.data.topLocationsYesterday.map((item: { location?: string; count?: number }) => ({
                 location: String(item.location || ''),
                 count: Number(item.count || 0)
               }))
