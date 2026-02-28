@@ -44,9 +44,14 @@ export default function Login() {
         body: JSON.stringify({ username, password })
       });
 
-      if (data.success) {
+      if (data.success && data.token) {
+        const user = data.user || data.data;
+        if (!user) {
+          throw new Error('登录返回缺少用户信息');
+        }
+
         // 保存用户信息
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('user', JSON.stringify(user));
 
         // 处理记住我功能
         if (rememberMe) {
@@ -62,7 +67,7 @@ export default function Login() {
         }
 
         // 调用AuthContext中的login方法，直接传入用户数据
-        login(data.user, rememberMe);
+        login(user, data.token, rememberMe);
         toast.success('登录成功！');
         // 确保在状态更新后再导航
         setTimeout(() => {

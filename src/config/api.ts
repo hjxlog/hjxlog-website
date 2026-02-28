@@ -10,7 +10,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   // 尝试从localStorage获取认证token
   let authHeaders = {};
   try {
-    const authData = localStorage.getItem('auth');
+    const authData = localStorage.getItem('auth') || sessionStorage.getItem('auth');
     if (authData) {
       const { token, expiration } = JSON.parse(authData);
       // 检查token是否存在且未过期

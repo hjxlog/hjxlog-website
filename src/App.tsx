@@ -37,10 +37,14 @@ const parseJSON = <T,>(raw: string, errorMessage: string): T | null => {
   }
 };
 
-// 计算7天后的过期时间
-const getExpirationDate = () => {
+// 记住我: 7天；会话登录: 12小时
+const getExpirationDate = (remember: boolean) => {
   const date = new Date();
-  date.setDate(date.getDate() + 7);
+  if (remember) {
+    date.setDate(date.getDate() + 7);
+  } else {
+    date.setHours(date.getHours() + 12);
+  }
   return date.toISOString();
 };
 
@@ -65,7 +69,7 @@ export default function App() {
 
   // 初始化时检查本地存储的认证状态
   useEffect(() => {
-    const savedAuth = localStorage.getItem('auth');
+    const savedAuth = localStorage.getItem('auth') || sessionStorage.getItem('auth');
     if (savedAuth) {
       const authData = parseJSON<{ token?: string; expiration?: string; user?: User }>(
         savedAuth,
@@ -78,25 +82,30 @@ export default function App() {
       } else {
         // Token过期或格式错误，清除存储
         localStorage.removeItem('auth');
+        sessionStorage.removeItem('auth');
       }
     }
   }, []);
 
-  const login = useCallback((userData: User, remember: boolean = false) => {
+  const login = useCallback((userData: User, token: string, remember: boolean = false) => {
     setIsAuthenticated(true);
 
     // 直接使用传入的用户数据
     const user = userData || DEFAULT_USER;
     setUser(user);
 
-    // 如果勾选"记住我"，保存到localStorage
+    const authData = {
+      token,
+      expiration: getExpirationDate(remember),
+      user
+    };
+
     if (remember) {
-      const authData = {
-        token: 'token-' + Date.now(),
-        expiration: getExpirationDate(),
-        user: user
-      };
       localStorage.setItem('auth', JSON.stringify(authData));
+      sessionStorage.removeItem('auth');
+    } else {
+      sessionStorage.setItem('auth', JSON.stringify(authData));
+      localStorage.removeItem('auth');
     }
   }, []);
 
@@ -104,6 +113,7 @@ export default function App() {
     setIsAuthenticated(false);
     setUser(null);
     localStorage.removeItem('auth');
+    sessionStorage.removeItem('auth');
     navigate('/login');
   }, [navigate]);
 
@@ -113,7 +123,7 @@ export default function App() {
       setUser(updatedUser);
 
       // 更新localStorage中的用户数据
-      const savedAuth = localStorage.getItem('auth');
+      const savedAuth = localStorage.getItem('auth') || sessionStorage.getItem('auth');
       if (savedAuth) {
         const authData = parseJSON<{ user?: User }>(
           savedAuth,
@@ -122,7 +132,12 @@ export default function App() {
 
         if (authData) {
           authData.user = updatedUser;
-          localStorage.setItem('auth', JSON.stringify(authData));
+          if (localStorage.getItem('auth')) {
+            localStorage.setItem('auth', JSON.stringify(authData));
+          }
+          if (sessionStorage.getItem('auth')) {
+            sessionStorage.setItem('auth', JSON.stringify(authData));
+          }
         }
       }
     }

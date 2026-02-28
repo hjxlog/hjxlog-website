@@ -1,5 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
+import { createAuthToken } from '../utils/authToken.js';
 
 // 创建认证路由的工厂函数
 export function createAuthRouter(getDbClient) {
@@ -110,11 +111,17 @@ export function createAuthRouter(getDbClient) {
 
             // 返回用户信息（不包含密码）
             const { password_hash, ...userInfo } = user;
+            const token = createAuthToken({
+                userId: userInfo.id,
+                username: userInfo.username
+            });
 
             console.log('✅ [API] 用户登录成功');
             res.json({
                 success: true,
                 data: userInfo,
+                user: userInfo,
+                token,
                 message: '登录成功'
             });
 

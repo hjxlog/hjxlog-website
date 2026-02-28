@@ -161,10 +161,18 @@ export function createBlogsRouter(getDbClient) {
                 });
             }
 
+            const blog = result.rows[0];
+            if (!blog.published && !req.authUser) {
+                return res.status(404).json({
+                    success: false,
+                    message: '博客不存在'
+                });
+            }
+
             console.log('✅ [API] 博客详情获取成功');
             res.json({
                 success: true,
-                data: result.rows[0]
+                data: blog
             });
 
         } catch (error) {

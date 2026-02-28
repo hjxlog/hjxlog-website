@@ -13,7 +13,7 @@ export interface User {
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (userData: User, remember?: boolean) => void;
+  login: (userData: User, token: string, remember?: boolean) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }

@@ -18,7 +18,7 @@ export function createMomentsRouter(getDbClient) {
             const offset = (parseInt(page) - 1) * parseInt(limit);
 
             // 根据include_private参数决定查询条件
-            const includePrivate = include_private === 'true';
+            const includePrivate = include_private === 'true' && Boolean(req.authUser);
             const whereClause = includePrivate ? '' : "WHERE visibility = 'public'";
             const countWhereClause = includePrivate ? '' : "WHERE visibility = 'public'";
 
@@ -98,10 +98,18 @@ export function createMomentsRouter(getDbClient) {
                 });
             }
 
+            const moment = result.rows[0];
+            if (moment.visibility !== 'public' && !req.authUser) {
+                return res.status(404).json({
+                    success: false,
+                    message: '动态不存在'
+                });
+            }
+
             console.log('✅ [API] 动态详情获取成功');
             res.json({
                 success: true,
-                data: result.rows[0]
+                data: moment
             });
 
         } catch (error) {

@@ -22,6 +22,7 @@ import { createAIRouter } from './routes/aiRouter.js';
 import { createAiSignalRouter } from './routes/aiSignalRouter.js';
 import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
 import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
+import { createOptionalAuthMiddleware, createRequireAuthMiddleware } from './middleware/authMiddleware.js';
 
 // 导入模块化路由
 import {
@@ -142,6 +143,8 @@ connectDatabase();
 // 获取数据库客户端的工厂函数
 const getDbClient = () => dbClient;
 const getLogger = () => logger;
+const optionalAuthMiddleware = createOptionalAuthMiddleware(getDbClient);
+const requireAuthMiddleware = createRequireAuthMiddleware(getDbClient);
 const viewTrackingRouter = createViewTrackingRouter(getDbClient);
 setMemoryDbClientGetter(getDbClient);
 setTaskDbClientGetter(getDbClient);
@@ -216,13 +219,13 @@ app.use('/api/ai-signal', (req, res, next) => {
 });
 
 // 博客相关API
-app.use('/api/blogs', createBlogsRouter(getDbClient));
+app.use('/api/blogs', optionalAuthMiddleware, createBlogsRouter(getDbClient));
 
 // 作品相关API
 app.use('/api/works', createWorksRouter(getDbClient));
 
 // 动态相关API
-app.use('/api/moments', createMomentsRouter(getDbClient));
+app.use('/api/moments', optionalAuthMiddleware, createMomentsRouter(getDbClient));
 
 // 照片相关API
 app.use('/api/photos', createPhotosRouter(getDbClient));
@@ -234,7 +237,7 @@ app.use('/api/auth', createAuthRouter(getDbClient));
 app.use('/api/users', createUsersRouter(getDbClient));
 
 // 管理后台API
-app.use('/api/admin', createAdminRouter(getDbClient, getLogger));
+app.use('/api/admin', requireAuthMiddleware, createAdminRouter(getDbClient, getLogger));
 
 // 每日想法 API
 app.use('/api', memoryRouter);
