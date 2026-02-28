@@ -40,13 +40,13 @@ services:
       PORT: 3006
       NODE_ENV: production
       TRUST_PROXY: "true"
-      TRUST_PROXY_HOPS: "2"
+      TRUST_PROXY_HOPS: "1"
       CLIENT_IP_PLACEHOLDER: "0.0.0.0"
       VIEW_DEDUPE_WINDOW_MINUTES: "30"
       VIEW_SET_VISITOR_COOKIE: "true"
       VIEW_COUNT_BOTS: "false"
-    ports:
-      - "3006:3006"
+    expose:
+      - "3006"
     networks:
       - hjxlog-network
     depends_on:
