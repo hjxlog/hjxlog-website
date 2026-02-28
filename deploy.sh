@@ -13,6 +13,7 @@ INFRA_PROJECT="hjxlog-infra"
 STATE_FILE=".deploy_active_slot"
 UPSTREAM_FILE="ops/nginx/active-upstream.runtime.conf"
 HEALTH_TIMEOUT=180
+APP_NETWORK="hjxlog-app-net"
 
 print_header() {
   echo -e "${BLUE}========================================${NC}"
@@ -69,6 +70,28 @@ wait_healthy() {
   done
 }
 
+container_exists() {
+  local name="$1"
+  docker inspect "$name" >/dev/null 2>&1
+}
+
+ensure_network() {
+  if ! docker network inspect "$APP_NETWORK" >/dev/null 2>&1; then
+    docker network create "$APP_NETWORK" >/dev/null
+  fi
+}
+
+ensure_database_ready() {
+  if container_exists "hjxlog-database"; then
+    echo -e "${YELLOW}♻️ 检测到已有 hjxlog-database，复用该容器${NC}"
+    docker start hjxlog-database >/dev/null 2>&1 || true
+    docker network connect "$APP_NETWORK" hjxlog-database >/dev/null 2>&1 || true
+  else
+    echo -e "${BLUE}未发现现有数据库容器，创建新的 hjxlog-database${NC}"
+    docker compose -p "$INFRA_PROJECT" -f "$COMPOSE_FILE" --profile infra up -d database
+  fi
+}
+
 switch_gateway_to_slot() {
   local slot="$1"
   cat > "$UPSTREAM_FILE" <<EOF
@@ -101,7 +124,13 @@ echo -e "${GREEN}✅ 代码拉取成功${NC}"
 echo
 
 echo -e "${BLUE}[2/6] 启动基础设施（database + gateway）...${NC}"
-docker compose -p "$INFRA_PROJECT" -f "$COMPOSE_FILE" --profile infra up -d database gateway
+ensure_network
+ensure_database_ready
+
+if container_exists "hjxlog-gateway"; then
+  docker rm -f hjxlog-gateway >/dev/null 2>&1 || true
+fi
+docker compose -p "$INFRA_PROJECT" -f "$COMPOSE_FILE" --profile infra up -d gateway
 echo -e "${GREEN}✅ 基础设施就绪${NC}"
 echo
 

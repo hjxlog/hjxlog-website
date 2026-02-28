@@ -33,8 +33,6 @@ services:
     networks:
       - hjxlog-app-net
     restart: unless-stopped
-    depends_on:
-      - database
 
   backend:
     build:
