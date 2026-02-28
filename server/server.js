@@ -50,7 +50,10 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const { Client } = pg;
 const app = express();
 const PORT = process.env.PORT || 3006;
-app.set('trust proxy', process.env.TRUST_PROXY || 1);
+
+const trustProxyEnabled = String(process.env.TRUST_PROXY || 'true').toLowerCase() !== 'false';
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '2', 10);
+app.set('trust proxy', trustProxyEnabled ? (Number.isNaN(trustProxyHops) ? 2 : trustProxyHops) : false);
 
 // 中间件
 app.use(cors());

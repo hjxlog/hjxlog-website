@@ -94,6 +94,9 @@ environment:
   DB_PASSWORD: 123456
   PORT: 3006
   NODE_ENV: production
+  TRUST_PROXY: true
+  TRUST_PROXY_HOPS: 2
+  TRUSTED_PROXY_CIDRS: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 ```
 
 ## 数据持久化
