@@ -3,6 +3,7 @@
  */
 
 import crypto from 'crypto';
+import { getClientIp } from './clientIp.js';
 
 export function hashApiToken(token) {
     return crypto.createHash('sha256').update(token).digest('hex');
@@ -107,7 +108,7 @@ export function createTokenAuthMiddleware(dbClient) {
         }
 
         // 验证token
-        const ipAddress = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null;
+        const ipAddress = getClientIp(req);
         const tokenInfo = await validateApiToken(authHeader, dbClient, { ipAddress });
 
         if (!tokenInfo) {

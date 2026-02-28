@@ -4,6 +4,7 @@
  */
 
 import pg from 'pg';
+import { getClientIp } from './clientIp.js';
 const { Client } = pg;
 
 // 日志记录函数
@@ -51,17 +52,6 @@ async function logToDatabase(logData, dbClient) {
   } catch (error) {
     console.error('❌ [LOG] 记录日志失败:', error.message);
   }
-}
-
-// 获取客户端IP地址
-function getClientIP(req) {
-  return req.headers['x-forwarded-for'] || 
-         req.headers['x-real-ip'] || 
-         req.connection.remoteAddress || 
-         req.socket.remoteAddress ||
-         (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
-         req.ip ||
-         'unknown';
 }
 
 // 获取模块名称（从路径中提取）
@@ -155,7 +145,7 @@ function requestLogMiddleware(dbClient) {
         action: `${req.method} ${req.path}`,
         description: `操作成功: ${req.method} ${req.path}`,
         user_id: req.user?.id || null,
-        ip_address: getClientIP(req),
+        ip_address: getClientIp(req),
         user_agent: req.headers['user-agent'] || null,
         request_data: shouldLogRequestData(req.method, req.path) ? {
           query: req.query,
@@ -187,7 +177,7 @@ function errorLogMiddleware(dbClient) {
       action: `${req.method} ${req.path}`,
       description: `API错误: ${error.message}`,
       user_id: req.user?.id || null,
-      ip_address: getClientIP(req),
+      ip_address: getClientIp(req),
       user_agent: req.headers['user-agent'] || null,
       request_data: shouldLogRequestData(req.method, req.path) ? {
         query: req.query,

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
+import { getClientIp } from './utils/clientIp.js';
 import {
   uploadToOSS,
   uploadMultipleToOSS,
@@ -49,6 +50,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const { Client } = pg;
 const app = express();
 const PORT = process.env.PORT || 3006;
+app.set('trust proxy', process.env.TRUST_PROXY || 1);
 
 // 中间件
 app.use(cors());
@@ -232,7 +234,7 @@ app.post('/api/view/report', async (req, res) => {
       return res.json({ success: true, message: '无有效数据' });
     }
 
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ip = getClientIp(req) || '127.0.0.1';
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const ipLocation = await getIpLocation(ip);
 
@@ -378,7 +380,7 @@ app.post('/api/upload/image', (req, res, next) => {
     if (logger) {
       await logger.error('upload', 'oss_upload_single', error, {
         user_id: req.user?.id || null,
-        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
+        ip_address: getClientIp(req),
         user_agent: req.headers['user-agent'] || null
       });
     }
@@ -585,7 +587,7 @@ app.post('/api/logs/frontend', async (req, res) => {
       file_info,
       user_info,
       additional_data,
-      ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+      ip_address: getClientIp(req),
       user_agent: req.headers['user-agent'] || null,
       timestamp: new Date().toISOString()
     };
@@ -621,7 +623,7 @@ app.use((error, req, res, next) => {
     setImmediate(() => {
       logger.error('server', `${req.method} ${req.path}`, error, {
         user_id: req.user?.id || null,
-        ip_address: req.ip || req.connection.remoteAddress || 'unknown',
+        ip_address: getClientIp(req),
         user_agent: req.headers['user-agent'] || null,
         request_data: {
           query: req.query,

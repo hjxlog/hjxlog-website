@@ -5,16 +5,13 @@
 import express from 'express';
 import RAGService from '../services/RAGService.js';
 import RateLimitService from '../services/RateLimitService.js';
+import { getClientIp } from '../utils/clientIp.js';
 
 /**
  * 获取客户端 IP 地址
  */
 function getClientIP(req) {
-  return req.ip ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    '127.0.0.1';
+  return getClientIp(req) || '127.0.0.1';
 }
 
 /**
