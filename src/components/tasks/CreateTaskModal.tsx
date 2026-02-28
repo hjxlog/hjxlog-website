@@ -26,6 +26,16 @@ interface CreateTaskModalProps {
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, onSubmit, onProjectChange, initialTask }) => {
+  const getProjectNameById = (projectId?: number | '') => {
+    if (typeof projectId !== 'number') return '';
+    return projects.find(project => project.id === projectId)?.name || '';
+  };
+
+  const getProjectTitlePrefix = (projectId?: number | '') => {
+    const projectName = getProjectNameById(projectId);
+    return projectName ? `【${projectName}】` : '';
+  };
+
   const todayDate = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -46,7 +56,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
   };
 
   const getInitialFormData = () => ({
-    title: initialTask?.title || '',
+    title: '',
     description: initialTask?.description || '',
     project_id: initialTask?.project_id ?? (projects.length > 0 ? projects[0].id : ''),
     priority: initialTask?.priority || 'P2',
@@ -55,7 +65,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
     due_date: toDateInputValue(initialTask?.due_date) || todayDate()
   });
 
-  const [formData, setFormData] = useState(getInitialFormData);
+  const [formData, setFormData] = useState(() => {
+    const initialFormData = getInitialFormData();
+    return {
+      ...initialFormData,
+      title: initialTask?.title || getProjectTitlePrefix(initialFormData.project_id)
+    };
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +147,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ projects, onClose, on
                 value={formData.project_id}
                 onChange={(e) => {
                   const nextValue = Number(e.target.value);
-                  setFormData({ ...formData, project_id: nextValue });
+                  setFormData((prev) => {
+                    const previousPrefix = getProjectTitlePrefix(prev.project_id);
+                    const nextPrefix = getProjectTitlePrefix(nextValue);
+                    const shouldAutoFillTitle = !prev.title.trim() || prev.title === previousPrefix;
+                    return {
+                      ...prev,
+                      project_id: nextValue,
+                      title: shouldAutoFillTitle ? nextPrefix : prev.title
+                    };
+                  });
                   onProjectChange?.(nextValue);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
