@@ -45,8 +45,8 @@ services:
       VIEW_DEDUPE_WINDOW_MINUTES: "30"
       VIEW_SET_VISITOR_COOKIE: "true"
       VIEW_COUNT_BOTS: "false"
-    expose:
-      - "3006"
+    ports:
+      - "3006:3006"
     networks:
       - hjxlog-network
     depends_on:
