@@ -5,6 +5,134 @@ import {
     hashApiToken
 } from '../utils/tokenValidator.js';
 
+const VIEW_LOG_OPTIONAL_COLUMNS = [
+    'visitor_id',
+    'visitor_fallback_hash',
+    'ip_quality',
+    'is_bot',
+    'dedupe_key',
+    'accepted'
+];
+
+async function getViewLogsColumnSet(dbClient) {
+    const result = await dbClient.query(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'view_logs'`
+    );
+    return new Set(result.rows.map((row) => row.column_name));
+}
+
+function parsePositiveInt(value, fallbackValue) {
+    const parsed = Number.parseInt(String(value ?? ''), 10);
+    if (Number.isNaN(parsed) || parsed <= 0) return fallbackValue;
+    return parsed;
+}
+
+function buildViewLogsWhereClause(query, queryParams, columnSet, options = {}) {
+    const whereConditions = [];
+    let paramIndex = queryParams.length + 1;
+
+    const append = (condition, value) => {
+        whereConditions.push(condition.replace('?', `$${paramIndex++}`));
+        queryParams.push(value);
+    };
+
+    const startDate = query.start_date ? String(query.start_date) : '';
+    const endDate = query.end_date ? String(query.end_date) : '';
+
+    if (startDate) {
+        append('created_at >= ?', startDate);
+    } else {
+        whereConditions.push(`created_at >= CURRENT_DATE - INTERVAL '6 days'`);
+    }
+
+    if (endDate) {
+        append('created_at < (?::date + INTERVAL \'1 day\')', endDate);
+    }
+
+    if (query.target_type) {
+        append('target_type = ?', String(query.target_type));
+    }
+
+    if (query.target_id !== undefined && query.target_id !== '') {
+        const targetId = Number.parseInt(String(query.target_id), 10);
+        if (!Number.isNaN(targetId)) {
+            append('target_id = ?', targetId);
+        }
+    }
+
+    if (query.path) {
+        append('path ILIKE ?', `%${String(query.path)}%`);
+    }
+
+    if (query.ip_location) {
+        append('ip_location ILIKE ?', `%${String(query.ip_location)}%`);
+    }
+
+    if (query.search) {
+        const pattern = `%${String(query.search)}%`;
+        const patternParams = [
+            `path ILIKE $${paramIndex++}`,
+            `ip_location ILIKE $${paramIndex++}`,
+            `user_agent ILIKE $${paramIndex++}`,
+            `ip_address::text ILIKE $${paramIndex++}`,
+            `target_type ILIKE $${paramIndex++}`
+        ];
+        whereConditions.push(`(${patternParams.join(' OR ')})`);
+        queryParams.push(pattern, pattern, pattern, pattern, pattern);
+    }
+
+    if (columnSet.has('ip_quality') && query.ip_quality) {
+        append('ip_quality = ?', String(query.ip_quality));
+    }
+
+    if (columnSet.has('is_bot') && query.is_bot !== undefined && query.is_bot !== '') {
+        append('is_bot = ?', String(query.is_bot).toLowerCase() === 'true');
+    }
+
+    if (columnSet.has('accepted') && query.accepted !== undefined && query.accepted !== '') {
+        append('accepted = ?', String(query.accepted).toLowerCase() === 'true');
+    }
+
+    if (options.excludeBotsInInsights && columnSet.has('is_bot')) {
+        whereConditions.push('is_bot = false');
+    }
+
+    if (options.onlyAcceptedInInsights && columnSet.has('accepted')) {
+        whereConditions.push('accepted = true');
+    }
+
+    if (whereConditions.length === 0) {
+        return '';
+    }
+    return ` WHERE ${whereConditions.join(' AND ')}`;
+}
+
+function buildViewLogsSelectColumns(columnSet) {
+    const optionalSelect = VIEW_LOG_OPTIONAL_COLUMNS.map((column) => {
+        if (columnSet.has(column)) {
+            if (column === 'visitor_id') return `${column}::text AS ${column}`;
+            return column;
+        }
+        if (column === 'is_bot' || column === 'accepted') return `NULL::boolean AS ${column}`;
+        return `NULL::text AS ${column}`;
+    });
+
+    return [
+        'id',
+        'target_type',
+        'target_id',
+        'ip_address::text AS ip_address',
+        'ip_location',
+        'user_agent',
+        'path',
+        'created_at',
+        ...optionalSelect
+    ].join(', ');
+}
+
 // 创建管理后台路由的工厂函数
 export function createAdminRouter(getDbClient, getLogger) {
     const router = express.Router();
@@ -124,37 +252,150 @@ export function createAdminRouter(getDbClient, getLogger) {
         }
     });
 
+    // 获取浏览记录洞察
+    router.get('/view-logs/insights', async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) throw new Error('数据库未连接');
+
+            const columnSet = await getViewLogsColumnSet(dbClient);
+            const queryParams = [];
+            const includeBots = String(req.query.include_bots || '').toLowerCase() === 'true';
+            const whereClause = buildViewLogsWhereClause(req.query, queryParams, columnSet, {
+                excludeBotsInInsights: !includeBots,
+                onlyAcceptedInInsights: true
+            });
+
+            const summaryResult = await dbClient.query(
+                `SELECT
+                    COUNT(*)::int AS total_views,
+                    COUNT(DISTINCT ip_address)::int AS unique_ips,
+                    COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE)::int AS today_views,
+                    COUNT(*) FILTER (
+                      WHERE created_at >= CURRENT_DATE - INTERVAL '1 day'
+                        AND created_at < CURRENT_DATE
+                    )::int AS yesterday_views
+                 FROM view_logs
+                 ${whereClause}`,
+                queryParams
+            );
+
+            const summaryRow = summaryResult.rows[0] || {};
+            const totalViews = Number(summaryRow.total_views || 0);
+            const safeTotalViews = totalViews > 0 ? totalViews : 1;
+
+            const regionResult = await dbClient.query(
+                `SELECT
+                    COALESCE(NULLIF(BTRIM(ip_location), ''), '未知位置') AS location,
+                    COUNT(*)::int AS count
+                 FROM view_logs
+                 ${whereClause}
+                 GROUP BY COALESCE(NULLIF(BTRIM(ip_location), ''), '未知位置')
+                 ORDER BY count DESC, location ASC`,
+                queryParams
+            );
+
+            const contentResult = await dbClient.query(
+                `SELECT
+                    target_type,
+                    target_id,
+                    COUNT(*)::int AS count
+                 FROM view_logs
+                 ${whereClause}
+                 GROUP BY target_type, target_id
+                 ORDER BY count DESC, target_type ASC, target_id ASC
+                 LIMIT 20`,
+                queryParams
+            );
+
+            const pathResult = await dbClient.query(
+                `SELECT
+                    COALESCE(NULLIF(BTRIM(path), ''), '(unknown)') AS path,
+                    COUNT(*)::int AS count
+                 FROM view_logs
+                 ${whereClause}
+                 GROUP BY COALESCE(NULLIF(BTRIM(path), ''), '(unknown)')
+                 ORDER BY count DESC, path ASC
+                 LIMIT 20`,
+                queryParams
+            );
+
+            res.json({
+                success: true,
+                data: {
+                    summary: {
+                        totalViews,
+                        uniqueIps: Number(summaryRow.unique_ips || 0),
+                        todayViews: Number(summaryRow.today_views || 0),
+                        yesterdayViews: Number(summaryRow.yesterday_views || 0)
+                    },
+                    regions: regionResult.rows.map((item) => ({
+                        location: item.location,
+                        count: Number(item.count || 0),
+                        ratio: Number(((Number(item.count || 0) / safeTotalViews) * 100).toFixed(1))
+                    })),
+                    contentHotspots: contentResult.rows.map((item) => ({
+                        targetType: item.target_type,
+                        targetId: Number(item.target_id || 0),
+                        count: Number(item.count || 0),
+                        ratio: Number(((Number(item.count || 0) / safeTotalViews) * 100).toFixed(1))
+                    })),
+                    pathHotspots: pathResult.rows.map((item) => ({
+                        path: item.path,
+                        count: Number(item.count || 0),
+                        ratio: Number(((Number(item.count || 0) / safeTotalViews) * 100).toFixed(1))
+                    }))
+                }
+            });
+        } catch (error) {
+            console.error('❌ [API] 获取浏览记录洞察失败:', error.message);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
     // 获取浏览记录列表
     router.get('/view-logs', async (req, res) => {
         try {
             const dbClient = getDbClient();
             if (!dbClient) throw new Error('数据库未连接');
 
-            const { page = 1, limit = 20, type } = req.query;
+            const columnSet = await getViewLogsColumnSet(dbClient);
+            const page = parsePositiveInt(req.query.page, 1);
+            const limit = Math.min(parsePositiveInt(req.query.limit, 20), 100);
             const offset = (page - 1) * limit;
 
-            let query = 'SELECT * FROM view_logs';
-            let countQuery = 'SELECT COUNT(*) FROM view_logs';
             const params = [];
+            const whereClause = buildViewLogsWhereClause(req.query, params, columnSet);
+            const selectColumns = buildViewLogsSelectColumns(columnSet);
 
-            if (type) {
-                query += ' WHERE target_type = $1';
-                countQuery += ' WHERE target_type = $1';
-                params.push(type);
-            }
+            const query = `SELECT ${selectColumns}
+                           FROM view_logs
+                           ${whereClause}
+                           ORDER BY created_at DESC
+                           LIMIT $${params.length + 1}
+                           OFFSET $${params.length + 2}`;
 
-            query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+            const countQuery = `SELECT COUNT(*)::int AS total
+                                FROM view_logs
+                                ${whereClause}`;
 
             const logs = await dbClient.query(query, [...params, limit, offset]);
             const totalResult = await dbClient.query(countQuery, params);
+            const total = Number(totalResult.rows[0]?.total || 0);
 
             res.json({
                 success: true,
                 data: {
                     list: logs.rows,
-                    total: parseInt(totalResult.rows[0].count),
-                    page: parseInt(page),
-                    limit: parseInt(limit)
+                    total,
+                    page,
+                    limit,
+                    pagination: {
+                        page,
+                        limit,
+                        total,
+                        totalPages: Math.max(1, Math.ceil(total / limit))
+                    }
                 }
             });
         } catch (error) {
