@@ -216,6 +216,23 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     }
   }, [task.id, title, notes, meta, onUpdate, onClose]);
 
+  const handleStartDateChange = useCallback((startDate: string) => {
+    setMeta((prev) => {
+      if (startDate && prev.due_date && prev.due_date < startDate) {
+        return {
+          ...prev,
+          start_date: startDate,
+          due_date: startDate
+        };
+      }
+
+      return {
+        ...prev,
+        start_date: startDate
+      };
+    });
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
@@ -400,7 +417,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
                     <input
                       type="date"
                       value={meta.start_date}
-                      onChange={(e) => setMeta((prev) => ({ ...prev, start_date: e.target.value }))}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
                       className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                     />
                   </div>
