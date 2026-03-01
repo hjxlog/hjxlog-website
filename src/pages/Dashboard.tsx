@@ -21,6 +21,7 @@ import PromptManagementTab from '@/components/dashboard/PromptManagementTab';
 import AISignalTab from '@/components/dashboard/AISignalTab';
 import OpenClawReportsTab from '@/components/dashboard/OpenClawReportsTab';
 import ExternalTokensTab from '@/components/dashboard/ExternalTokensTab';
+import DataCenterTab from '@/components/dashboard/DataCenterTab';
 import ThoughtsTab from '@/components/dashboard/ThoughtsTab';
 import TasksTab from '@/components/dashboard/TasksTab';
 import TodayHubTab from '@/components/dashboard/TodayHubTab';
@@ -815,6 +816,13 @@ export default function Dashboard() {
               <div className="space-y-6 animate-fade-in">
                 {/* 日志管理内容 */}
                 <LogManagement />
+              </div>
+            )}
+
+            {/* API Key 管理页面 */}
+            {activeTab === 'data-center' && (
+              <div className="animate-fade-in">
+                <DataCenterTab />
               </div>
             )}
 

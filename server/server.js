@@ -21,6 +21,7 @@ import { createPromptRouter } from './routes/promptRouter.js';
 import { createAIRouter } from './routes/aiRouter.js';
 import { createAiSignalRouter } from './routes/aiSignalRouter.js';
 import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
+import { createDataCenterRouter } from './routes/dataCenterRouter.js';
 import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
 import { createOptionalAuthMiddleware, createRequireAuthMiddleware } from './middleware/authMiddleware.js';
 
@@ -235,6 +236,9 @@ app.use('/api/auth', createAuthRouter(getDbClient));
 
 // 用户管理API
 app.use('/api/users', createUsersRouter(getDbClient));
+
+// 数据中心 API
+app.use('/api/admin/data-center', requireAuthMiddleware, createDataCenterRouter(getDbClient));
 
 // 管理后台API
 app.use('/api/admin', requireAuthMiddleware, createAdminRouter(getDbClient, getLogger));

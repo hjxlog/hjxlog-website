@@ -39,6 +39,7 @@ export const dashboardTabGroups = [
   {
     group: '系统',
     tabs: [
+      { key: 'data-center', label: '数据中心', icon: 'fas fa-table' },
       { key: 'external-tokens', label: 'API Key管理', icon: 'fas fa-key' },
       { key: 'logs', label: '日志管理', icon: 'fas fa-file-alt' },
     ]
