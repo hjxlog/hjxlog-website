@@ -68,6 +68,7 @@ export default function Dashboard() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(getInitialDashboardTab);
+  const [activeTabRefreshVersion, setActiveTabRefreshVersion] = useState(0);
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
 
@@ -117,7 +118,13 @@ export default function Dashboard() {
 
   const handleTabChange = useCallback((tab: string) => {
     const nextTab = validDashboardTabs.has(tab) ? tab : DASHBOARD_DEFAULT_TAB;
-    setActiveTab(nextTab);
+    setActiveTab((prevTab) => {
+      if (prevTab === nextTab) {
+        setActiveTabRefreshVersion((prevVersion) => prevVersion + 1);
+        return prevTab;
+      }
+      return nextTab;
+    });
   }, [validDashboardTabs]);
 
   // API调用函数
@@ -720,7 +727,7 @@ export default function Dashboard() {
         
         {/* 右侧主内容区域 */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-          <div className="mx-auto space-y-6 max-w-full">
+          <div key={`${activeTab}-${activeTabRefreshVersion}`} className="mx-auto space-y-6 max-w-full">
             {/* 今日中心页面 */}
             {activeTab === 'today' && (
               <div className="animate-fade-in">
