@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Task, Project } from '../../types/task';
 import { CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 import TaskDetailSidebar from './TaskDetailSidebar';
@@ -11,6 +12,7 @@ interface TaskListProps {
 }
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
+  const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -174,6 +176,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, projects, onUpdate }) => {
           projects={projects}
           onClose={() => setSelectedTask(null)}
           onUpdate={onUpdate}
+          onOpenAsPage={(taskId) => {
+            setSelectedTask(null);
+            navigate(`/dashboard/tasks/${taskId}`);
+          }}
         />
       )}
     </div>

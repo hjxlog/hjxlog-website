@@ -29,6 +29,59 @@ function getTodayDateString() {
   return `${year}-${month}-${day}`;
 }
 
+function markdownToTaskContent(markdown) {
+  const text = typeof markdown === 'string' ? markdown : '';
+  const lines = text.split('\n');
+  const content = lines.length
+    ? lines.map((line) => ({
+        type: 'paragraph',
+        content: line ? [{ type: 'text', text: line }] : []
+      }))
+    : [{ type: 'paragraph' }];
+
+  return {
+    type: 'doc',
+    content
+  };
+}
+
+function taskContentToMarkdown(contentJson) {
+  if (!contentJson || typeof contentJson !== 'object' || !Array.isArray(contentJson.content)) {
+    return '';
+  }
+
+  const lines = contentJson.content.map((node) => {
+    if (!node || typeof node !== 'object') return '';
+
+    if (node.type === 'image') {
+      const attrs = node.attrs && typeof node.attrs === 'object' ? node.attrs : {};
+      const src = typeof attrs.src === 'string' ? attrs.src : '';
+      if (!src) return '';
+      const alt = typeof attrs.alt === 'string' ? attrs.alt : 'image';
+      return `![${alt}](${src})`;
+    }
+
+    if (node.type === 'heading' && Array.isArray(node.content)) {
+      const headingText = node.content
+        .filter((item) => item && typeof item === 'object' && typeof item.text === 'string')
+        .map((item) => item.text)
+        .join('');
+      return headingText ? `# ${headingText}` : '';
+    }
+
+    if (Array.isArray(node.content)) {
+      return node.content
+        .filter((item) => item && typeof item === 'object' && typeof item.text === 'string')
+        .map((item) => item.text)
+        .join('');
+    }
+
+    return '';
+  });
+
+  return lines.join('\n').trim();
+}
+
 // ==================== 项目管理 ====================
 
 /**
@@ -167,6 +220,8 @@ export async function createTask(data) {
   const {
     title,
     description,
+    content_json,
+    content_version = 1,
     project_id,
     status = 'todo',
     priority = 'P2',
@@ -186,17 +241,24 @@ export async function createTask(data) {
 
   const effectiveStartDate = start_date || getTodayDateString();
   const effectiveDueDate = due_date || getTodayDateString();
+  const normalizedContent =
+    Object.prototype.hasOwnProperty.call(data, 'content_json')
+      ? content_json
+      : markdownToTaskContent(description || '');
+  const normalizedDescription =
+    typeof description === 'string' ? description : taskContentToMarkdown(normalizedContent);
 
   const result = await db.query(
     `INSERT INTO tasks (
       title, description, project_id, status, priority,
-      tags, start_date, due_date, estimated_hours, parent_task_id,
+      tags, content_json, content_version, start_date, due_date, estimated_hours, parent_task_id,
       source_thought_id, position
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *`,
     [
-      title, description, project_id, status, priority,
-      tags || '{}', effectiveStartDate, effectiveDueDate, estimated_hours, parent_task_id,
+      title, normalizedDescription, project_id, status, priority,
+      tags || '{}', normalizedContent ? JSON.stringify(normalizedContent) : null, content_version,
+      effectiveStartDate, effectiveDueDate, estimated_hours, parent_task_id,
       source_thought_id, position
     ]
   );
@@ -208,9 +270,23 @@ export async function createTask(data) {
  */
 export async function updateTask(id, data) {
   const db = getDbClient();
+  const normalizedData = { ...data };
+  const hasContentJson = Object.prototype.hasOwnProperty.call(normalizedData, 'content_json');
+  const hasDescription = Object.prototype.hasOwnProperty.call(normalizedData, 'description');
+
+  if (hasContentJson && typeof normalizedData.description === 'undefined') {
+    normalizedData.description = taskContentToMarkdown(normalizedData.content_json);
+  }
+
+  if (hasDescription && !hasContentJson) {
+    normalizedData.content_json = markdownToTaskContent(normalizedData.description || '');
+  }
+
   const allowedFields = [
     'title',
     'description',
+    'content_json',
+    'content_version',
     'project_id',
     'status',
     'priority',
@@ -228,9 +304,17 @@ export async function updateTask(id, data) {
   let index = 1;
 
   for (const field of allowedFields) {
-    if (Object.prototype.hasOwnProperty.call(data, field)) {
-      setClauses.push(`${field} = $${index++}`);
-      values.push(data[field]);
+    if (Object.prototype.hasOwnProperty.call(normalizedData, field)) {
+      const placeholder = `$${index++}`;
+      if (field === 'content_json') {
+        setClauses.push(`${field} = ${placeholder}::jsonb`);
+      } else {
+        setClauses.push(`${field} = ${placeholder}`);
+      }
+      const value = field === 'content_json' && normalizedData[field] !== null
+        ? JSON.stringify(normalizedData[field])
+        : normalizedData[field];
+      values.push(value);
     }
   }
 

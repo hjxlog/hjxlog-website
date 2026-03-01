@@ -5,28 +5,35 @@ import { apiRequest } from '../../config/api';
 import { Project, Task } from '../../types/task';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import {
-  uploadImageToOSS,
-  validateImageType,
-  validateImageSize,
-  UploadResult
-} from '@/utils/ossUpload';
+import TaskContentEditor from '@/components/tasks/TaskContentEditor';
 import { parseTaskDate } from '@/utils/taskDate';
+import { isTaskContentDoc, markdownToTaskContent, taskContentToMarkdown, TaskContentDoc } from '@/utils/taskContent';
 
 interface TaskDetailProps {
   task: Task;
   projects?: Project[];
   onClose: () => void;
   onUpdate: () => void;
+  variant?: 'peek' | 'page';
+  onOpenAsPage?: (taskId: number) => void;
 }
 
-const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onClose, onUpdate }) => {
+const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
+  task,
+  projects = [],
+  onClose,
+  onUpdate,
+  variant = 'peek',
+  onOpenAsPage
+}) => {
   const [title, setTitle] = useState(task.title || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [notes, setNotes] = useState(task.description || '');
+  const [contentJson, setContentJson] = useState<TaskContentDoc>(
+    isTaskContentDoc(task.content_json) ? task.content_json : markdownToTaskContent(task.description || '')
+  );
   const [savingNotes, setSavingNotes] = useState(false);
   const [isPreview, setIsPreview] = useState(false); // false means "Live/Preview Mode", true means "Source Mode" (user logic inverted)
-  const [dragOver, setDragOver] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [meta, setMeta] = useState({
@@ -51,7 +58,11 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
 
   useEffect(() => {
     setTitle(task.title || '');
-    setNotes(task.description || '');
+    const initialContent = isTaskContentDoc(task.content_json)
+      ? task.content_json
+      : markdownToTaskContent(task.description || '');
+    setContentJson(initialContent);
+    setNotes(task.description || taskContentToMarkdown(initialContent));
     setIsPreview(false);
     setMeta({
       status: task.status,
@@ -63,127 +74,6 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     });
   }, [task.id, task.description, task.title]);
 
-  const handleDrop = useCallback(async (e: React.DragEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    setDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
-    );
-    
-    if (files.length === 0) return;
-
-    // Validate files first
-    const validFiles: File[] = [];
-    for (const file of files) {
-      if (!validateImageType(file)) {
-        toast.error(`${file.name}: 不支持的文件类型`);
-        continue;
-      }
-      if (!validateImageSize(file)) {
-        toast.error(`${file.name}: 文件大小超过15MB限制`);
-        continue;
-      }
-      validFiles.push(file);
-    }
-
-    if (validFiles.length === 0) return;
-
-    const textarea = e.currentTarget;
-    const startPos = textarea.selectionStart;
-    const endPos = textarea.selectionEnd;
-    const textBefore = notes.substring(0, startPos);
-    const textAfter = notes.substring(endPos);
-    
-    let newContent = textBefore;
-    const uploads = [];
-
-    // Insert placeholders
-    for (const file of validFiles) {
-        const placeholderId = Date.now().toString() + Math.random().toString(36).substring(7);
-        const placeholder = `![上传中...](${placeholderId})`;
-        newContent += placeholder;
-        uploads.push({ file, placeholder });
-    }
-    
-    newContent += textAfter;
-    setNotes(newContent);
-
-    // Perform uploads
-    uploads.forEach(async ({ file, placeholder }) => {
-        try {
-            const result = await uploadImageToOSS(file);
-            const uploadResult = result as UploadResult;
-            if (uploadResult.success && uploadResult.url) {
-                const imageMarkdown = `![${file.name || 'image'}](${uploadResult.url})`;
-                setNotes(prev => prev.replace(placeholder, imageMarkdown));
-                toast.success(`${file.name} 上传成功`);
-            } else {
-                throw new Error(uploadResult.error || '上传失败');
-            }
-        } catch (error) {
-            console.error('上传失败:', error);
-            toast.error(`${file.name} 上传失败`);
-            setNotes(prev => prev.replace(placeholder, '')); // Remove placeholder on error
-        }
-    });
-  }, [notes]);
-
-  const handlePaste = useCallback(async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const items = e.clipboardData.items;
-    let imageFile: File | null = null;
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        imageFile = items[i].getAsFile();
-        break;
-      }
-    }
-
-    if (!imageFile) return;
-
-    e.preventDefault();
-
-    if (!validateImageType(imageFile)) {
-      toast.error('不支持的文件类型');
-      return;
-    }
-    if (!validateImageSize(imageFile)) {
-      toast.error('文件大小超过15MB限制');
-      return;
-    }
-    
-    const textarea = e.currentTarget;
-    const startPos = textarea.selectionStart;
-    const endPos = textarea.selectionEnd;
-    const textBefore = notes.substring(0, startPos);
-    const textAfter = notes.substring(endPos);
-
-    const placeholderId = Date.now();
-    const placeholder = `![上传中...](${placeholderId})`;
-    const newContent = textBefore + placeholder + textAfter;
-    
-    setNotes(newContent);
-
-    try {
-      const result = await uploadImageToOSS(imageFile);
-      const uploadResult = result as UploadResult;
-
-      if (uploadResult.success && uploadResult.url) {
-        const imageMarkdown = `![${imageFile.name || 'image'}](${uploadResult.url})`;
-        setNotes(prev => prev.replace(placeholder, imageMarkdown));
-        toast.success('图片上传成功');
-      } else {
-        throw new Error(uploadResult.error || '上传失败');
-      }
-    } catch (error) {
-      console.error('图片粘贴上传失败:', error);
-      const message = error instanceof Error ? error.message : '上传失败';
-      toast.error(`上传失败: ${message}`);
-      setNotes(prev => prev.replace(placeholder, ''));
-    }
-  }, [notes]);
-
   const handleSaveTask = useCallback(async (closeAfterSave = false) => {
     try {
       setSavingNotes(true);
@@ -192,6 +82,8 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
         body: JSON.stringify({
           title,
           description: notes,
+          content_json: contentJson,
+          content_version: 1,
           status: meta.status,
           priority: meta.priority,
           project_id: meta.project_id || null,
@@ -214,7 +106,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
     } finally {
       setSavingNotes(false);
     }
-  }, [task.id, title, notes, meta, onUpdate, onClose]);
+  }, [task.id, title, notes, contentJson, meta, onUpdate, onClose]);
 
   const handleStartDateChange = useCallback((startDate: string) => {
     setMeta((prev) => {
@@ -294,15 +186,29 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="关闭任务编辑弹窗"
-        onClick={handleBackdropClick}
-        className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/30"
-      />
+      {variant === 'peek' && (
+        <button
+          type="button"
+          aria-label="关闭任务编辑弹窗"
+          onClick={handleBackdropClick}
+          className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/30"
+        />
+      )}
 
-      <aside className="fixed inset-x-0 bottom-0 top-16 z-50 flex items-start justify-center p-2 sm:p-5">
-        <div className="h-full w-full max-w-6xl rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col overflow-hidden">
+      <aside
+        className={
+          variant === 'peek'
+            ? 'fixed inset-x-0 bottom-0 top-16 z-50 flex items-start justify-center p-2 sm:p-5'
+            : 'w-full'
+        }
+      >
+        <div
+          className={
+            variant === 'peek'
+              ? 'h-full w-full max-w-6xl rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col overflow-hidden'
+              : 'w-full min-h-[calc(100vh-10rem)] rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col overflow-hidden'
+          }
+        >
           <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
             <div className="min-w-0 pr-3 flex-1">
               {isEditingTitle ? (
@@ -330,6 +236,15 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
               )}
             </div>
             <div className="flex items-center gap-2">
+              {variant === 'peek' && (
+                <button
+                  onClick={() => onOpenAsPage?.(task.id)}
+                  className="px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="在页面中打开"
+                >
+                  页面打开
+                </button>
+              )}
               <button
                 onClick={() => setIsPreview(!isPreview)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors mr-1"
@@ -471,34 +386,16 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({ task, projects = [], onC
                   </div>
                 ) : (
                   <div className="relative w-full h-full flex flex-col">
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      onPaste={handlePaste}
-                      onDrop={handleDrop}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOver(true);
+                    <TaskContentEditor
+                      value={contentJson}
+                      onChange={(doc, markdown) => {
+                        setContentJson(doc);
+                        setNotes(markdown);
                       }}
-                      onDragLeave={() => setDragOver(false)}
-                      placeholder="写下任务过程、补充说明、结论...支持 Markdown。可以直接粘贴或拖拽图片上传。"
-                      className={`flex-1 w-full min-h-[300px] rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF] resize-none leading-7 transition-colors ${
-                        dragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300'
-                      }`}
                     />
-                    {dragOver && (
-                      <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center pointer-events-none rounded-xl border-2 border-blue-400 border-dashed z-10">
-                        <div className="text-blue-500 font-medium flex items-center bg-white px-4 py-2 rounded-lg shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 mr-2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                          </svg>
-                          释放图片以上传
-                        </div>
-                      </div>
-                    )}
                     <div className="mt-2 text-xs text-slate-400 flex justify-between px-1">
-                      <span>支持 Markdown 语法</span>
-                      <span>可直接粘贴或拖拽图片上传</span>
+                      <span>Notion 风格块编辑</span>
+                      <span>自动保存到结构化内容</span>
                     </div>
                   </div>
                 )}

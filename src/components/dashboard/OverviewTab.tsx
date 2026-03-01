@@ -202,11 +202,11 @@ export default function OverviewTab({
                     }`}></div>
                     
                     <div className="flex-1 min-w-0 pt-0.5">
-                      <div className="flex justify-between items-start">
-                        <p className="text-sm font-medium text-slate-800 truncate pr-2 group-hover:text-blue-600 transition-colors">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="flex-1 min-w-0 text-sm font-medium text-slate-800 truncate pr-2 group-hover:text-blue-600 transition-colors">
                           {activity.title || '无标题'}
                         </p>
-                        <span className="text-[10px] text-slate-400 whitespace-nowrap mt-0.5">
+                        <span className="mt-0.5 flex-shrink-0 whitespace-nowrap text-right text-[10px] leading-none text-slate-400">
                           {formatDate(activity.date).split(' ')[0]}
                         </span>
                       </div>

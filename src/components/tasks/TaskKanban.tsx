@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { apiRequest } from '../../config/api';
 import { Task, Project } from '../../types/task';
@@ -12,6 +13,7 @@ interface TaskKanbanProps {
 }
 
 const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) => {
+  const navigate = useNavigate();
   const DEFAULT_VISIBLE_COUNT = 8;
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -190,6 +192,10 @@ const TaskKanban: React.FC<TaskKanbanProps> = ({ tasks, projects, onUpdate }) =>
           projects={projects}
           onClose={() => setSelectedTask(null)}
           onUpdate={onUpdate}
+          onOpenAsPage={(taskId) => {
+            setSelectedTask(null);
+            navigate(`/dashboard/tasks/${taskId}`);
+          }}
         />
       )}
     </div>

@@ -21,6 +21,7 @@ const Moments = lazy(() => import("@/pages/Moments"));
 const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
 const Photos = lazy(() => import("@/pages/Photos"));
 const ThoughtsPage = lazy(() => import("@/pages/ThoughtsPage"));
+const TaskDetailPage = lazy(() => import("@/pages/TaskDetailPage"));
 
 const DEFAULT_USER: User = {
   id: '1',
@@ -163,6 +164,7 @@ export default function App() {
           <Route path="/blogs" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Login />} />
+          <Route path="/dashboard/tasks/:id" element={isAuthenticated ? <TaskDetailPage /> : <Login />} />
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Login />} />
           <Route path="/admin/blogs" element={isAuthenticated ? <BlogManagement /> : <Login />} />
           <Route path="/admin/blog/create" element={isAuthenticated ? <BlogEditor /> : <Login />} />

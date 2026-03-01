@@ -349,8 +349,8 @@ export default function TodayHubTab({
                     <span className="hidden sm:absolute sm:left-0 sm:top-2 sm:block sm:h-2.5 sm:w-2.5 sm:rounded-full sm:bg-indigo-500" />
                     <span className="hidden sm:absolute sm:left-1 sm:top-5 sm:block sm:h-[calc(100%-8px)] sm:w-px sm:bg-slate-200" />
                     <div className="flex items-start justify-between gap-2 sm:gap-3">
-                      <p className="line-clamp-1 text-sm font-semibold text-slate-800 sm:text-base">{item.title}</p>
-                      <span className="text-xs text-slate-400 sm:text-sm">{toDisplayDate(item.date)}</span>
+                      <p className="line-clamp-1 min-w-0 flex-1 text-sm font-semibold text-slate-800 sm:text-base">{item.title}</p>
+                      <span className="flex-shrink-0 whitespace-nowrap text-xs text-slate-400 sm:text-sm">{toDisplayDate(item.date)}</span>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5 sm:mt-1 sm:gap-2">
                       <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{item.type}</span>

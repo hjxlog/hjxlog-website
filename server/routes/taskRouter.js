@@ -29,6 +29,11 @@ function isValidDateValue(value) {
   return !Number.isNaN(new Date(value).getTime());
 }
 
+function isValidJsonObject(value) {
+  if (value === null) return true;
+  return typeof value === 'object' && !Array.isArray(value);
+}
+
 function normalizeTaskPayload(payload, { requireTitle = false } = {}) {
   const normalized = {};
 
@@ -122,6 +127,23 @@ function normalizeTaskPayload(payload, { requireTitle = false } = {}) {
       return { error: '排序字段格式错误' };
     }
     normalized.position = payload.position;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'content_json')) {
+    if (!isValidJsonObject(payload.content_json)) {
+      return { error: '任务内容格式错误' };
+    }
+    normalized.content_json = payload.content_json;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'content_version')) {
+    if (
+      payload.content_version !== null &&
+      (!Number.isInteger(payload.content_version) || payload.content_version < 1)
+    ) {
+      return { error: '任务内容版本格式错误' };
+    }
+    normalized.content_version = payload.content_version;
   }
 
   return { data: normalized };

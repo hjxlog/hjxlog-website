@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PencilSquareIcon, PlusIcon, SwatchIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { apiRequest } from '@/config/api';
@@ -31,6 +32,7 @@ type TaskInputPayload = {
 };
 
 export default function TasksTab() {
+  const navigate = useNavigate();
   const [view, setView] = useState<ViewType>('calendar');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -513,6 +515,10 @@ export default function TasksTab() {
           projects={projects}
           onClose={() => setSelectedTask(null)}
           onUpdate={refreshTaskAndStats}
+          onOpenAsPage={(taskId) => {
+            setSelectedTask(null);
+            navigate(`/dashboard/tasks/${taskId}`);
+          }}
         />
       )}
     </div>
