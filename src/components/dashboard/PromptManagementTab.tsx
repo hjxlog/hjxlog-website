@@ -290,70 +290,78 @@ export default function PromptManagementTab() {
       </div>
 
       {/* 模板列表 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {templates.map((template) => (
-          <div key={template.id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900">{template.display_name}</h3>
-                  <p className="text-sm text-slate-500">代码: {template.name}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getScenarioColor(template.scenario)}`}>
-                    {getScenarioLabel(template.scenario)}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="hidden border-b border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 md:grid md:grid-cols-12 md:gap-3">
+          <div className="md:col-span-3">模板</div>
+          <div className="md:col-span-2">场景/状态</div>
+          <div className="md:col-span-4">提示词预览</div>
+          <div className="md:col-span-1">版本</div>
+          <div className="md:col-span-2 text-right">操作</div>
+        </div>
+
+        <div className="divide-y divide-slate-200">
+          {templates.map((template) => (
+            <div
+              key={template.id}
+              className="px-4 py-3 transition-colors hover:bg-slate-50/70 md:grid md:grid-cols-12 md:items-center md:gap-3"
+            >
+              <div className="md:col-span-3 md:flex md:flex-col md:justify-center">
+                <h3 className="text-sm font-semibold text-slate-900">{template.display_name}</h3>
+                <p className="mt-0.5 text-xs text-slate-500">{template.name}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  更新于 {new Date(template.updated_at).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="mt-2 flex items-center gap-2 md:col-span-2 md:mt-0 md:min-h-[42px]">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getScenarioColor(template.scenario)}`}>
+                  {getScenarioLabel(template.scenario)}
+                </span>
+                {!template.is_active && (
+                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                    未启用
                   </span>
-                  {!template.is_active && (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      未启用
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
 
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-slate-600">系统提示词: </span>
-                  <p className="text-slate-800 line-clamp-2">{template.system_prompt}</p>
-                </div>
-
-                <div>
-                  <span className="text-slate-600">用户提示词模板: </span>
-                  <p className="text-slate-800 line-clamp-2">{template.user_prompt_template}</p>
-                </div>
+              <div className="mt-2 space-y-1 text-xs md:col-span-4 md:mt-0 md:min-h-[42px] md:flex md:flex-col md:justify-center">
+                <p className="truncate text-slate-700 leading-5">
+                  <span className="text-slate-500">System: </span>
+                  {template.system_prompt || '-'}
+                </p>
+                <p className="truncate text-slate-700 leading-5">
+                  <span className="text-slate-500">User: </span>
+                  {template.user_prompt_template}
+                </p>
               </div>
 
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
-                <div className="text-xs text-slate-500">
-                  版本: v{template.version} · 更新: {new Date(template.updated_at).toLocaleDateString()}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => openTestPanel(template)}
-                    className="whitespace-nowrap px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-                  >
-                    <i className="fas fa-flask mr-1"></i>
-                    测试
-                  </button>
-                  <button
-                    onClick={() => openEditForm(template)}
-                    className="whitespace-nowrap px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                  >
-                    <i className="fas fa-edit mr-1"></i>
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => deleteTemplate(template.name)}
-                    className="whitespace-nowrap px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                  >
-                    <i className="fas fa-trash mr-1"></i>
-                    删除
-                  </button>
-                </div>
+              <div className="mt-2 text-xs font-semibold text-slate-700 md:col-span-1 md:mt-0 md:flex md:items-center md:min-h-[42px]">
+                v{template.version}
+              </div>
+
+              <div className="mt-3 flex items-center justify-start gap-2 md:col-span-2 md:mt-0 md:justify-end md:min-h-[42px]">
+                <button
+                  onClick={() => openTestPanel(template)}
+                  className="whitespace-nowrap rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+                >
+                  测试
+                </button>
+                <button
+                  onClick={() => openEditForm(template)}
+                  className="whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  编辑
+                </button>
+                <button
+                  onClick={() => deleteTemplate(template.name)}
+                  className="whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 transition-colors"
+                >
+                  删除
+                </button>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* 编辑/新建表单模态框 */}
