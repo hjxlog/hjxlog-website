@@ -157,7 +157,7 @@ const AboutModal = memo(({ onClose }: { onClose: () => void }) => {
                        <a href="https://github.com" target="_blank" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
                           <Github size={14} /> GitHub 代码库
                        </a>
-                       <a href="https://twitter.com" target="_blank" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
+                       <a href="https://x.com/hjxlog" target="_blank" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
                           <Twitter size={14} /> Twitter 动态
                        </a>
                        <a href="/blogs" className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-50 rounded-lg -ml-2">
@@ -388,7 +388,7 @@ const HeroApple = () => {
 
           <div className="flex items-center gap-6 text-slate-400">
             <a href="https://github.com/hjxlog" className="hover:text-slate-900 transition-colors"><Github size={24} /></a>
-            <a href="https://twitter.com" className="hover:text-blue-500 transition-colors"><Twitter size={24} /></a>
+            <a href="https://x.com/hjxlog" className="hover:text-blue-500 transition-colors"><Twitter size={24} /></a>
             <a href="mailto:hjxlog@gmail.com" className="hover:text-red-500 transition-colors"><Mail size={24} /></a>
             <div className="w-px h-6 bg-slate-300 mx-2"></div>
             <div className="flex gap-4">
