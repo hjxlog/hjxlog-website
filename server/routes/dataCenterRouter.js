@@ -1,12 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs/promises';
-import os from 'os';
-import path from 'path';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-
-const execFileAsync = promisify(execFile);
+import JSZip from 'jszip';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -235,6 +229,25 @@ async function getRowEstimateMap(dbClient) {
   const map = new Map();
   result.rows.forEach((row) => {
     map.set(row.table_name, Number(row.row_estimate || 0));
+  });
+  return map;
+}
+
+async function getTableDisplayNameMap(dbClient) {
+  const result = await dbClient.query(
+    `SELECT
+       c.relname AS table_name,
+       COALESCE(obj_description(c.oid, 'pg_class'), '') AS table_comment
+     FROM pg_class c
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public'
+       AND c.relkind = 'r'`
+  );
+
+  const map = new Map();
+  result.rows.forEach((row) => {
+    const comment = String(row.table_comment || '').trim();
+    map.set(row.table_name, comment);
   });
   return map;
 }
@@ -478,18 +491,6 @@ function getTableNameFromEntryName(entryName) {
   return tableName;
 }
 
-async function createTempDir(prefix) {
-  return fs.mkdtemp(path.join(os.tmpdir(), prefix));
-}
-
-async function safeRemoveDir(dirPath) {
-  try {
-    await fs.rm(dirPath, { recursive: true, force: true });
-  } catch {
-    // ignore cleanup errors
-  }
-}
-
 export function createDataCenterRouter(getDbClient) {
   const router = express.Router();
 
@@ -498,9 +499,10 @@ export function createDataCenterRouter(getDbClient) {
       const dbClient = getDbClient();
       if (!dbClient) throw new Error('数据库未连接');
 
-      const [tableNames, rowEstimateMap] = await Promise.all([
+      const [tableNames, rowEstimateMap, tableDisplayNameMap] = await Promise.all([
         getTableList(dbClient),
-        getRowEstimateMap(dbClient)
+        getRowEstimateMap(dbClient),
+        getTableDisplayNameMap(dbClient)
       ]);
 
       const payload = [];
@@ -512,6 +514,7 @@ export function createDataCenterRouter(getDbClient) {
 
         payload.push({
           tableName,
+          displayName: tableDisplayNameMap.get(tableName) || tableName,
           rowCountEstimate: rowEstimateMap.get(tableName) || 0,
           primaryKey: pkColumns.length === 1 ? pkColumns[0] : null,
           primaryKeyColumns: pkColumns,
@@ -646,37 +649,29 @@ export function createDataCenterRouter(getDbClient) {
   });
 
   router.get('/export/all.zip', async (req, res) => {
-    let tempDir = '';
     try {
       const dbClient = getDbClient();
       if (!dbClient) throw new Error('数据库未连接');
 
       const tableNames = await getTableList(dbClient);
-      tempDir = await createTempDir('data-center-export-');
-      const csvPaths = [];
+      const zip = new JSZip();
       for (const tableName of tableNames) {
         const csv = await exportTableToCsv(dbClient, tableName);
-        const csvPath = path.join(tempDir, `${tableName}.csv`);
-        await fs.writeFile(csvPath, csv, 'utf8');
-        csvPaths.push(csvPath);
+        zip.file(`${tableName}.csv`, csv);
       }
 
       const date = new Date().toISOString().slice(0, 10);
-      const zipPath = path.join(tempDir, `data_center_all_${date}.zip`);
-      await execFileAsync('zip', ['-q', '-j', zipPath, ...csvPaths], {
-        maxBuffer: 200 * 1024 * 1024
+      const buffer = await zip.generateAsync({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
       });
-      const buffer = await fs.readFile(zipPath);
 
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="data_center_all_${date}.zip"`);
       res.send(buffer);
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
-    } finally {
-      if (tempDir) {
-        await safeRemoveDir(tempDir);
-      }
     }
   });
 
@@ -733,7 +728,6 @@ export function createDataCenterRouter(getDbClient) {
   });
 
   router.post('/import/all.zip', upload.single('file'), async (req, res) => {
-    let tempDir = '';
     try {
       const dbClient = getDbClient();
       if (!dbClient) throw new Error('数据库未连接');
@@ -742,29 +736,18 @@ export function createDataCenterRouter(getDbClient) {
         return res.status(400).json({ success: false, message: '请上传 ZIP 文件' });
       }
 
-      tempDir = await createTempDir('data-center-import-');
-      const zipPath = path.join(tempDir, 'uploaded.zip');
-      await fs.writeFile(zipPath, req.file.buffer);
-
-      let entryListText = '';
+      let zip;
       try {
-        const { stdout } = await execFileAsync('unzip', ['-Z1', zipPath], {
-          maxBuffer: 50 * 1024 * 1024
-        });
-        entryListText = String(stdout || '');
+        zip = await JSZip.loadAsync(req.file.buffer);
       } catch {
         return res.status(400).json({ success: false, message: 'ZIP 文件无效或已损坏' });
       }
 
-      const allEntryNames = entryListText
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean);
-      const allCsvEntryNames = allEntryNames.filter((entryName) =>
-        entryName.toLowerCase().endsWith('.csv')
+      const allCsvEntries = Object.values(zip.files).filter(
+        (entry) => !entry.dir && entry.name.toLowerCase().endsWith('.csv')
       );
 
-      if (allCsvEntryNames.length === 0) {
+      if (allCsvEntries.length === 0) {
         return res.status(400).json({ success: false, message: 'ZIP 中未找到 CSV 文件' });
       }
 
@@ -781,13 +764,13 @@ export function createDataCenterRouter(getDbClient) {
       let skipped = 0;
       let erroredRows = 0;
 
-      for (const entryName of allCsvEntryNames) {
-        const tableName = getTableNameFromEntryName(entryName);
+      for (const entry of allCsvEntries) {
+        const tableName = getTableNameFromEntryName(entry.name);
 
         if (!tableName) {
           skippedTables += 1;
           tables.push({
-            tableName: entryName,
+            tableName: entry.name,
             status: 'ignored',
             reason: 'invalid_csv_filename_or_nested_path'
           });
@@ -806,11 +789,7 @@ export function createDataCenterRouter(getDbClient) {
 
         processedTables += 1;
         try {
-          const { stdout } = await execFileAsync('unzip', ['-p', zipPath, entryName], {
-            encoding: 'utf8',
-            maxBuffer: 200 * 1024 * 1024
-          });
-          const csvText = String(stdout || '');
+          const csvText = await entry.async('string');
           const result = await importCsvToTable(dbClient, tableName, csvText);
 
           inserted += result.inserted;
@@ -844,7 +823,7 @@ export function createDataCenterRouter(getDbClient) {
         success: true,
         data: {
           zipFileName: req.file.originalname || 'uploaded.zip',
-          totalCsvFiles: allCsvEntryNames.length,
+          totalCsvFiles: allCsvEntries.length,
           processedTables,
           skippedTables,
           succeededTables,
@@ -860,10 +839,6 @@ export function createDataCenterRouter(getDbClient) {
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
-    } finally {
-      if (tempDir) {
-        await safeRemoveDir(tempDir);
-      }
     }
   });
 
