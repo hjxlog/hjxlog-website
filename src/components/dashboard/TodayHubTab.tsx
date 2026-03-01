@@ -286,7 +286,7 @@ export default function TodayHubTab({
               {taskPieData.map((item) => (
                 <div key={item.name} className="inline-flex items-center text-slate-600">
                   <span className="mr-1.5 h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                  {item.name}
+                  {item.name} {item.value}
                 </div>
               ))}
             </div>
