@@ -12,6 +12,7 @@ import QuickAddModal from '@/components/tasks/QuickAddModal';
 import TaskCalendar from '@/components/tasks/TaskCalendar';
 import TaskTodayView from '@/components/tasks/TaskTodayView';
 import TaskDetailSidebar from '@/components/tasks/TaskDetailSidebar';
+import TaskDaySheet from '@/components/tasks/TaskDaySheet';
 import { Task, Project, ViewType } from '@/types/task';
 import { parseTaskDate } from '@/utils/taskDate';
 
@@ -46,6 +47,8 @@ export default function TasksTab() {
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [showDaySheet, setShowDaySheet] = useState(false);
   const [createTaskInitialData, setCreateTaskInitialData] = useState<{ start_date?: string; due_date?: string } | null>(null);
   const [lastSelectedProjectId, setLastSelectedProjectId] = useState<number | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
@@ -236,6 +239,16 @@ export default function TasksTab() {
     }
   };
 
+  const getTasksForDate = useCallback((dateString: string) => {
+    const target = parseLocalDate(dateString);
+    target.setHours(0, 0, 0, 0);
+    return tasks.filter((task) => {
+      const range = getTaskRange(task);
+      if (!range) return false;
+      return target >= range.start && target <= range.end;
+    });
+  }, [tasks]);
+
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4">
@@ -332,6 +345,10 @@ export default function TasksTab() {
               <TaskCalendar
                 tasks={tasks}
                 onTaskClick={setSelectedTask}
+                onDateSelect={(date) => {
+                  setSelectedDate(date);
+                  setShowDaySheet(true);
+                }}
                 onCreateForDate={(date) => {
                   setCreateTaskInitialData({ start_date: date, due_date: date });
                   setShowCreateTask(true);
@@ -349,6 +366,19 @@ export default function TasksTab() {
           </>
         )}
       </div>
+
+      <TaskDaySheet
+        open={showDaySheet}
+        date={selectedDate}
+        tasks={selectedDate ? getTasksForDate(selectedDate) : []}
+        onClose={() => setShowDaySheet(false)}
+        onTaskClick={setSelectedTask}
+        onCreateForDate={(date) => {
+          setShowDaySheet(false);
+          setCreateTaskInitialData({ start_date: date, due_date: date });
+          setShowCreateTask(true);
+        }}
+      />
 
       {showCreateTask && (
         <CreateTaskModal

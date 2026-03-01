@@ -7,11 +7,12 @@ interface TaskCalendarProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
   onCreateForDate?: (date: string) => void;
+  onDateSelect?: (date: string) => void;
   onMoveTask?: (task: Task, targetDate: string) => void;
   onResizeTask?: (task: Task, targetDate: string) => void;
 }
 
-const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreateForDate, onMoveTask, onResizeTask }) => {
+const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreateForDate, onDateSelect, onMoveTask, onResizeTask }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
@@ -49,10 +50,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
       : { start: safeEnd, end: safeStart };
   };
 
-  const isDateInRange = (date: Date, start: Date, end: Date) => {
-    return date >= start && date <= end;
-  };
-
   const getDaysSpan = (start: Date, end: Date) => {
     return Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1);
   };
@@ -75,14 +72,6 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
 
     return { year, month, daysInMonth, startDayOfWeek };
-  };
-
-  const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => {
-      const range = getTaskRange(task);
-      if (!range) return false;
-      return isDateInRange(date, range.start, range.end);
-    });
   };
 
   const isToday = (date: Date) => {
@@ -134,7 +123,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月',
                       '七月', '八月', '九月', '十月', '十一月', '十二月'];
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-  const cellHeight = isCompact ? 92 : 144;
+  const cellHeight = isCompact ? 58 : 144;
   const laneHeight = isCompact ? 16 : 26;
   const laneTopOffset = isCompact ? 28 : 40;
   const laneGap = isCompact ? 1 : 2;
@@ -287,12 +276,15 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     const past = isPast(date);
     const rowIndex = Math.floor((startDayOfWeek + day - 1) / 7);
     const laneCount = Math.max(1, rowLaneCounts[rowIndex] || 0);
-    const dayTasks = isCompact ? getTasksForDate(date) : [];
-    const dayTaskCount = dayTasks.length;
 
     calendarDays.push(
       <div
         key={day}
+        onClick={() => {
+          if (isCompact) {
+            onDateSelect?.(dateKey);
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOverDate(dateKey);
@@ -324,37 +316,40 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
           }
         }}
         className={`p-2 border border-gray-100 ${
-          today ? 'bg-blue-50' : 'bg-white'
+          (today && !isCompact) ? 'bg-blue-50' : 'bg-white'
         } ${past ? 'bg-gray-50' : ''} ${dragOverDate === dateKey ? 'ring-2 ring-[#165DFF] ring-inset' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
         style={{ height: rowHeights[rowIndex] || cellHeight }}
       >
-        <div className="flex items-center justify-between mb-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateForDate?.(getLocalDateString(date));
-            }}
-            className="p-0.5 rounded text-gray-400 hover:text-[#165DFF] hover:bg-blue-100 transition-colors"
-            title={`为 ${getLocalDateString(date)} 添加任务`}
+        <div className={`flex items-center mb-1 ${isCompact ? 'justify-end' : 'justify-between'}`}>
+          {!isCompact && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCreateForDate?.(getLocalDateString(date));
+              }}
+              className="p-0.5 rounded text-gray-400 hover:text-[#165DFF] hover:bg-blue-100 transition-colors"
+              title={`为 ${getLocalDateString(date)} 添加任务`}
+            >
+              <PlusIcon className="h-5 w-5" />
+            </button>
+          )}
+          <div
+            className={`text-lg font-bold ${
+              isCompact && today
+                ? 'h-7 w-7 rounded-full bg-[#165DFF] text-white flex items-center justify-center text-base'
+                : today
+                  ? 'text-blue-600'
+                  : past
+                    ? 'text-gray-400'
+                    : 'text-gray-700'
+            }`}
           >
-            <PlusIcon className="h-5 w-5" />
-          </button>
-          <div className={`text-lg font-bold ${
-            today ? 'text-blue-600' : past ? 'text-gray-400' : 'text-gray-700'
-          }`}>
             {day}
           </div>
         </div>
         <div className="space-y-0.5">
           {isCompact ? (
-            <div className="flex flex-wrap items-center gap-1">
-              {Array.from({ length: Math.min(3, dayTaskCount) }).map((_, index) => (
-                <span key={`dot-${day}-${index}`} className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              ))}
-              {dayTaskCount > 3 && (
-                <span className="text-sm font-semibold text-slate-500">+{dayTaskCount - 3}</span>
-              )}
-            </div>
+            <div className="h-[8px]" />
           ) : (
             Array.from({ length: laneCount }).map((_, lane) => (
               <div key={`lane-empty-${day}-${lane}`} className="h-[26px]" />
