@@ -127,6 +127,16 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showDeleteConfirm) {
+          setShowDeleteConfirm(false);
+          return;
+        }
+        onClose();
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         handleSaveTask(false);
@@ -135,7 +145,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveTask]);
+  }, [handleSaveTask, onClose, showDeleteConfirm]);
 
   const handleBackdropClick = async () => {
     await handleSaveTask(true);
