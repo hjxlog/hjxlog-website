@@ -367,7 +367,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
 
   const completedCount = monthTasks.filter(t => t.status === 'done').length;
   const overdueCount = monthTasks.filter(t => {
-    if (t.status === 'done') return false;
+    if (t.status === 'done' || t.status === 'cancelled') return false;
     const range = getTaskRange(t);
     if (!range) return false;
     const today = new Date();
@@ -505,6 +505,8 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             const colorClass =
               segment.task.status === 'done'
                 ? 'bg-green-100 text-green-700 border-green-200'
+                : segment.task.status === 'cancelled'
+                ? 'bg-slate-100 text-slate-700 border-slate-200'
                 : segment.task.priority === 'P0'
                 ? 'bg-red-100 text-red-700 border-red-200'
                 : segment.task.priority === 'P1'
@@ -542,7 +544,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                   onMouseEnter={() => setHoveredTaskId(segment.task.id)}
                   onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
                   className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-sm h-[26px] leading-[26px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
-                    segment.task.status === 'done' ? 'line-through' : ''
+                    segment.task.status === 'done' || segment.task.status === 'cancelled' ? 'line-through' : ''
                   } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
                   style={{
                     top: (rowOffsets[segment.row] || 0) + laneTopOffset + segment.lane * (laneHeight + laneGap),
