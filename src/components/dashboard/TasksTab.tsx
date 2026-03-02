@@ -31,9 +31,21 @@ type TaskInputPayload = {
   [key: string]: unknown;
 };
 
+const TASKS_VIEW_STORAGE_KEY = 'dashboard.tasks.activeView';
+const TASKS_DEFAULT_VIEW: ViewType = 'calendar';
+const TASKS_VALID_VIEWS = new Set<ViewType>(['calendar', 'kanban', 'list', 'today']);
+
+function getInitialTaskView(): ViewType {
+  if (typeof window === 'undefined') return TASKS_DEFAULT_VIEW;
+  const viewFromStorage = localStorage.getItem(TASKS_VIEW_STORAGE_KEY);
+  return viewFromStorage && TASKS_VALID_VIEWS.has(viewFromStorage as ViewType)
+    ? (viewFromStorage as ViewType)
+    : TASKS_DEFAULT_VIEW;
+}
+
 export default function TasksTab() {
   const navigate = useNavigate();
-  const [view, setView] = useState<ViewType>('calendar');
+  const [view, setView] = useState<ViewType>(getInitialTaskView);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,6 +139,11 @@ export default function TasksTab() {
   useEffect(() => {
     fetchTasks();
   }, [filters]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(TASKS_VIEW_STORAGE_KEY, view);
+  }, [view]);
 
   useShortcut('cmd+k', () => {
     setShowQuickAdd(true);
