@@ -140,6 +140,12 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         handleSaveTask(false);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Slash') {
+        e.preventDefault();
+        setIsPreview((prev) => !prev);
       }
     };
 
@@ -405,7 +411,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                     />
                     <div className="mt-2 text-xs text-slate-400 flex justify-between px-1">
                       <span>Notion 风格块编辑</span>
-                      <span>自动保存到结构化内容</span>
+                      <span>Cmd/Ctrl + / 切换预览</span>
                     </div>
                   </div>
                 )}
