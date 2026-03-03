@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import ManagementPageHeader from '@/components/admin/ManagementPageHeader';
 import { apiRequest } from '../config/api';
 import { 
   PlusIcon, 
@@ -120,30 +121,27 @@ const BlogManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 头部 */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">博客管理</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                管理您的博客，创建、编辑和发布内容
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ManagementPageHeader
+          title="博客管理"
+          description="管理博客内容，支持搜索、编辑、发布与归档"
+          meta={[
+            { label: '总文章', value: totalBlogs },
+            { label: '筛选', value: showPublishedOnly ? '仅已发布' : '全部状态' }
+          ]}
+          actions={
             <button
               onClick={() => navigate('/admin/blog/create')}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center rounded-lg bg-[#165DFF] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#165DFF]/90"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
+              <PlusIcon className="mr-2 h-5 w-5" />
               新建博客
             </button>
-          </div>
-        </div>
-      </div>
+          }
+        />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 搜索和筛选 */}
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <div className="mt-6 bg-white p-6 rounded-lg shadow mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-3 text-gray-400" />
@@ -273,7 +271,7 @@ const BlogManagement: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDelete(blog.id)}
-                        className="p-2 text-red-400 hover:text-red-600"
+                        className="rounded-md border border-red-200 bg-red-50 p-2 text-red-600 hover:border-red-300 hover:bg-red-100 hover:text-red-700"
                         title="删除"
                       >
                         <TrashIcon className="h-5 w-5" />

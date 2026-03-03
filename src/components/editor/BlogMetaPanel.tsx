@@ -54,8 +54,8 @@ export default function BlogMetaPanel({
     <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
       <div className="space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">分类</label>
-          <div className="mb-2 flex items-center justify-end">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-slate-700">分类</label>
             <button
               type="button"
               onClick={onAIGenerateCategory}
@@ -74,8 +74,8 @@ export default function BlogMetaPanel({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">摘要</label>
-          <div className="mb-2 flex items-center justify-end">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-slate-700">摘要</label>
             <button
               type="button"
               onClick={onAIGenerateExcerpt}
@@ -95,8 +95,8 @@ export default function BlogMetaPanel({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">标签（逗号分隔）</label>
-          <div className="mb-2 flex items-center justify-end">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-slate-700">标签（逗号分隔）</label>
             <button
               type="button"
               onClick={onAIGenerateTags}
@@ -135,25 +135,51 @@ export default function BlogMetaPanel({
           )}
         </div>
 
-        <div className="space-y-2 text-sm text-slate-700">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.published}
-              onChange={(event) => onPatch({ published: event.target.checked })}
-              className="rounded border-slate-300 text-[#165DFF]"
-            />
-            发布状态
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.featured}
-              onChange={(event) => onPatch({ featured: event.target.checked })}
-              className="rounded border-slate-300 text-[#165DFF]"
-            />
-            设为精选
-          </label>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-700">发布状态</span>
+            <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => onPatch({ published: false })}
+                className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                  !formData.published ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                草稿
+              </button>
+              <button
+                type="button"
+                onClick={() => onPatch({ published: true })}
+                className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                  formData.published ? 'bg-[#165DFF] text-white' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                已发布
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-slate-700">设为精选</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={formData.featured}
+              onClick={() => onPatch({ featured: !formData.featured })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full border transition ${
+                formData.featured ? 'border-slate-300 bg-slate-100' : 'border-slate-300 bg-white'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full transition ${
+                  formData.featured
+                    ? 'translate-x-6 bg-[#165DFF]'
+                    : 'translate-x-1 bg-slate-500'
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
     </aside>

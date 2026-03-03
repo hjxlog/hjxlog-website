@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import ManagementPageHeader from '@/components/admin/ManagementPageHeader';
 import { apiRequest } from '../config/api';
 import {
   ArrowPathIcon,
@@ -155,39 +156,36 @@ const KnowledgeBase: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 头部 */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">知识库管理</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                管理 AI 助手的向量知识库
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ManagementPageHeader
+          title="知识库管理"
+          description="管理 AI 助手向量知识库，支持快速刷新与一键重建"
+          meta={[
+            { label: '文档块', value: stats?.total ?? 0 },
+            { label: '最后更新', value: stats?.lastUpdated ? formatDate(stats.lastUpdated) : '暂无' }
+          ]}
+          actions={
+            <>
               <button
                 onClick={fetchStats}
                 disabled={loading}
-                className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="whitespace-nowrap inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
               >
-                <ArrowPathIcon className={`h-5 w-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                <ArrowPathIcon className={`mr-2 h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
                 刷新
               </button>
               <button
                 onClick={handleRebuild}
                 disabled={rebuilding}
-                className="whitespace-nowrap inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300"
+                className="whitespace-nowrap inline-flex items-center rounded-lg bg-[#165DFF] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#165DFF]/90 disabled:bg-slate-300"
               >
-                <ArrowPathIcon className={`h-5 w-5 mr-2 ${rebuilding ? 'animate-spin' : ''}`} />
+                <ArrowPathIcon className={`mr-2 h-5 w-5 ${rebuilding ? 'animate-spin' : ''}`} />
                 {rebuilding ? '重建中...' : '重建知识库'}
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </>
+          }
+        />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 错误提示 */}
         {error && (
           <div className="mb-6">
@@ -200,7 +198,7 @@ const KnowledgeBase: React.FC = () => {
         )}
 
         {/* 标签页 */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="mt-6 border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}

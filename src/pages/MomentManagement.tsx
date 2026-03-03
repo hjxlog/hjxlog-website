@@ -4,6 +4,7 @@ import { PencilIcon, TrashIcon, EyeIcon, PlusIcon } from '@heroicons/react/24/ou
 import { toast } from 'sonner';
 import { apiRequest } from '@/config/api';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import ManagementPageHeader from '@/components/admin/ManagementPageHeader';
 
 interface Moment {
   id: number;
@@ -157,24 +158,26 @@ const MomentManagement: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 页面标题和操作 */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">动态管理</h1>
-              <p className="mt-2 text-gray-600">管理所有动态内容</p>
-            </div>
+        <ManagementPageHeader
+          title="动态管理"
+          description="集中管理动态内容，快速查看、编辑与发布"
+          meta={[
+            { label: '总动态', value: total },
+            { label: '当前页', value: page }
+          ]}
+          actions={
             <Link
               to="/moments/create"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#165DFF] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#165DFF]/90"
             >
               <PlusIcon className="h-5 w-5" />
               发布新动态
             </Link>
-          </div>
-        </div>
+          }
+        />
 
         {/* 统计信息 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="mt-6 bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{total}</div>

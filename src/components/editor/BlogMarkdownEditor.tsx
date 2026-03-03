@@ -48,7 +48,7 @@ export default function BlogMarkdownEditor({
   value,
   onChange,
   onSaveShortcut,
-  placeholder = '输入 / 可以快速插入段落类型，按 Cmd/Ctrl + S 保存草稿...',
+  placeholder = '输入 / 可以快速插入段落类型，按 Cmd/Ctrl + S 保存...',
   minHeightClassName = 'min-h-[60vh]',
   showStats = true,
   showSourceToggle = true

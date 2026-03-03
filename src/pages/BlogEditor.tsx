@@ -218,7 +218,7 @@ export default function BlogEditor() {
       setFormData((prev) => ({ ...prev, published: Boolean(payload.published) }));
       setSaveStatus('saved');
       setIsDirty(false);
-      toast.success(publishNow ? '文章已发布' : '草稿已保存');
+      toast.success(publishNow ? '文章已发布' : '已保存');
       return true;
     } catch (error) {
       console.error('保存博客失败:', error);
@@ -234,6 +234,21 @@ export default function BlogEditor() {
     }
     navigate(backTarget);
   }, [backTarget, isDirty, navigate]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) {
+        return;
+      }
+      event.preventDefault();
+      handleBack();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [handleBack]);
 
   if (loading) {
     return (
@@ -266,11 +281,11 @@ export default function BlogEditor() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => void saveBlog(false)}
+              onClick={() => void saveBlog()}
               disabled={saveStatus === 'saving'}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-60"
             >
-              保存草稿
+              保存
             </button>
             <button
               type="button"
@@ -297,7 +312,7 @@ export default function BlogEditor() {
             value={formData.content}
             onChange={(content) => patchFormData({ content })}
             onSaveShortcut={() => {
-              void saveBlog(false);
+              void saveBlog();
             }}
           />
         </section>
