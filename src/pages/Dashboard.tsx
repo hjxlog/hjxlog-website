@@ -12,8 +12,6 @@ import { API_BASE_URL, apiRequest } from '@/config/api';
 import MomentsTab from '@/components/dashboard/MomentsTab';
 import WorksTab from '@/components/dashboard/WorksTab';
 import BlogsTab from '@/components/dashboard/BlogsTab';
-import WorkForm from '@/components/dashboard/WorkForm';
-import BlogForm from '@/components/dashboard/BlogForm';
 import MomentForm from '@/components/dashboard/MomentForm';
 import PhotosTab from '@/components/dashboard/PhotosTab';
 import KnowledgeBaseTab from '@/components/dashboard/KnowledgeBaseTab';
@@ -72,10 +70,6 @@ export default function Dashboard() {
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
 
-  const [isWorkFormOpen, setIsWorkFormOpen] = useState(false);
-  const [isBlogFormOpen, setIsBlogFormOpen] = useState(false);
-  const [currentWork, setCurrentWork] = useState<Work | null>(null);
-  const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
   const [totalViews, setTotalViews] = useState(0);
   const [viewStatsSimple, setViewStatsSimple] = useState<ViewStatsSimple | null>(null);
   const [taskStats, setTaskStats] = useState<TaskOverviewStats | null>(null);
@@ -156,48 +150,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  const createWork = useCallback(async (workData: Partial<Work>) => {
-    try {
-      const result = await apiRequest('/api/works', {
-        method: 'POST',
-        body: JSON.stringify(workData),
-      });
-      if (result.success) {
-        await fetchWorks();
-        toast.success('作品创建成功');
-        return true;
-      } else {
-        toast.error(result.message || '创建作品失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('创建作品失败:', error);
-      toast.error('创建作品失败');
-      return false;
-    }
-  }, [fetchWorks]);
-
-  const updateWork = useCallback(async (id: number, workData: Partial<Work>) => {
-    try {
-      const result = await apiRequest(`/api/works/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(workData),
-      });
-      if (result.success) {
-        await fetchWorks();
-        toast.success('作品更新成功');
-        return true;
-      } else {
-        toast.error(result.message || '更新作品失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('更新作品失败:', error);
-      toast.error('更新作品失败');
-      return false;
-    }
-  }, [fetchWorks]);
-
   const deleteWork = useCallback(async (id: number) => {
     try {
       const result = await apiRequest(`/api/works/${id}`, {
@@ -217,48 +169,6 @@ export default function Dashboard() {
       return false;
     }
   }, [fetchWorks]);
-
-  const createBlog = useCallback(async (blogData: Partial<Blog>) => {
-    try {
-      const result = await apiRequest('/api/blogs', {
-        method: 'POST',
-        body: JSON.stringify(blogData),
-      });
-      if (result.success) {
-        await fetchBlogs();
-        toast.success('博客创建成功');
-        return true;
-      } else {
-        toast.error(result.message || '创建博客失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('创建博客失败:', error);
-      toast.error('创建博客失败');
-      return false;
-    }
-  }, [fetchBlogs]);
-
-  const updateBlog = useCallback(async (id: number, blogData: Partial<Blog>) => {
-    try {
-      const result = await apiRequest(`/api/blogs/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(blogData),
-      });
-      if (result.success) {
-        await fetchBlogs();
-        toast.success('博客更新成功');
-        return true;
-      } else {
-        toast.error(result.message || '更新博客失败');
-        return false;
-      }
-    } catch (error) {
-      console.error('更新博客失败:', error);
-      toast.error('更新博客失败');
-      return false;
-    }
-  }, [fetchBlogs]);
 
   const deleteBlog = useCallback(async (id: number) => {
     try {
@@ -437,26 +347,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleWorkSave = useCallback(async (workData: Partial<Work>) => {
-    let success = false;
-    if (currentWork) {
-      success = await updateWork(currentWork.id, workData);
-    } else {
-      success = await createWork(workData);
-    }
-    return success;
-  }, [createWork, currentWork, updateWork]);
-
-  const handleBlogSave = useCallback(async (blogData: Partial<Blog>) => {
-    let success = false;
-    if (currentBlog) {
-      success = await updateBlog(currentBlog.id, blogData);
-    } else {
-      success = await createBlog(blogData);
-    }
-    return success;
-  }, [createBlog, currentBlog, updateBlog]);
-
   const openMomentForm = useCallback((moment?: Moment) => {
     if (moment) {
       setCurrentMoment(moment);
@@ -570,31 +460,19 @@ export default function Dashboard() {
 
   const openWorkForm = useCallback((work?: Work) => {
     if (work) {
-      setCurrentWork(work);
+      navigate(`/admin/work/edit/${work.id}?from=dashboard`);
     } else {
-      setCurrentWork(null);
+      navigate('/admin/work/create?from=dashboard');
     }
-    setIsWorkFormOpen(true);
-  }, []);
+  }, [navigate]);
 
   const openBlogForm = useCallback((blog?: Blog) => {
     if (blog) {
-      setCurrentBlog(blog);
+      navigate(`/admin/blog/edit/${blog.id}?from=dashboard`);
     } else {
-      setCurrentBlog(null);
+      navigate('/admin/blog/create?from=dashboard');
     }
-    setIsBlogFormOpen(true);
-  }, []);
-
-  const closeWorkForm = useCallback(() => {
-    setIsWorkFormOpen(false);
-    setCurrentWork(null);
-  }, []);
-
-  const closeBlogForm = useCallback(() => {
-    setIsBlogFormOpen(false);
-    setCurrentBlog(null);
-  }, []);
+  }, [navigate]);
 
   // 博客筛选和分页逻辑
   const blogSearchLower = useMemo(() => blogSearchQuery.toLowerCase(), [blogSearchQuery]);
@@ -891,22 +769,6 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-
-      {/* 作品编辑表单模态框 */}
-      <WorkForm
-        isOpen={isWorkFormOpen}
-        onClose={closeWorkForm}
-        initialData={currentWork}
-        onSave={handleWorkSave}
-      />
-
-      {/* 博客编辑表单模态框 */}
-      <BlogForm
-        isOpen={isBlogFormOpen}
-        onClose={closeBlogForm}
-        initialData={currentBlog}
-        onSave={handleBlogSave}
-      />
 
       {/* 动态发布表单模态框 */}
       <MomentForm

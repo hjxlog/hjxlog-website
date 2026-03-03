@@ -1,0 +1,113 @@
+.blog-editor-shell {
+  --editor-accent: #165dff;
+  --editor-bg: #fbfcfe;
+  --editor-border: #e2e8f0;
+  --editor-text: #0f172a;
+  --editor-muted: #64748b;
+}
+
+.blog-editor-shell .ProseMirror {
+  min-height: 60vh;
+  outline: none;
+  color: var(--editor-text);
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.blog-editor-shell .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+.blog-editor-shell .ProseMirror h1,
+.blog-editor-shell .ProseMirror h2,
+.blog-editor-shell .ProseMirror h3 {
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 1.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.blog-editor-shell .ProseMirror h1 {
+  font-size: 2rem;
+}
+
+.blog-editor-shell .ProseMirror h2 {
+  font-size: 1.55rem;
+}
+
+.blog-editor-shell .ProseMirror h3 {
+  font-size: 1.2rem;
+}
+
+.blog-editor-shell .ProseMirror p,
+.blog-editor-shell .ProseMirror ul,
+.blog-editor-shell .ProseMirror ol,
+.blog-editor-shell .ProseMirror pre,
+.blog-editor-shell .ProseMirror blockquote {
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.blog-editor-shell .ProseMirror ul,
+.blog-editor-shell .ProseMirror ol {
+  padding-left: 1.4rem;
+}
+
+.blog-editor-shell .ProseMirror blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 1rem;
+  color: #475569;
+}
+
+.blog-editor-shell .ProseMirror pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+}
+
+.blog-editor-shell .ProseMirror code {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9em;
+  padding: 0.1rem 0.35rem;
+}
+
+.blog-editor-shell .ProseMirror pre code {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.blog-editor-shell .ProseMirror img {
+  max-width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--editor-border);
+}
+
+.blog-editor-shell .ProseMirror a {
+  color: var(--editor-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.blog-editor-toolbar-btn {
+  border: 1px solid transparent;
+}
+
+.blog-editor-toolbar-btn:hover {
+  border-color: #cbd5e1;
+}
+
+.blog-editor-toolbar-btn.active {
+  color: var(--editor-accent);
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}

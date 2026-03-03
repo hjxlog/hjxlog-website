@@ -17,6 +17,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const BlogManagement = lazy(() => import("@/pages/BlogManagement"));
 const BlogEditor = lazy(() => import("@/pages/BlogEditor"));
+const WorkEditor = lazy(() => import("@/pages/WorkEditor"));
 const Moments = lazy(() => import("@/pages/Moments"));
 const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
 const Photos = lazy(() => import("@/pages/Photos"));
@@ -169,6 +170,8 @@ export default function App() {
           <Route path="/admin/blogs" element={isAuthenticated ? <BlogManagement /> : <Login />} />
           <Route path="/admin/blog/create" element={isAuthenticated ? <BlogEditor /> : <Login />} />
           <Route path="/admin/blog/edit/:id" element={isAuthenticated ? <BlogEditor /> : <Login />} />
+          <Route path="/admin/work/create" element={isAuthenticated ? <WorkEditor /> : <Login />} />
+          <Route path="/admin/work/edit/:id" element={isAuthenticated ? <WorkEditor /> : <Login />} />
           <Route path="/moments" element={<Moments />} />
           <Route path="/moments/:id" element={<MomentDetail />} />
           <Route path="/photos" element={<Photos />} />

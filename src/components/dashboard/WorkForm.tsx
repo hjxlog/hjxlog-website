@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import RichTextEditor from '@/components/RichTextEditor';
+import BlogMarkdownEditor from '@/components/editor/BlogMarkdownEditor';
 import type { Work, WorkFormData } from '@/types';
 
 interface WorkFormProps {
@@ -281,21 +281,22 @@ export default function WorkForm({ isOpen, onClose, initialData, onSave }: WorkF
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700">简短描述</label>
-                <RichTextEditor
+                <BlogMarkdownEditor
                   value={formData.description}
                   onChange={handleDescriptionChange}
                   placeholder="请输入作品简短描述..."
-                  height={200}
+                  minHeightClassName="min-h-[16rem]"
+                  showStats={false}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700">完整内容</label>
-                <RichTextEditor
+                <BlogMarkdownEditor
                   value={formData.content}
                   onChange={handleContentChange}
                   placeholder="请输入作品详细内容..."
-                  height={400}
+                  minHeightClassName="min-h-[24rem]"
                 />
               </div>
             </div>
