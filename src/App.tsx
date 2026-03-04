@@ -1,9 +1,7 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react";
 import { AuthContext, User } from '@/contexts/authContext';
-import { Toaster } from 'sonner';
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { AIAssistant } from "@/components/chat/AIAssistant";
 
 // 懒加载页面组件
 const Home = lazy(() => import("@/pages/Home"));
@@ -23,6 +21,10 @@ const MomentDetail = lazy(() => import("@/pages/MomentDetail"));
 const Photos = lazy(() => import("@/pages/Photos"));
 const ThoughtsPage = lazy(() => import("@/pages/ThoughtsPage"));
 const TaskDetailPage = lazy(() => import("@/pages/TaskDetailPage"));
+const AIAssistant = lazy(() => import('@/components/chat/AIAssistant').then((mod) => ({
+  default: mod.AIAssistant
+})));
+const AdminToaster = lazy(() => import('@/components/admin/AdminToaster'));
 
 const DEFAULT_USER: User = {
   id: '1',
@@ -58,14 +60,25 @@ const isTokenValid = (expirationDate: string) => {
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isAssistantMounted, setIsAssistantMounted] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const shouldShowAIAssistant = useMemo(() => {
     const path = location.pathname;
     return !(
-      path === '/dashboard' ||
-      path.startsWith('/admin/')
+      path.startsWith('/dashboard') ||
+      path.startsWith('/admin/') ||
+      path === '/profile'
+    );
+  }, [location.pathname]);
+
+  const shouldShowAdminToaster = useMemo(() => {
+    const path = location.pathname;
+    return (
+      path.startsWith('/dashboard') ||
+      path.startsWith('/admin/') ||
+      path === '/profile'
     );
   }, [location.pathname]);
 
@@ -88,6 +101,37 @@ export default function App() {
       }
     }
   }, []);
+
+  // 前台场景下延迟挂载 AI 助手，避免影响首屏加载
+  useEffect(() => {
+    if (!shouldShowAIAssistant) {
+      setIsAssistantMounted(false);
+      return;
+    }
+
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+    const mountAssistant = () => setIsAssistantMounted(true);
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      idleId = idleWindow.requestIdleCallback(mountAssistant, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(mountAssistant, 1500);
+    }
+
+    return () => {
+      if (idleId !== null && idleWindow.cancelIdleCallback) {
+        idleWindow.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [shouldShowAIAssistant]);
 
   const login = useCallback((userData: User, token: string, remember: boolean = false) => {
     setIsAuthenticated(true);
@@ -154,8 +198,16 @@ export default function App() {
     <AuthContext.Provider
       value={authContextValue}
     >
-      <Toaster position="top-right" richColors />
-      {shouldShowAIAssistant && <AIAssistant />}
+      {shouldShowAdminToaster && (
+        <Suspense fallback={null}>
+          <AdminToaster />
+        </Suspense>
+      )}
+      {shouldShowAIAssistant && isAssistantMounted && (
+        <Suspense fallback={null}>
+          <AIAssistant />
+        </Suspense>
+      )}
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" text="加载页面资源中..." /></div>}>
         <Routes>
           <Route path="/" element={<Home />} />

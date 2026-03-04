@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Calendar, Eye, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 import PublicNav from '@/components/PublicNav';
 import { apiRequest } from '@/config/api';
 import { useViewTracker } from '@/hooks/useViewTracker';
@@ -28,10 +27,10 @@ export default function MomentDetail() {
   const { id } = useParams<{ id: string }>();
   useViewTracker('moment', Number(id), !!id);
 
-  const navigate = useNavigate();
   const [moment, setMoment] = useState<Moment | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // 获取动态详情
   const fetchMoment = async () => {
@@ -43,14 +42,15 @@ export default function MomentDetail() {
 
       if (data.success) {
         setMoment(data.data);
+        setErrorMessage(null);
       } else {
-        toast.error(data.message || '获取动态详情失败');
-        navigate('/moments');
+        setMoment(null);
+        setErrorMessage(data.message || '获取动态详情失败');
       }
     } catch (error) {
       console.error('获取动态详情失败:', error);
-      toast.error('获取动态详情失败');
-      navigate('/moments');
+      setMoment(null);
+      setErrorMessage('获取动态详情失败');
     } finally {
       setLoading(false);
     }
@@ -123,6 +123,9 @@ export default function MomentDetail() {
         <div className="pt-24 pb-16">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">动态不存在</h1>
+            {errorMessage && (
+              <p className="mb-4 text-sm text-rose-600">{errorMessage}</p>
+            )}
             <Link
               to="/moments"
               className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"

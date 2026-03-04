@@ -16,15 +16,52 @@ export default defineConfig({
         globals: {
           // 全局变量配置
         },
-        manualChunks: {
-          // React 核心库
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          
-          // UI 库
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          
-          // 工具库
-          'utils-vendor': ['axios', 'clsx', 'tailwind-merge', 'zod']
+        manualChunks(id) {
+          const normalizedId = id.replace(/\\/g, '/');
+
+          if (
+            normalizedId.includes('/node_modules/@tiptap/') ||
+            normalizedId.includes('/node_modules/prosemirror')
+          ) {
+            return 'admin-editor-vendor';
+          }
+
+          if (
+            normalizedId.includes('/node_modules/react-markdown') ||
+            normalizedId.includes('/node_modules/remark-gfm') ||
+            normalizedId.includes('/node_modules/rehype-')
+          ) {
+            return 'markdown-vendor';
+          }
+
+          if (
+            normalizedId.includes('/node_modules/react/') ||
+            normalizedId.includes('/node_modules/react-dom/') ||
+            normalizedId.includes('/node_modules/react-router-dom/')
+          ) {
+            return 'react-vendor';
+          }
+
+          if (normalizedId.includes('/node_modules/sonner/')) {
+            return 'toast-vendor';
+          }
+
+          if (normalizedId.includes('/node_modules/framer-motion/')) {
+            return 'motion-vendor';
+          }
+
+          if (normalizedId.includes('/node_modules/lucide-react/')) {
+            return 'icons-vendor';
+          }
+
+          if (
+            normalizedId.includes('/node_modules/axios/') ||
+            normalizedId.includes('/node_modules/clsx/') ||
+            normalizedId.includes('/node_modules/tailwind-merge/') ||
+            normalizedId.includes('/node_modules/zod/')
+          ) {
+            return 'utils-vendor';
+          }
         }
       }
     },

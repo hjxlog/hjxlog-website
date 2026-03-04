@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { MouseEvent } from 'react';
 import { ChevronDown, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
 import PublicNav from '../components/PublicNav';
 import Footer from '@/components/Footer';
 import { apiRequest } from '@/config/api';
@@ -35,6 +34,7 @@ export default function Moments() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [selectedMomentImages, setSelectedMomentImages] = useState<string[]>([]);
   const limit = 10;
@@ -142,6 +142,7 @@ export default function Moments() {
       const data: MomentsResponse = await apiRequest(`/api/moments?page=${pageNum}&limit=${limit}&sort=created_at`);
 
       if (data.success) {
+        setError(null);
         if (append) {
           setMoments(prev => [...prev, ...data.data.moments]);
         } else {
@@ -149,11 +150,11 @@ export default function Moments() {
         }
         setHasMore(data.data.moments.length === limit);
       } else {
-        toast.error(data.message || '获取动态列表失败');
+        setError(data.message || '获取动态列表失败');
       }
     } catch (error) {
       console.error('获取动态列表失败:', error);
-      toast.error('获取动态列表失败');
+      setError('获取动态列表失败');
     } finally {
       setLoading(false);
     }
@@ -232,6 +233,12 @@ export default function Moments() {
         <div className="relative">
           {/* Vertical Timeline Line */}
           <div className="hidden md:block absolute left-[104px] top-0 bottom-0 w-px bg-slate-200" />
+
+          {error && (
+            <div className="mb-8 md:ml-[120px] rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          )}
 
           {/* Moments List */}
           <div className="space-y-8">

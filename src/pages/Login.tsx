@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/authContext';
-import { toast } from 'sonner';
 import { apiRequest } from '../config/api';
 import { motion } from 'framer-motion';
 import { User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
@@ -12,6 +11,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -31,11 +31,12 @@ export default function Login() {
 
     // 简单验证
     if (!username || !password) {
-      toast.error('请输入用户名和密码');
+      setFeedback({ type: 'error', message: '请输入用户名和密码' });
       return;
     }
 
     setIsLoading(true);
+    setFeedback(null);
 
     try {
       // 使用真实API登录
@@ -68,17 +69,17 @@ export default function Login() {
 
         // 调用AuthContext中的login方法，直接传入用户数据
         login(user, data.token, rememberMe);
-        toast.success('登录成功！');
+        setFeedback({ type: 'success', message: '登录成功，正在进入后台...' });
         // 确保在状态更新后再导航
         setTimeout(() => {
           navigate('/dashboard');
         }, 100);
       } else {
-        toast.error(data.message || '登录失败');
+        setFeedback({ type: 'error', message: data.message || '登录失败' });
       }
     } catch (error) {
       console.error('登录失败:', error);
-      toast.error('网络连接失败，请检查服务器是否正常运行');
+      setFeedback({ type: 'error', message: '网络连接失败，请检查服务器是否正常运行' });
     } finally {
       setIsLoading(false);
     }
@@ -115,6 +116,18 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {feedback && (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  feedback.type === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-rose-200 bg-rose-50 text-rose-700'
+                }`}
+              >
+                {feedback.message}
+              </div>
+            )}
+
             <div className="space-y-5">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-1.5">

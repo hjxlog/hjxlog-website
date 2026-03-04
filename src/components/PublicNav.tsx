@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 
 export default function PublicNav() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function PublicNav() {
           className="md:hidden text-slate-600"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
-          <i className={isMenuOpen ? 'fas fa-times text-2xl' : 'fas fa-bars text-2xl'}></i>
+          {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
       

@@ -9,7 +9,6 @@ import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import TableOfContents from '@/components/TableOfContents';
 import { useBackToTop } from '@/hooks/useBackToTop';
-import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { useViewTracker } from '@/hooks/useViewTracker';
@@ -67,6 +66,7 @@ const BlogDetail: React.FC = () => {
   const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasToc, setHasToc] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // 浏览追踪
   useViewTracker('blog', Number(id), !!id);
@@ -99,6 +99,7 @@ const BlogDetail: React.FC = () => {
         }
         
         setPost(blogData);
+        setLoadError(null);
         
         // 检测是否有目录
         if (blogData.content) {
@@ -113,8 +114,7 @@ const BlogDetail: React.FC = () => {
         
       } catch (error) {
         console.error('❌ [BlogDetail] API获取失败:', error);
-        
-        toast.error('获取博客详情失败');
+        setLoadError('获取博客详情失败');
       } finally {
         setLoading(false);
       }
@@ -192,7 +192,7 @@ const BlogDetail: React.FC = () => {
         <PublicNav />
         <div className="text-center z-10 p-8 glass-panel rounded-2xl">
           <h1 className="text-3xl font-bold mb-4 text-slate-800">404</h1>
-          <p className="mb-6 text-slate-600">抱歉，未找到该文章。</p>
+          <p className="mb-6 text-slate-600">{loadError || '抱歉，未找到该文章。'}</p>
           <button 
             onClick={() => navigate('/blogs')} 
             className="bg-slate-900 text-white px-6 py-2.5 rounded-full hover:bg-slate-800 transition-all flex items-center gap-2 mx-auto"

@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import Empty from '@/components/Empty';
-import { toast } from 'sonner';
 import type { Photo, PhotosResponse } from '@/types';
 import { useViewTracker } from '@/hooks/useViewTracker';
 
@@ -58,12 +57,10 @@ export default function Photos() {
         setPage(pageNum);
       } else {
         setError(data.message || '获取照片失败');
-        toast.error(data.message || '获取照片失败');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '网络错误';
       setError(errorMessage);
-      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setLoadingMore(false);

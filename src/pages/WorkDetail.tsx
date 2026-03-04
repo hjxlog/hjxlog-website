@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  AlertTriangle,
+  ArrowUp,
+  Calendar,
+  Check,
+  Code2,
+  Cog,
+  ExternalLink,
+  Github,
+  Lightbulb,
+  Link2,
+  Star
+} from 'lucide-react';
 import PublicNav from '@/components/PublicNav';
 import Footer from '@/components/Footer';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -106,8 +119,8 @@ export default function WorkDetail() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl text-red-500 mb-4">
-            <i className="fas fa-exclamation-triangle"></i>
+          <div className="mb-4 flex justify-center text-red-500">
+            <AlertTriangle size={56} />
           </div>
           <h2 className="text-2xl font-semibold text-slate-600 mb-4">加载失败</h2>
           <p className="text-slate-500 mb-6">{error || '作品不存在'}</p>
@@ -165,7 +178,7 @@ export default function WorkDetail() {
                     {work.category}
                   </span>
                   <span className="text-slate-500">
-                    <i className="fas fa-calendar mr-2"></i>
+                    <Calendar size={16} className="mr-2 inline-block" />
                     {createdDateLabel}
                   </span>
                 </div>
@@ -229,7 +242,7 @@ export default function WorkDetail() {
               {/* 技术栈 */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                  <i className="fas fa-code mr-2 text-[#165DFF]"></i>
+                  <Code2 size={18} className="mr-2 inline-block text-[#165DFF]" />
                   技术栈
                 </h3>
                 <div className="space-y-2">
@@ -238,7 +251,7 @@ export default function WorkDetail() {
                       key={index}
                       className="flex items-center space-x-2 text-slate-600"
                     >
-                      <i className="fas fa-check text-green-500 text-sm"></i>
+                      <Check size={14} className="text-green-500" />
                       <span>{tech}</span>
                     </div>
                   ))}
@@ -248,7 +261,7 @@ export default function WorkDetail() {
               {/* 核心功能 */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                  <i className="fas fa-star mr-2 text-[#165DFF]"></i>
+                  <Star size={18} className="mr-2 inline-block text-[#165DFF]" />
                   核心功能
                 </h3>
                 <div className="space-y-2">
@@ -257,7 +270,7 @@ export default function WorkDetail() {
                       key={index}
                       className="flex items-center space-x-2 text-slate-600"
                     >
-                      <i className="fas fa-check text-green-500 text-sm"></i>
+                      <Check size={14} className="text-green-500" />
                       <span>{feature}</span>
                     </div>
                   ))}
@@ -267,7 +280,7 @@ export default function WorkDetail() {
               {/* 技术挑战 */}
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                  <i className="fas fa-lightbulb mr-2 text-[#165DFF]"></i>
+                  <Lightbulb size={18} className="mr-2 inline-block text-[#165DFF]" />
                   技术挑战
                 </h3>
                 <div className="space-y-2">
@@ -276,7 +289,7 @@ export default function WorkDetail() {
                       key={index}
                       className="flex items-center space-x-2 text-slate-600"
                     >
-                      <i className="fas fa-cog text-orange-500 text-sm"></i>
+                      <Cog size={14} className="text-orange-500" />
                       <span>{challenge}</span>
                     </div>
                   ))}
@@ -287,7 +300,7 @@ export default function WorkDetail() {
               {(work.project_url || work.github_url) && (
                 <div className="bg-white rounded-xl p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                    <i className="fas fa-link mr-2 text-[#165DFF]"></i>
+                    <Link2 size={18} className="mr-2 inline-block text-[#165DFF]" />
                     项目链接
                   </h3>
                   <div className="space-y-3">
@@ -298,7 +311,7 @@ export default function WorkDetail() {
                         rel="noopener noreferrer"
                         className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                       >
-                        <i className="fas fa-external-link-alt text-[#165DFF]"></i>
+                        <ExternalLink size={16} className="text-[#165DFF]" />
                         <span className="text-slate-700">在线预览</span>
                       </a>
                     )}
@@ -309,7 +322,7 @@ export default function WorkDetail() {
                         rel="noopener noreferrer"
                         className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                       >
-                        <i className="fab fa-github text-slate-600"></i>
+                        <Github size={16} className="text-slate-600" />
                         <span className="text-slate-700">源代码</span>
                       </a>
                     )}
@@ -380,7 +393,7 @@ export default function WorkDetail() {
 
       {/* 回到顶部按钮 */}
       <button id="backToTop" className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-[#165DFF] text-white shadow-lg flex items-center justify-center opacity-0 invisible transition-all">
-        <i className="fas fa-arrow-up"></i>
+        <ArrowUp size={18} />
       </button>
 
       <Footer />
