@@ -710,7 +710,8 @@ export default function Dashboard() {
                   setBlogSelectedCategory={setBlogSelectedCategory}
                   setBlogSelectedStatus={setBlogSelectedStatus}
                   openBlogForm={openBlogForm}
-                handleDeleteBlog={handleDeleteBlog}
+                  handleDeleteBlog={handleDeleteBlog}
+                  refreshBlogs={fetchBlogs}
               />
             </div>
           )}

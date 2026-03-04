@@ -1,4 +1,7 @@
 import express from 'express';
+import multer from 'multer';
+import PromptService from '../services/PromptService.js';
+import LLMService from '../services/LLMService.js';
 import {
     buildApiTokenPrefix,
     generateApiToken,
@@ -131,6 +134,251 @@ function buildViewLogsSelectColumns(columnSet) {
         'created_at',
         ...optionalSelect
     ].join(', ');
+}
+
+const markdownUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 2 * 1024 * 1024,
+        files: 200
+    }
+});
+let llmServiceInstance = null;
+
+function getLLMService() {
+    if (llmServiceInstance) {
+        return llmServiceInstance;
+    }
+    const apiKey = process.env.ZHIPU_API_KEY;
+    if (!apiKey || !String(apiKey).trim()) {
+        return null;
+    }
+    llmServiceInstance = new LLMService(apiKey);
+    return llmServiceInstance;
+}
+
+function isMarkdownFile(file) {
+    if (!file?.originalname) return false;
+    return file.originalname.toLowerCase().endsWith('.md');
+}
+
+function extractFirstH1(markdownText) {
+    if (typeof markdownText !== 'string') return '';
+    const matched = markdownText.match(/^#\s+(.+)$/m);
+    return matched?.[1]?.trim() || '';
+}
+
+function removeLeadingH1(markdownText) {
+    if (typeof markdownText !== 'string') return '';
+    return markdownText.replace(/^#\s+.+$/m, '').trim();
+}
+
+function stripMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/`[^`]*`/g, ' ')
+        .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
+        .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+        .replace(/[#>*_~-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function buildExcerpt(markdownText, maxLength = 180) {
+    const contentWithoutTitle = removeLeadingH1(markdownText);
+    const firstParagraph = contentWithoutTitle
+        .split(/\n\s*\n/)
+        .map((part) => stripMarkdown(part))
+        .find(Boolean) || '';
+
+    if (!firstParagraph) return '';
+    if (firstParagraph.length <= maxLength) return firstParagraph;
+    return `${firstParagraph.slice(0, maxLength).trim()}...`;
+}
+
+function isMeaningfulCategory(value) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return false;
+    return normalized !== '未分类';
+}
+
+async function generateSummaryIfEmpty(dbClient, content, currentValue) {
+    if (currentValue && String(currentValue).trim()) {
+        return {
+            value: String(currentValue).trim(),
+            usedAI: false,
+            error: null
+        };
+    }
+
+    try {
+        const llmService = getLLMService();
+        if (!llmService) {
+            return {
+                value: '',
+                usedAI: false,
+                error: 'missing_api_key:ZHIPU_API_KEY'
+            };
+        }
+
+        const promptService = new PromptService(dbClient);
+        const templateResult = await promptService.getTemplate('blog_summary');
+        if (!templateResult.success || !templateResult.data) {
+            return {
+                value: '',
+                usedAI: false,
+                error: 'missing_template:blog_summary'
+            };
+        }
+
+        const template = templateResult.data;
+        const userPrompt = template.user_prompt_template.replace('{content}', content);
+        const summary = await llmService.chat({
+            system: template.system_prompt,
+            messages: [{ role: 'user', content: userPrompt }]
+        });
+        return {
+            value: summary?.trim() || '',
+            usedAI: true,
+            error: null
+        };
+    } catch (error) {
+        console.warn('[AdminRouter] AI 生成摘要失败:', error?.message || error);
+        return {
+            value: '',
+            usedAI: false,
+            error: error?.message || 'summary_generation_failed'
+        };
+    }
+}
+
+async function generateCategoryIfEmpty(dbClient, content, currentValue) {
+    if (isMeaningfulCategory(currentValue)) {
+        return {
+            value: String(currentValue).trim(),
+            usedAI: false,
+            error: null
+        };
+    }
+
+    try {
+        const llmService = getLLMService();
+        if (!llmService) {
+            return {
+                value: '',
+                usedAI: false,
+                error: 'missing_api_key:ZHIPU_API_KEY'
+            };
+        }
+
+        const promptService = new PromptService(dbClient);
+        const templateResult = await promptService.getTemplate('blog_category');
+        if (!templateResult.success || !templateResult.data) {
+            return {
+                value: '',
+                usedAI: false,
+                error: 'missing_template:blog_category'
+            };
+        }
+
+        const categoriesResult = await dbClient.query(
+            'SELECT DISTINCT category FROM blogs WHERE category IS NOT NULL AND category != \'\''
+        );
+        const existingCategories = categoriesResult.rows.map((row) => row.category);
+
+        const template = templateResult.data;
+        const userPrompt = template.user_prompt_template
+            .replace('{existing_categories}', existingCategories.join(', '))
+            .replace('{content}', content);
+
+        const category = await llmService.chat({
+            system: template.system_prompt,
+            messages: [{ role: 'user', content: userPrompt }]
+        });
+
+        return {
+            value: category?.trim().replace(/['"《》]/g, '') || '',
+            usedAI: true,
+            error: null
+        };
+    } catch (error) {
+        console.warn('[AdminRouter] AI 生成分类失败:', error?.message || error);
+        return {
+            value: '',
+            usedAI: false,
+            error: error?.message || 'category_generation_failed'
+        };
+    }
+}
+
+async function generateTagsIfEmpty(dbClient, content, currentValue) {
+    if (Array.isArray(currentValue) && currentValue.length > 0) {
+        return {
+            value: currentValue,
+            usedAI: false,
+            error: null
+        };
+    }
+
+    try {
+        const llmService = getLLMService();
+        if (!llmService) {
+            return {
+                value: [],
+                usedAI: false,
+                error: 'missing_api_key:ZHIPU_API_KEY'
+            };
+        }
+
+        const promptService = new PromptService(dbClient);
+        const templateResult = await promptService.getTemplate('blog_tags');
+        if (!templateResult.success || !templateResult.data) {
+            return {
+                value: [],
+                usedAI: false,
+                error: 'missing_template:blog_tags'
+            };
+        }
+
+        const tagsResult = await dbClient.query('SELECT DISTINCT unnest(tags) as tag FROM blogs');
+        const existingTags = tagsResult.rows.map((row) => row.tag);
+
+        const template = templateResult.data;
+        const userPrompt = template.user_prompt_template
+            .replace('{existing_tags}', existingTags.join(', '))
+            .replace('{content}', content);
+
+        const responseText = await llmService.chat({
+            system: template.system_prompt,
+            messages: [{ role: 'user', content: userPrompt }]
+        });
+
+        let tags = [];
+        try {
+            const jsonMatch = responseText.match(/\[.*\]/s);
+            const jsonStr = jsonMatch ? jsonMatch[0] : responseText;
+            tags = JSON.parse(jsonStr);
+        } catch (error) {
+            tags = String(responseText || '')
+                .split(/[,，]/)
+                .map((tag) => tag.trim())
+                .filter(Boolean);
+        }
+
+        return {
+            value: Array.isArray(tags) ? tags.slice(0, 5) : [],
+            usedAI: true,
+            error: null
+        };
+    } catch (error) {
+        console.warn('[AdminRouter] AI 生成标签失败:', error?.message || error);
+        return {
+            value: [],
+            usedAI: false,
+            error: error?.message || 'tags_generation_failed'
+        };
+    }
 }
 
 // 创建管理后台路由的工厂函数
@@ -801,6 +1049,183 @@ export function createAdminRouter(getDbClient, getLogger) {
             res.json({ success: true, data: result.rows[0] });
         } catch (error) {
             res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    // 单个/批量导入 Markdown 博客（按第一个 H1 标题匹配）
+    router.post('/blogs/import-md', markdownUpload.array('files', 200), async (req, res) => {
+        try {
+            const dbClient = getDbClient();
+            if (!dbClient) throw new Error('数据库未连接');
+
+            const files = Array.isArray(req.files) ? req.files : [];
+            if (files.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: '请上传至少一个 .md 文件'
+                });
+            }
+
+            const results = [];
+            const summary = {
+                total: files.length,
+                created: 0,
+                updated: 0,
+                skipped: 0,
+                failed: 0
+            };
+
+            for (const file of files) {
+                const filename = file?.originalname || 'unknown.md';
+
+                if (!isMarkdownFile(file)) {
+                    summary.failed += 1;
+                    results.push({
+                        filename,
+                        title: '',
+                        action: 'failed',
+                        message: 'unsupported_file_type'
+                    });
+                    continue;
+                }
+
+                try {
+                    const markdown = file.buffer.toString('utf-8');
+                    const title = extractFirstH1(markdown);
+                    if (!title) {
+                        summary.failed += 1;
+                        results.push({
+                            filename,
+                            title: '',
+                            action: 'failed',
+                            message: 'missing_h1_title'
+                        });
+                        continue;
+                    }
+
+                    const excerpt = buildExcerpt(markdown);
+                    const existing = await dbClient.query(
+                        `SELECT id, excerpt, category, tags
+                         FROM blogs
+                         WHERE title = $1
+                         ORDER BY updated_at DESC`,
+                        [title]
+                    );
+
+                    if (existing.rows.length > 1) {
+                        summary.failed += 1;
+                        results.push({
+                            filename,
+                            title,
+                            action: 'failed',
+                            message: 'duplicate_title_conflict'
+                        });
+                        continue;
+                    }
+
+                    if (existing.rows.length === 1) {
+                        const targetBlog = existing.rows[0];
+                        const targetId = targetBlog.id;
+                        const fallbackExcerpt = targetBlog.excerpt || '';
+                        const fallbackCategory = targetBlog.category || '';
+                        const fallbackTags = Array.isArray(targetBlog.tags) ? targetBlog.tags : [];
+                        const aiWarnings = [];
+
+                        const summaryGen = await generateSummaryIfEmpty(dbClient, markdown, excerpt || fallbackExcerpt);
+                        const categoryGen = await generateCategoryIfEmpty(dbClient, markdown, fallbackCategory);
+                        const tagsGen = await generateTagsIfEmpty(dbClient, markdown, fallbackTags);
+
+                        if (summaryGen.error) aiWarnings.push(`summary:${summaryGen.error}`);
+                        if (categoryGen.error) aiWarnings.push(`category:${categoryGen.error}`);
+                        if (tagsGen.error) aiWarnings.push(`tags:${tagsGen.error}`);
+
+                        let finalExcerpt = summaryGen.value || excerpt || fallbackExcerpt;
+                        let finalCategory = categoryGen.value || '';
+                        let finalTags = Array.isArray(tagsGen.value) ? tagsGen.value : [];
+
+                        if (!finalCategory) {
+                            finalCategory = '未分类';
+                        }
+
+                        const updated = await dbClient.query(
+                            `UPDATE blogs SET
+                               title = $1,
+                               content = $2,
+                               excerpt = $3,
+                               category = $4,
+                               tags = $5,
+                               updated_at = CURRENT_TIMESTAMP
+                             WHERE id = $6
+                             RETURNING id`,
+                            [title, markdown, finalExcerpt, finalCategory, finalTags, targetId]
+                        );
+                        summary.updated += 1;
+                        results.push({
+                            filename,
+                            title,
+                            action: 'updated',
+                            blogId: updated.rows[0]?.id || targetId,
+                            message: aiWarnings.length > 0 ? `ok_with_ai_warnings:${aiWarnings.join('|')}` : 'ok'
+                        });
+                        continue;
+                    }
+
+                    const aiWarnings = [];
+                    const summaryGen = await generateSummaryIfEmpty(dbClient, markdown, excerpt);
+                    const categoryGen = await generateCategoryIfEmpty(dbClient, markdown, '');
+                    const tagsGen = await generateTagsIfEmpty(dbClient, markdown, []);
+
+                    if (summaryGen.error) aiWarnings.push(`summary:${summaryGen.error}`);
+                    if (categoryGen.error) aiWarnings.push(`category:${categoryGen.error}`);
+                    if (tagsGen.error) aiWarnings.push(`tags:${tagsGen.error}`);
+
+                    let finalExcerpt = summaryGen.value || excerpt;
+                    let finalCategory = categoryGen.value || '';
+                    let finalTags = Array.isArray(tagsGen.value) ? tagsGen.value : [];
+
+                    if (!finalCategory) {
+                        finalCategory = '未分类';
+                    }
+
+                    const created = await dbClient.query(
+                        `INSERT INTO blogs (
+                           title, content, excerpt, category, tags, published, featured, cover_image
+                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                         RETURNING id`,
+                        [title, markdown, finalExcerpt, finalCategory, finalTags, true, false, '']
+                    );
+                    summary.created += 1;
+                    results.push({
+                        filename,
+                        title,
+                        action: 'created',
+                        blogId: created.rows[0]?.id,
+                        message: aiWarnings.length > 0 ? `ok_with_ai_warnings:${aiWarnings.join('|')}` : 'ok'
+                    });
+                } catch (error) {
+                    summary.failed += 1;
+                    results.push({
+                        filename,
+                        title: '',
+                        action: 'failed',
+                        message: error?.message || 'import_failed'
+                    });
+                }
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    summary,
+                    results
+                }
+            });
+        } catch (error) {
+            console.error('❌ [API] 导入 Markdown 博客失败:', error.message);
+            res.status(500).json({
+                success: false,
+                message: error.message || '导入失败'
+            });
         }
     });
 

@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Blog } from '@/types';
+import { apiRequestFormData } from '@/config/api';
 
 interface BlogsTabProps {
   filteredBlogs: Blog[];
@@ -20,6 +22,7 @@ interface BlogsTabProps {
   setBlogSelectedStatus: (status: string) => void;
   openBlogForm: (blog?: Blog) => void;
   handleDeleteBlog: (id: number) => Promise<void>;
+  refreshBlogs: () => Promise<void>;
 }
 
 export default function BlogsTab({
@@ -40,8 +43,13 @@ export default function BlogsTab({
   setBlogSelectedCategory,
   setBlogSelectedStatus,
   openBlogForm,
-  handleDeleteBlog
+  handleDeleteBlog,
+  refreshBlogs
 }: BlogsTabProps) {
+  const [isImporting, setIsImporting] = useState(false);
+  const singleFileInputRef = useRef<HTMLInputElement>(null);
+  const multiFileInputRef = useRef<HTMLInputElement>(null);
+
   const blogCards = useMemo(() => (
     currentBlogs.map((blog) => ({
       ...blog,
@@ -53,6 +61,36 @@ export default function BlogsTab({
     () => Array.from({ length: totalBlogPages }, (_, i) => i + 1),
     [totalBlogPages]
   );
+
+  const handleImportFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append('files', file);
+    });
+
+    setIsImporting(true);
+    try {
+      const response = await apiRequestFormData('/api/admin/blogs/import-md', formData);
+      const summary = response?.data?.summary || {};
+      const results = Array.isArray(response?.data?.results) ? response.data.results : [];
+      const hasAiWarnings = results.some((item) => String(item?.message || '').startsWith('ok_with_ai_warnings:'));
+      toast.success(
+        `导入完成：新增 ${summary.created || 0}，更新 ${summary.updated || 0}，失败 ${summary.failed || 0}${hasAiWarnings ? '（部分AI补全失败）' : ''}`
+      );
+      await refreshBlogs();
+    } catch (error) {
+      console.error('导入 Markdown 失败:', error);
+      toast.error('导入失败，请稍后重试');
+    } finally {
+      setIsImporting(false);
+      if (singleFileInputRef.current) singleFileInputRef.current.value = '';
+      if (multiFileInputRef.current) multiFileInputRef.current.value = '';
+    }
+  };
 
   const renderBlogStatusBadge = (published: boolean) => {
     return (
@@ -71,6 +109,39 @@ export default function BlogsTab({
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800">博客管理</h2>
         <div className="flex gap-3">
+          <input
+            ref={singleFileInputRef}
+            type="file"
+            accept=".md,text/markdown"
+            className="hidden"
+            onChange={(event) => {
+              void handleImportFiles(event.target.files);
+            }}
+          />
+          <input
+            ref={multiFileInputRef}
+            type="file"
+            multiple
+            accept=".md,text/markdown"
+            className="hidden"
+            onChange={(event) => {
+              void handleImportFiles(event.target.files);
+            }}
+          />
+          <button
+            onClick={() => singleFileInputRef.current?.click()}
+            disabled={isImporting}
+            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <i className="fas fa-file-import mr-2"></i> 导入 MD
+          </button>
+          <button
+            onClick={() => multiFileInputRef.current?.click()}
+            disabled={isImporting}
+            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors flex items-center disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <i className="fas fa-files mr-2"></i> 批量导入 MD
+          </button>
           <button
             onClick={() => openBlogForm()}
             className="px-4 py-2 bg-[#165DFF] text-white rounded-lg hover:bg-[#165DFF]/90 transition-colors flex items-center"
