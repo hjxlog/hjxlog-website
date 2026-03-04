@@ -254,66 +254,65 @@ const Blog: React.FC = () => {
           </div>
         )}
 
-        {/* Blog Grid */}
+        {/* Blog List */}
         <div className="max-w-5xl mx-auto">
           {loading ? (
             <div className="py-20 flex justify-center">
               <LoadingSpinner size="lg" text="正在加载内容..." />
             </div>
           ) : blogs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div className="space-y-4 mb-14">
               {blogCards.map(({ blog, dateLabel, gradient }, index) => (
                 <motion.article 
                   key={blog.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="group relative bg-white rounded-[2rem] overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 cursor-pointer h-full flex flex-col"
+                  className="group bg-white rounded-xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
                   onClick={() => navigate(`/blog/${blog.id}`)}
                 >
-                  {/* Cover Image Area */}
-                  <div className="aspect-[16/10] bg-slate-100 relative overflow-hidden">
-                    {blog.cover_image ? (
-                      <img src={blog.cover_image} alt={blog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
-                    )}
-                    
-                    {/* Category Badge overlay */}
-                    <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md text-[10px] font-bold text-slate-900 rounded-full shadow-sm tracking-wide uppercase">
-                        {blog.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content Body */}
-                  <div className="p-6 flex flex-col flex-1">
-                    {/* Date & Meta */}
-                    <div className="flex items-center gap-3 text-xs font-medium text-slate-400 mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <time>{dateLabel}</time>
+                  <div className="p-4 sm:p-5">
+                    <div className="flex gap-4">
+                      <div className="hidden sm:block w-28 md:w-32 h-20 md:h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+                        {blog.cover_image ? (
+                          <img
+                            src={blog.cover_image}
+                            alt={blog.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
+                        )}
                       </div>
-                    </div>
 
-                    {/* Title */}
-                    <h2 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
-                      {blog.title}
-                    </h2>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 mb-2">
+                          <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                            {blog.category}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <time>{dateLabel}</time>
+                          </span>
+                          <span>{blog.views || 0} 阅读</span>
+                        </div>
 
-                    {/* Excerpt */}
-                    <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
-                      {blog.excerpt}
-                    </p>
+                        <h2 className="text-base md:text-lg font-semibold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+                          {blog.title}
+                        </h2>
 
-                    {/* Tags (Minimalist) */}
-                    <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-slate-50">
-                      {blog.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-[10px] font-semibold text-slate-500 bg-slate-100/80 px-2 py-1 rounded">
-                          #{tag}
-                        </span>
-                      ))}
+                        <p className="mt-2 text-sm text-slate-600 leading-relaxed line-clamp-2">
+                          {blog.excerpt}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {blog.tags.slice(0, 2).map(tag => (
+                            <span key={tag} className="text-[11px] font-medium text-slate-500 bg-slate-100/90 px-2 py-0.5 rounded">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.article>
