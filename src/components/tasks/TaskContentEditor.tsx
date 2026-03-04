@@ -134,7 +134,7 @@ export default function TaskContentEditor({ value, onChange }: TaskContentEditor
       },
       attributes: {
         class:
-          'task-editor-content min-h-[52vh] lg:min-h-[58vh] prose prose-sm max-w-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none'
+          'task-editor-content min-h-[52vh] lg:min-h-[58vh] prose prose-sm max-w-none dark:prose-invert rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none'
       }
     },
     onUpdate: ({ editor: currentEditor }) => {
@@ -197,13 +197,13 @@ export default function TaskContentEditor({ value, onChange }: TaskContentEditor
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-2 flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className="rounded px-2 py-1 hover:bg-white">粗体</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className="rounded px-2 py-1 hover:bg-white">斜体</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className="rounded px-2 py-1 hover:bg-white">H2</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className="rounded px-2 py-1 hover:bg-white">列表</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleTaskList().run()} className="rounded px-2 py-1 hover:bg-white">待办</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className="rounded px-2 py-1 hover:bg-white">代码</button>
+      <div className="mb-2 flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 px-2 py-1.5 text-xs text-slate-600 dark:text-slate-300">
+        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">粗体</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">斜体</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">H2</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">列表</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleTaskList().run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">待办</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()} className="rounded px-2 py-1 hover:bg-white dark:hover:bg-slate-700/80">代码</button>
       </div>
       <div
         ref={editorWrapRef}
@@ -257,7 +257,7 @@ export default function TaskContentEditor({ value, onChange }: TaskContentEditor
               event.preventDefault();
               editor.chain().focus().run();
             }}
-            className="absolute z-20 -left-6 h-5 w-5 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 cursor-grab"
+            className="absolute z-20 -left-6 h-5 w-5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-700 dark:hover:text-slate-100 cursor-grab"
             style={{ top: `${Math.max(0, currentBlock.top + 4)}px` }}
             title="拖拽调整区块顺序"
           >

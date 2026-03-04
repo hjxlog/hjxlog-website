@@ -587,6 +587,7 @@ export default function TasksTab() {
         <TaskDetailSidebar
           task={selectedTask}
           projects={projects}
+          source={view === 'calendar' ? 'calendar' : 'default'}
           onClose={() => setSelectedTask(null)}
           onUpdate={refreshTaskAndStats}
           onOpenAsPage={(taskId) => {

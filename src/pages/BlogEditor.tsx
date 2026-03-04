@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -13,7 +13,7 @@ const createEmptyFormData = (): BlogEditorFormData => ({
   excerpt: '',
   category: '',
   tags: '',
-  published: false,
+  published: true,
   featured: false,
   cover_image: ''
 });
@@ -50,9 +50,11 @@ export default function BlogEditor() {
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isDirty, setIsDirty] = useState(false);
+  const isSavingRef = useRef(false);
   const [isGeneratingExcerpt, setIsGeneratingExcerpt] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [isGeneratingCategory, setIsGeneratingCategory] = useState(false);
+  const isGeneratingAll = isGeneratingExcerpt && isGeneratingTags && isGeneratingCategory;
 
   const backTarget = fromDashboard ? '/dashboard' : '/admin/blogs';
 
@@ -191,7 +193,69 @@ export default function BlogEditor() {
     }
   }, [formData.content, patchFormData, runAIGenerator]);
 
+  const handleAIGenerateAll = useCallback(async () => {
+    if (!formData.content.trim()) {
+      toast.error('请先输入正文内容');
+      return;
+    }
+
+    setIsGeneratingExcerpt(true);
+    setIsGeneratingTags(true);
+    setIsGeneratingCategory(true);
+
+    const [summaryResult, tagsResult, categoryResult] = await Promise.allSettled([
+      runAIGenerator('/api/ai/generate-summary'),
+      runAIGenerator('/api/ai/generate-tags'),
+      runAIGenerator('/api/ai/generate-category')
+    ]);
+
+    const patch: Partial<BlogEditorFormData> = {};
+    const failed: string[] = [];
+
+    if (summaryResult.status === 'fulfilled') {
+      patch.excerpt = summaryResult.value.summary || '';
+    } else {
+      failed.push('摘要');
+    }
+
+    if (tagsResult.status === 'fulfilled') {
+      patch.tags = Array.isArray(tagsResult.value.tags) ? tagsResult.value.tags.join(', ') : '';
+    } else {
+      failed.push('标签');
+    }
+
+    if (categoryResult.status === 'fulfilled') {
+      patch.category = categoryResult.value.category || '';
+    } else {
+      failed.push('分类');
+    }
+
+    if (Object.keys(patch).length > 0) {
+      patchFormData(patch);
+    }
+
+    setIsGeneratingExcerpt(false);
+    setIsGeneratingTags(false);
+    setIsGeneratingCategory(false);
+
+    if (failed.length === 0) {
+      toast.success('分类、摘要、标签生成成功');
+      return;
+    }
+
+    if (failed.length === 3) {
+      toast.error('一键生成失败，请稍后重试');
+      return;
+    }
+
+    toast.warning(`部分生成失败：${failed.join('、')}`);
+  }, [formData.content, patchFormData, runAIGenerator]);
+
   const saveBlog = useCallback(async (publishNow?: boolean) => {
+    if (isSavingRef.current) {
+      return false;
+    }
+
     if (!formData.title.trim()) {
       toast.error('请输入标题');
       return false;
@@ -202,6 +266,7 @@ export default function BlogEditor() {
       return false;
     }
 
+    isSavingRef.current = true;
     setSaveStatus('saving');
 
     const payload = blogFormDataToPayload({
@@ -233,6 +298,8 @@ export default function BlogEditor() {
       setSaveStatus('error');
       toast.error('保存失败，请稍后重试');
       return false;
+    } finally {
+      isSavingRef.current = false;
     }
   }, [formData, id, isEditing]);
 
@@ -328,9 +395,11 @@ export default function BlogEditor() {
         <BlogMetaPanel
           formData={formData}
           onPatch={patchFormData}
+          onAIGenerateAll={() => void handleAIGenerateAll()}
           onAIGenerateExcerpt={() => void handleAIGenerateExcerpt()}
           onAIGenerateTags={() => void handleAIGenerateTags()}
           onAIGenerateCategory={() => void handleAIGenerateCategory()}
+          isGeneratingAll={isGeneratingAll}
           isGeneratingExcerpt={isGeneratingExcerpt}
           isGeneratingTags={isGeneratingTags}
           isGeneratingCategory={isGeneratingCategory}

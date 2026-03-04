@@ -262,7 +262,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     calendarDays.push(
       <div
         key={`empty-${i}`}
-        className="bg-gray-50 border border-gray-100"
+        className="bg-gray-50 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-800"
         style={{ height: rowHeights[rowIndex] || cellHeight }}
       />
     );
@@ -276,6 +276,18 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
     const past = isPast(date);
     const rowIndex = Math.floor((startDayOfWeek + day - 1) / 7);
     const laneCount = Math.max(1, rowLaneCounts[rowIndex] || 0);
+    const dayCellClass = (today && !isCompact)
+      ? 'bg-blue-50 dark:bg-blue-950/40'
+      : past
+        ? 'bg-gray-50 dark:bg-slate-900/70'
+        : 'bg-white dark:bg-slate-900/35';
+    const dayNumberClass = isCompact && today
+      ? 'h-7 w-7 rounded-full bg-[#165DFF] text-white flex items-center justify-center text-base'
+      : today
+        ? 'text-blue-600 dark:text-blue-300'
+        : past
+          ? 'text-gray-400 dark:text-slate-500'
+          : 'text-gray-700 dark:text-slate-200';
 
     calendarDays.push(
       <div
@@ -315,9 +327,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             setDragNavDirection(null);
           }
         }}
-        className={`p-2 border border-gray-100 ${
-          (today && !isCompact) ? 'bg-blue-50' : 'bg-white'
-        } ${past ? 'bg-gray-50' : ''} ${dragOverDate === dateKey ? 'ring-2 ring-[#165DFF] ring-inset' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
+        className={`p-2 border border-gray-100 dark:border-slate-800 ${dayCellClass} ${dragOverDate === dateKey ? 'ring-2 ring-[#165DFF] ring-inset' : ''} hover:bg-gray-50 dark:hover:bg-slate-800/70 transition-colors cursor-pointer`}
         style={{ height: rowHeights[rowIndex] || cellHeight }}
       >
         <div className={`flex items-center mb-1 ${isCompact ? 'justify-end' : 'justify-between'}`}>
@@ -327,23 +337,13 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 e.stopPropagation();
                 onCreateForDate?.(getLocalDateString(date));
               }}
-              className="p-0.5 rounded text-gray-400 hover:text-[#165DFF] hover:bg-blue-100 transition-colors"
+              className="p-0.5 rounded text-gray-400 dark:text-slate-500 hover:text-[#165DFF] dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/40 transition-colors"
               title={`为 ${getLocalDateString(date)} 添加任务`}
             >
               <PlusIcon className="h-5 w-5" />
             </button>
           )}
-          <div
-            className={`text-lg font-bold ${
-              isCompact && today
-                ? 'h-7 w-7 rounded-full bg-[#165DFF] text-white flex items-center justify-center text-base'
-                : today
-                  ? 'text-blue-600'
-                  : past
-                    ? 'text-gray-400'
-                    : 'text-gray-700'
-            }`}
-          >
+          <div className={`text-lg font-bold ${dayNumberClass}`}>
             {day}
           </div>
         </div>
@@ -376,11 +376,11 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
   }).length;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
       {/* 头部 */}
-      <div className="p-6 border-b">
+      <div className="p-6 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
             {year}年 {monthNames[month]}
           </h3>
           <div className="flex gap-2">
@@ -397,13 +397,13 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 }
               }}
               onDrop={() => setDragNavDirection(null)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+              <ChevronLeftIcon className="h-5 w-5 text-gray-600 dark:text-slate-300" />
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               今天
             </button>
@@ -420,9 +420,9 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                 }
               }}
               onDrop={() => setDragNavDirection(null)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+              <ChevronRightIcon className="h-5 w-5 text-gray-600 dark:text-slate-300" />
             </button>
           </div>
         </div>
@@ -431,23 +431,23 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span className="text-gray-600">总计: {monthTasks.length}</span>
+            <span className="text-gray-600 dark:text-slate-300">总计: {monthTasks.length}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-gray-600">完成: {completedCount}</span>
+            <span className="text-gray-600 dark:text-slate-300">完成: {completedCount}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-gray-600">逾期: {overdueCount}</span>
+            <span className="text-gray-600 dark:text-slate-300">逾期: {overdueCount}</span>
           </div>
         </div>
       </div>
 
       {/* 星期标题 */}
-      <div className="grid grid-cols-7 border-b">
+      <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800">
         {weekDays.map(day => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-700 bg-gray-50">
+          <div key={day} className="p-2 text-center text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-50 dark:bg-slate-900/80">
             {day}
           </div>
         ))}
@@ -504,14 +504,14 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
             const isHovered = hoveredTaskId === segment.task.id;
             const colorClass =
               segment.task.status === 'done'
-                ? 'bg-green-100 text-green-700 border-green-200'
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/35 dark:text-emerald-200 dark:border-emerald-800'
                 : segment.task.status === 'cancelled'
-                ? 'bg-slate-100 text-slate-700 border-slate-200'
+                ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700'
                 : segment.task.priority === 'P0'
-                ? 'bg-red-100 text-red-700 border-red-200'
+                ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/35 dark:text-red-200 dark:border-red-800'
                 : segment.task.priority === 'P1'
-                ? 'bg-orange-100 text-orange-700 border-orange-200'
-                : 'bg-blue-100 text-blue-700 border-blue-200';
+                ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-amber-950/35 dark:text-amber-200 dark:border-amber-800'
+                : 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/35 dark:text-blue-200 dark:border-blue-800';
             const projectTintStyle = segment.task.project_color
               ? {
                   backgroundColor: hexToRgba(segment.task.project_color, isHovered ? 0.28 : 0.16) || undefined,
@@ -574,7 +574,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                           setDragNavDirection(null);
                         }}
                         title="拖拽到目标日期以延长截止"
-                        className="text-sm px-1 rounded bg-black/10 hover:bg-black/20"
+                        className="text-sm px-1 rounded bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
                       >
                         ⇢
                       </span>

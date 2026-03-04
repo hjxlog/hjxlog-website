@@ -15,6 +15,7 @@ interface TaskDetailProps {
   onClose: () => void;
   onUpdate: () => void;
   variant?: 'peek' | 'page';
+  source?: 'default' | 'calendar';
   onOpenAsPage?: (taskId: number) => void;
 }
 
@@ -24,6 +25,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
   onClose,
   onUpdate,
   variant = 'peek',
+  source = 'default',
   onOpenAsPage
 }) => {
   const [title, setTitle] = useState(task.title || '');
@@ -44,6 +46,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
     due_date: '',
     tags: (task.tags || []).join(', ')
   });
+  const isCalendarPopup = variant === 'peek' && source === 'calendar';
 
   const toDateInputValue = (value?: string | null) => {
     if (!value) return '';
@@ -157,21 +160,6 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
     await handleSaveTask(true);
   };
 
-  const handleUpdateStatus = async (status: Task['status']) => {
-    try {
-      await apiRequest(`/api/tasks/${task.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      });
-      setMeta((prev) => ({ ...prev, status }));
-      toast.success('状态已更新');
-      onUpdate();
-    } catch (error) {
-      console.error('Failed to update task status:', error);
-      toast.error('状态更新失败');
-    }
-  };
-
   const handleDeleteTask = async () => {
     if (deleting) return;
     try {
@@ -189,17 +177,6 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
     }
   };
 
-  const formatDate = (value?: string | null) => {
-    if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  };
-
   return (
     <>
       {variant === 'peek' && (
@@ -207,7 +184,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
           type="button"
           aria-label="关闭任务编辑弹窗"
           onClick={handleBackdropClick}
-          className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/30"
+          className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/40 dark:bg-black/60"
         />
       )}
 
@@ -221,11 +198,17 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
         <div
           className={
             variant === 'peek'
-              ? 'h-full w-full max-w-6xl rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col overflow-hidden'
-              : 'w-full min-h-[calc(100vh-10rem)] rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col overflow-hidden'
+              ? 'h-full w-full max-w-6xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden'
+              : 'w-full min-h-[calc(100vh-10rem)] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm flex flex-col overflow-hidden'
           }
         >
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div
+            className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-700 ${
+              isCalendarPopup
+                ? 'bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900'
+                : 'bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-900'
+            }`}
+          >
             <div className="min-w-0 pr-3 flex-1">
               {isEditingTitle ? (
                 <input
@@ -239,15 +222,23 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                     }
                   }}
                   autoFocus
-                  className="w-full text-lg sm:text-xl font-semibold text-slate-900 border-b-2 border-[#165DFF] focus:outline-none bg-transparent px-1 py-0.5"
+                  className={
+                    isCalendarPopup
+                      ? 'w-full rounded-lg text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-50 border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-800 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/35 focus:border-[#165DFF]'
+                      : 'w-full text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 border-b-2 border-[#165DFF] focus:outline-none bg-transparent px-1 py-0.5'
+                  }
                 />
               ) : (
                 <h2 
-                  className="text-lg sm:text-xl font-semibold text-slate-900 truncate cursor-text hover:bg-slate-100/50 rounded px-1 transition-colors py-0.5"
+                  className={
+                    isCalendarPopup
+                      ? 'text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-50 truncate cursor-text hover:bg-slate-100/70 dark:hover:bg-slate-700/60 rounded-lg px-2 py-1 transition-colors'
+                      : 'text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 truncate cursor-text hover:bg-slate-100/50 dark:hover:bg-slate-800/60 rounded px-1 transition-colors py-0.5'
+                  }
                   onDoubleClick={() => setIsEditingTitle(true)}
                   title="双击编辑标题"
                 >
-                  {title}
+                  {isCalendarPopup ? (title || '未命名任务') : title}
                 </h2>
               )}
             </div>
@@ -255,7 +246,11 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
               {variant === 'peek' && (
                 <button
                   onClick={() => onOpenAsPage?.(task.id)}
-                  className="px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                  className={
+                    isCalendarPopup
+                      ? 'px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors'
+                      : 'px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors'
+                  }
                   title="在页面中打开"
                 >
                   页面打开
@@ -263,7 +258,11 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
               )}
               <button
                 onClick={() => setIsPreview(!isPreview)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors mr-1"
+                className={
+                  isCalendarPopup
+                    ? 'px-2.5 py-1.5 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors mr-1'
+                    : 'p-1.5 text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors mr-1'
+                }
                 title={isPreview ? '编辑' : '预览'}
               >
                 {isPreview ? (
@@ -280,15 +279,15 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="p-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                className="p-1.5 text-rose-500 hover:text-rose-600 dark:hover:text-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                 title="删除任务"
               >
                 <TrashIcon className="h-5 w-5" />
               </button>
-              <div className="h-4 w-px bg-slate-200 mx-1" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                className="text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -297,13 +296,13 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
 
           <div className="flex-1 overflow-hidden">
             <div className="grid h-full grid-cols-1 lg:grid-cols-[236px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)]">
-              <div className="overflow-y-auto border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/80 p-3.5 sm:p-4 space-y-3.5">
+              <div className="overflow-y-auto border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900 p-3.5 sm:p-4 space-y-3.5">
                 <div>
-                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">状态</label>
+                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">状态</label>
                   <select
                     value={meta.status}
                     onChange={(e) => setMeta((prev) => ({ ...prev, status: e.target.value as Task['status'] }))}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                   >
                     <option value="todo">待办</option>
                     <option value="in_progress">进行中</option>
@@ -313,11 +312,11 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">优先级</label>
+                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">优先级</label>
                   <select
                     value={meta.priority}
                     onChange={(e) => setMeta((prev) => ({ ...prev, priority: e.target.value as Task['priority'] }))}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                   >
                     <option value="P0">P0 紧急</option>
                     <option value="P1">P1 高优</option>
@@ -327,11 +326,11 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">项目</label>
+                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">项目</label>
                   <select
                     value={meta.project_id ?? ''}
                     onChange={(e) => setMeta((prev) => ({ ...prev, project_id: e.target.value ? Number(e.target.value) : null }))}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                   >
                     <option value="">未归属项目</option>
                     {projects.map((project) => (
@@ -344,32 +343,32 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
 
                 <div className="grid grid-cols-1 gap-3">
                   <div>
-                    <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">开始日期</label>
+                    <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">开始日期</label>
                     <input
                       type="date"
                       value={meta.start_date}
                       onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">截止日期</label>
+                    <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">截止日期</label>
                     <input
                       type="date"
                       value={meta.due_date}
                       onChange={(e) => setMeta((prev) => ({ ...prev, due_date: e.target.value }))}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500">标签（逗号分隔）</label>
+                  <label className="block mb-1 text-[11px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">标签（逗号分隔）</label>
                   <input
                     type="text"
                     value={meta.tags}
                     onChange={(e) => setMeta((prev) => ({ ...prev, tags: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#165DFF]/30 focus:border-[#165DFF]"
                     placeholder="例如：工作流, dashboard"
                   />
                 </div>
@@ -385,17 +384,17 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                 </div>
               </div>
 
-              <div className="min-w-0 p-4 sm:p-6 lg:p-7 lg:h-full overflow-hidden flex flex-col">
+              <div className="min-w-0 p-4 sm:p-6 lg:p-7 lg:h-full overflow-hidden flex flex-col bg-white dark:bg-slate-900">
                 {isPreview ? (
                   <div 
-                    className="w-full h-full rounded-xl border border-transparent px-1 py-1 text-sm text-slate-900 overflow-y-auto prose prose-sm max-w-none"
+                    className="w-full h-full rounded-xl border border-transparent px-1 py-1 text-sm text-slate-900 dark:text-slate-100 overflow-y-auto prose prose-sm max-w-none dark:prose-invert"
                     onDoubleClick={() => setIsPreview(false)}
                     title="双击编辑"
                   >
                     {notes ? (
                       <MarkdownRenderer content={notes} />
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-slate-400 cursor-pointer" onClick={() => setIsPreview(false)}>
+                      <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 cursor-pointer" onClick={() => setIsPreview(false)}>
                         <p>暂无内容，点击编辑</p>
                       </div>
                     )}
@@ -409,7 +408,7 @@ const TaskDetailSidebar: React.FC<TaskDetailProps> = ({
                         setNotes(markdown);
                       }}
                     />
-                    <div className="mt-2 text-xs text-slate-400 flex justify-between px-1">
+                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-500 flex justify-between px-1">
                       <span>Notion 风格块编辑</span>
                       <span>Cmd/Ctrl + / 切换预览</span>
                     </div>

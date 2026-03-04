@@ -14,9 +14,11 @@ export interface BlogEditorFormData {
 interface BlogMetaPanelProps {
   formData: BlogEditorFormData;
   onPatch: (patch: Partial<BlogEditorFormData>) => void;
+  onAIGenerateAll: () => void;
   onAIGenerateExcerpt: () => void;
   onAIGenerateTags: () => void;
   onAIGenerateCategory: () => void;
+  isGeneratingAll: boolean;
   isGeneratingExcerpt: boolean;
   isGeneratingTags: boolean;
   isGeneratingCategory: boolean;
@@ -42,9 +44,11 @@ export const blogFormDataToPayload = (formData: BlogEditorFormData): Partial<Blo
 export default function BlogMetaPanel({
   formData,
   onPatch,
+  onAIGenerateAll,
   onAIGenerateExcerpt,
   onAIGenerateTags,
   onAIGenerateCategory,
+  isGeneratingAll,
   isGeneratingExcerpt,
   isGeneratingTags,
   isGeneratingCategory,
@@ -54,12 +58,23 @@ export default function BlogMetaPanel({
     <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-24">
       <div className="space-y-5">
         <div>
+          <button
+            type="button"
+            onClick={onAIGenerateAll}
+            disabled={isGeneratingAll || !formData.content.trim()}
+            className="w-full rounded-lg border border-[#165DFF]/30 bg-[#165DFF]/5 px-3 py-2 text-sm font-medium text-[#165DFF] transition hover:bg-[#165DFF]/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isGeneratingAll ? 'AI 生成中...' : 'AI 一键生成'}
+          </button>
+        </div>
+
+        <div>
           <div className="mb-2 flex items-center justify-between gap-3">
             <label className="text-sm font-medium text-slate-700">分类</label>
             <button
               type="button"
               onClick={onAIGenerateCategory}
-              disabled={isGeneratingCategory || !formData.content.trim()}
+              disabled={isGeneratingAll || isGeneratingCategory || !formData.content.trim()}
               className={aiButtonClass}
             >
               {isGeneratingCategory ? 'AI 生成中...' : 'AI 生成分类'}
@@ -79,7 +94,7 @@ export default function BlogMetaPanel({
             <button
               type="button"
               onClick={onAIGenerateExcerpt}
-              disabled={isGeneratingExcerpt || !formData.content.trim()}
+              disabled={isGeneratingAll || isGeneratingExcerpt || !formData.content.trim()}
               className={aiButtonClass}
             >
               {isGeneratingExcerpt ? 'AI 生成中...' : 'AI 生成摘要'}
@@ -100,7 +115,7 @@ export default function BlogMetaPanel({
             <button
               type="button"
               onClick={onAIGenerateTags}
-              disabled={isGeneratingTags || !formData.content.trim()}
+              disabled={isGeneratingAll || isGeneratingTags || !formData.content.trim()}
               className={aiButtonClass}
             >
               {isGeneratingTags ? 'AI 生成中...' : 'AI 生成标签'}
