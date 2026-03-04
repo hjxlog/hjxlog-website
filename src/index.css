@@ -111,6 +111,31 @@
   scrollbar-width: none;
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.55);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.8);
+}
+
 /* 3D Transforms */
 .perspective-1000 {
   perspective: 1000px;
@@ -203,7 +228,50 @@
   --dh-info-bg: #20354d;
   --dh-info-fg: #9ccbff;
   --dh-info-border: #3d6288;
+  --dh-scrollbar-thumb: rgba(156, 175, 197, 0.52);
+  --dh-scrollbar-thumb-hover: rgba(176, 194, 214, 0.72);
   color: var(--dh-fg-default);
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .custom-scrollbar {
+  scrollbar-color: var(--dh-scrollbar-thumb) transparent;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--dh-scrollbar-thumb);
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dh-scrollbar-thumb-hover);
+}
+
+body.dashboard-privacy-scrollbars {
+  --dh-scrollbar-thumb: rgba(156, 175, 197, 0.52);
+  --dh-scrollbar-thumb-hover: rgba(176, 194, 214, 0.72);
+  scrollbar-width: thin;
+  scrollbar-color: var(--dh-scrollbar-thumb) transparent;
+}
+
+body.dashboard-privacy-scrollbars::-webkit-scrollbar {
+  width: 10px;
+}
+
+body.dashboard-privacy-scrollbars::-webkit-scrollbar-track {
+  background: #22272e;
+}
+
+body.dashboard-privacy-scrollbars::-webkit-scrollbar-thumb {
+  background-color: var(--dh-scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid #22272e;
+}
+
+body.dashboard-privacy-scrollbars::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dh-scrollbar-thumb-hover);
 }
 
 .dashboard-privacy.dashboard-privacy--dimmed,

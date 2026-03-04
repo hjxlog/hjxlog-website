@@ -155,7 +155,11 @@ export default function AdminNav({ activeTab, setActiveTab, privacyMode, onToggl
           <div className="flex items-center">
             <button
               onClick={handleOpenHome}
-              className="text-2xl font-bold text-[#165DFF] hover:text-[#0E4BA4] transition-colors"
+              className={`text-2xl font-bold transition-colors ${
+                privacyMode
+                  ? 'text-slate-100 hover:text-blue-300'
+                  : 'text-[#165DFF] hover:text-[#0E4BA4]'
+              }`}
             >
               HJXLOG
             </button>

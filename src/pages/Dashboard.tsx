@@ -427,6 +427,17 @@ export default function Dashboard() {
     localStorage.setItem(DASHBOARD_PRIVACY_MODE_KEY, privacyMode ? '1' : '0');
   }, [privacyMode]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (privacyMode) {
+      document.body.classList.add('dashboard-privacy-scrollbars');
+      return () => {
+        document.body.classList.remove('dashboard-privacy-scrollbars');
+      };
+    }
+    document.body.classList.remove('dashboard-privacy-scrollbars');
+  }, [privacyMode]);
+
   // 事件处理函数
   const handleDeleteWork = useCallback(async (id: number) => {
     setConfirmDialog({
