@@ -23,6 +23,7 @@ import { createAiSignalRouter } from './routes/aiSignalRouter.js';
 import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
 import { createDataCenterRouter } from './routes/dataCenterRouter.js';
 import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
+import { scheduleDailyReportJob } from './jobs/dailyReportJob.js';
 import { createOptionalAuthMiddleware, createRequireAuthMiddleware } from './middleware/authMiddleware.js';
 
 // 导入模块化路由
@@ -130,6 +131,7 @@ async function connectDatabase() {
     logger = createLogger(dbClient);
     await logger.system('server', 'startup', '服务器启动，数据库连接成功');
     scheduleAiSignalJob(() => dbClient, logger);
+    scheduleDailyReportJob(() => dbClient, logger);
 
     return true;
   } catch (error) {
