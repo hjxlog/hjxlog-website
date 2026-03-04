@@ -18,6 +18,7 @@ import {
   getKanbanData,
   getTaskStats
 } from '../services/TaskService.js';
+import { parseTasksFromText } from '../services/TaskParseService.js';
 
 const router = express.Router();
 const TASK_STATUSES = new Set(['todo', 'in_progress', 'done', 'cancelled']);
@@ -246,6 +247,36 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching tasks:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * AI 解析任务文本
+ * POST /api/tasks/ai-parse
+ */
+router.post('/ai-parse', async (req, res) => {
+  try {
+    const text = typeof req.body?.text === 'string' ? req.body.text : '';
+    if (!text.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少 text 参数'
+      });
+    }
+
+    const tasks = await parseTasksFromText(text);
+    res.json({
+      success: true,
+      data: {
+        tasks
+      }
+    });
+  } catch (error) {
+    console.error('Error parsing tasks by AI:', error.message);
     res.status(500).json({
       success: false,
       error: error.message

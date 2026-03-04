@@ -75,4 +75,22 @@ export interface TaskOverviewStats {
   overdue: number;
 }
 
+export interface ParsedTaskDraft {
+  title: string;
+  description: string;
+  project_id: number | null;
+  priority: 'P0' | 'P1' | 'P2' | 'P3';
+  tags: string[];
+  start_date: string | null;
+  due_date: string | null;
+  warnings?: string[];
+}
+
+export interface TaskParseResponse {
+  success: boolean;
+  data: {
+    tasks: ParsedTaskDraft[];
+  };
+}
+
 export type ViewType = 'kanban' | 'list' | 'calendar' | 'today';

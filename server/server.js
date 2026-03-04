@@ -41,6 +41,7 @@ import {
 import memoryRouter from './routes/memoryRouter.js';
 import { setMemoryDbClientGetter } from './services/MemoryService.js';
 import { setTaskDbClientGetter } from './services/TaskService.js';
+import { setTaskParseDbClientGetter } from './services/TaskParseService.js';
 import dailyReportRouter from './routes/dailyReportRouter.js';
 import { setDailyReportDbClientGetter } from './services/DailyReportService.js';
 
@@ -149,6 +150,7 @@ const requireAuthMiddleware = createRequireAuthMiddleware(getDbClient);
 const viewTrackingRouter = createViewTrackingRouter(getDbClient);
 setMemoryDbClientGetter(getDbClient);
 setTaskDbClientGetter(getDbClient);
+setTaskParseDbClientGetter(getDbClient);
 setDailyReportDbClientGetter(getDbClient);
 
 // 添加日志中间件

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { PencilSquareIcon, PlusIcon, SwatchIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, PlusIcon, SparklesIcon, SwatchIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { apiRequest } from '@/config/api';
 import { useShortcut } from '@/hooks/useShortcut';
 import TaskKanban from '@/components/tasks/TaskKanban';
@@ -10,11 +10,12 @@ import TaskFilters from '@/components/tasks/TaskFilters';
 import CreateTaskModal from '@/components/tasks/CreateTaskModal';
 import CreateProjectModal from '@/components/tasks/CreateProjectModal';
 import QuickAddModal from '@/components/tasks/QuickAddModal';
+import AITaskParseModal from '@/components/tasks/AITaskParseModal';
 import TaskCalendar from '@/components/tasks/TaskCalendar';
 import TaskTodayView from '@/components/tasks/TaskTodayView';
 import TaskDetailSidebar from '@/components/tasks/TaskDetailSidebar';
 import TaskDaySheet from '@/components/tasks/TaskDaySheet';
-import { Task, Project, ViewType } from '@/types/task';
+import { Task, Project, ViewType, ParsedTaskDraft } from '@/types/task';
 import { parseTaskDate } from '@/utils/taskDate';
 
 type ProjectPayload = {
@@ -60,6 +61,7 @@ export default function TasksTab() {
   const [showEditProject, setShowEditProject] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showAiParse, setShowAiParse] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [showDaySheet, setShowDaySheet] = useState(false);
@@ -169,6 +171,46 @@ export default function TasksTab() {
     } catch (error) {
       console.error('Failed to create task:', error);
       toast.error('创建任务失败');
+    }
+  };
+
+  const handleBatchCreateFromAi = async (tasksToCreate: ParsedTaskDraft[]) => {
+    const payloads = tasksToCreate
+      .filter((item) => item.title && item.title.trim())
+      .map((item) => ({
+        title: item.title.trim(),
+        description: item.description || '',
+        project_id: item.project_id || null,
+        priority: item.priority || 'P2',
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        start_date: item.start_date || null,
+        due_date: item.due_date || null
+      }));
+
+    if (!payloads.length) {
+      toast.error('没有可创建的有效任务');
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      payloads.map((payload) =>
+        apiRequest('/api/tasks', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        })
+      )
+    );
+
+    const successCount = results.filter((result) => result.status === 'fulfilled').length;
+    const failedCount = results.length - successCount;
+
+    if (successCount > 0) {
+      toast.success(`已创建 ${successCount} 条任务`);
+      fetchTasks(false);
+    }
+    if (failedCount > 0) {
+      toast.error(`${failedCount} 条任务创建失败，请重试`);
+      throw new Error(`Failed to create ${failedCount} tasks`);
     }
   };
 
@@ -284,6 +326,13 @@ export default function TasksTab() {
               >
                 <SwatchIcon className="h-4 w-4 mr-1" />
                 项目管理
+              </button>
+              <button
+                onClick={() => setShowAiParse(true)}
+                className="px-2.5 py-1.5 text-sm font-medium text-[#165DFF] bg-white border border-[#BFD4FF] rounded-lg hover:bg-[#EEF4FF] transition-colors flex items-center"
+              >
+                <SparklesIcon className="h-4 w-4 mr-1" />
+                AI解析
               </button>
               <button
                 onClick={() => {
@@ -523,6 +572,14 @@ export default function TasksTab() {
           projects={projects}
           onClose={() => setShowQuickAdd(false)}
           onSubmit={handleCreateTask}
+        />
+      )}
+
+      {showAiParse && (
+        <AITaskParseModal
+          projects={projects}
+          onClose={() => setShowAiParse(false)}
+          onConfirmCreate={handleBatchCreateFromAi}
         />
       )}
 
