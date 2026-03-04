@@ -111,3 +111,42 @@
   border-color: #bfdbfe;
   background: #eff6ff;
 }
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-shell {
+  --editor-accent: #58a6ff;
+  --editor-bg: #2a313a;
+  --editor-border: #444c56;
+  --editor-text: #cdd9e5;
+  --editor-muted: #9aa8b6;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-shell .ProseMirror p.is-editor-empty:first-child::before {
+  color: #7f8b97;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-shell .ProseMirror blockquote {
+  border-left-color: #5a6570;
+  color: #b8c4d0;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-shell .ProseMirror pre {
+  background: #1f252d;
+  color: #d5dde5;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-shell .ProseMirror code {
+  background: #313b47;
+  border-color: #4a5562;
+  color: #d7e0e8;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-toolbar-btn:hover {
+  border-color: #5a6570;
+  background: #343b43;
+}
+
+.dashboard-privacy.dashboard-privacy--dimmed .blog-editor-toolbar-btn.active {
+  color: #9fccff;
+  border-color: #5a81b3;
+  background: #2c3f58;
+}

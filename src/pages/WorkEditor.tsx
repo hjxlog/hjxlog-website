@@ -100,6 +100,14 @@ export default function WorkEditor() {
     return searchParams.get('from') === 'dashboard';
   }, [location.search]);
 
+  const isPrivacyModeEnabled = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const raw = localStorage.getItem('dashboard.privacyMode');
+    if (raw === '0' || raw === 'false') return false;
+    if (raw === '1' || raw === 'true') return true;
+    return fromDashboard;
+  }, [fromDashboard]);
+
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isDirty, setIsDirty] = useState(false);
@@ -206,14 +214,14 @@ export default function WorkEditor() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className={`flex min-h-screen items-center justify-center bg-slate-50 ${isPrivacyModeEnabled ? 'dashboard-privacy dashboard-privacy--dimmed' : ''}`}>
         <LoadingSpinner size="lg" text="正在加载作品内容..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className={`min-h-screen bg-slate-50 ${isPrivacyModeEnabled ? 'dashboard-privacy dashboard-privacy--dimmed' : ''}`}>
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[1700px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">

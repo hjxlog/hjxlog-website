@@ -171,6 +171,8 @@ logs
 # Build outputs
 build/
 dist/
+playwright-report/
+test-results/
 
 # Temporary files
 tmp/

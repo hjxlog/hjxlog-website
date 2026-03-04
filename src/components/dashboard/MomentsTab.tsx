@@ -113,15 +113,17 @@ export default function MomentsTab({
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`dh-badge px-2 py-1 rounded-full text-xs font-medium ${
                         moment.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      } ${
+                        moment.visibility === 'public' ? 'dh-badge--success' : 'dh-badge--neutral'
                       }`}>
                         {moment.visibility === 'public' ? '公开' : '私密'}
                       </span>
                     </div>
                     
                     {moment.textHtml && (
-                      <div className="prose prose-gray max-w-none mb-3">
+                      <div className="dh-moment-content prose prose-gray max-w-none mb-3">
                         <div dangerouslySetInnerHTML={{ 
                           __html: moment.textHtml
                         }} />

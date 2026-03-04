@@ -5,6 +5,8 @@ import { AuthContext } from '@/contexts/authContext';
 interface AdminNavProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
+  privacyMode?: boolean;
+  onTogglePrivacyMode?: () => void;
 }
 
 // Dashboard页面内的标签页 - 分组显示 (移到函数外部以便导出)
@@ -46,7 +48,7 @@ export const dashboardTabGroups = [
   },
 ];
 
-export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
+export default function AdminNav({ activeTab, setActiveTab, privacyMode, onTogglePrivacyMode }: AdminNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useContext(AuthContext);
@@ -176,15 +178,33 @@ export default function AdminNav({ activeTab, setActiveTab }: AdminNavProps) {
             {/* 用户菜单已移至侧边栏底部 */}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={handleToggleMenu}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="切换菜单"
-            >
-              <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
-            </button>
+          <div className="flex items-center gap-1">
+            {isDashboard && onTogglePrivacyMode && (
+              <button
+                onClick={onTogglePrivacyMode}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm transition-colors ${
+                  privacyMode
+                    ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+                aria-label="切换隐私模式"
+                title={privacyMode ? '关闭隐私模式' : '开启隐私模式'}
+                type="button"
+              >
+                <i className={`fas ${privacyMode ? 'fa-moon' : 'fa-sun'}`}></i>
+              </button>
+            )}
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={handleToggleMenu}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="切换菜单"
+              >
+                <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+              </button>
+            </div>
           </div>
         </div>
 

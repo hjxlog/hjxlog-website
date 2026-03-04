@@ -56,8 +56,10 @@ export default function BlogsTab({
 
   const renderBlogStatusBadge = (published: boolean) => {
     return (
-      <span className={`whitespace-nowrap px-2 py-1 rounded-full text-xs font-medium ${
+      <span className={`dh-badge whitespace-nowrap px-2 py-1 rounded-full text-xs font-medium ${
         published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+      } ${
+        published ? 'dh-badge--success' : 'dh-badge--neutral'
       }`}>
         {published ? '已发布' : '草稿'}
       </span>
@@ -89,6 +91,7 @@ export default function BlogsTab({
                 placeholder="搜索博客标题、内容或标签..."
                 value={blogSearchQuery}
                 onChange={(e) => handleBlogSearch(e.target.value)}
+                aria-label="搜索博客"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -102,6 +105,7 @@ export default function BlogsTab({
             <select
               value={blogSelectedCategory}
               onChange={(e) => handleBlogCategoryFilter(e.target.value)}
+              aria-label="按分类筛选博客"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">所有分类</option>
@@ -116,6 +120,7 @@ export default function BlogsTab({
             <select
               value={blogSelectedStatus}
               onChange={(e) => handleBlogStatusFilter(e.target.value)}
+              aria-label="按状态筛选博客"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">所有状态</option>
@@ -172,7 +177,7 @@ export default function BlogsTab({
                 
                 <div className="flex flex-wrap gap-1 mt-3">
                   {blog.tags.map((tag, index) => (
-                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                    <span key={index} className="dh-badge dh-badge--neutral px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                       #{tag}
                     </span>
                   ))}

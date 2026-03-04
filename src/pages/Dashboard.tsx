@@ -49,6 +49,7 @@ type ViewStatsSimple = {
 };
 
 const DASHBOARD_TAB_STORAGE_KEY = 'dashboard.activeTab';
+const DASHBOARD_PRIVACY_MODE_KEY = 'dashboard.privacyMode';
 const DASHBOARD_DEFAULT_TAB = 'today';
 const DASHBOARD_VALID_TABS = new Set(
   dashboardTabGroups.flatMap((group) => group.tabs.map((tab) => tab.key))
@@ -62,10 +63,19 @@ function getInitialDashboardTab() {
     : DASHBOARD_DEFAULT_TAB;
 }
 
+function getInitialPrivacyMode() {
+  if (typeof window === 'undefined') return true;
+  const raw = localStorage.getItem(DASHBOARD_PRIVACY_MODE_KEY);
+  if (raw === '0' || raw === 'false') return false;
+  if (raw === '1' || raw === 'true') return true;
+  return true;
+}
+
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(getInitialDashboardTab);
+  const [privacyMode, setPrivacyMode] = useState(getInitialPrivacyMode);
   const [activeTabRefreshVersion, setActiveTabRefreshVersion] = useState(0);
   const [works, setWorks] = useState<Work[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -411,6 +421,12 @@ export default function Dashboard() {
     localStorage.setItem(DASHBOARD_TAB_STORAGE_KEY, activeTab);
   }, [activeTab, validDashboardTabs]);
 
+  // 持久化 Dashboard 隐私模式
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(DASHBOARD_PRIVACY_MODE_KEY, privacyMode ? '1' : '0');
+  }, [privacyMode]);
+
   // 事件处理函数
   const handleDeleteWork = useCallback(async (id: number) => {
     setConfirmDialog({
@@ -581,8 +597,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <AdminNav activeTab={activeTab} setActiveTab={handleTabChange} />
+      <div className={`min-h-screen bg-slate-50 flex flex-col ${privacyMode ? 'dashboard-privacy dashboard-privacy--dimmed' : ''}`}>
+        <AdminNav
+          activeTab={activeTab}
+          setActiveTab={handleTabChange}
+          privacyMode={privacyMode}
+          onTogglePrivacyMode={() => setPrivacyMode((prev) => !prev)}
+        />
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -596,8 +617,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <AdminNav activeTab={activeTab} setActiveTab={handleTabChange} />
+    <div className={`min-h-screen bg-slate-50 flex flex-col ${privacyMode ? 'dashboard-privacy dashboard-privacy--dimmed' : ''}`}>
+      <AdminNav
+        activeTab={activeTab}
+        setActiveTab={handleTabChange}
+        privacyMode={privacyMode}
+        onTogglePrivacyMode={() => setPrivacyMode((prev) => !prev)}
+      />
       
       <div className="flex flex-1 max-w-[1920px] mx-auto w-full">
         {/* 左侧边栏 */}

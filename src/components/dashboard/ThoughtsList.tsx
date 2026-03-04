@@ -115,20 +115,20 @@ const ThoughtsList: React.FC<ThoughtsListProps> = ({
             <button
               key={date}
               onClick={() => onSelectDate(date)}
-              className={`w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                isSelected ? 'bg-purple-50 border-l-4 border-l-purple-600' : 'border-l-4 border-l-transparent'
+              className={`dh-list-item w-full text-left p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                isSelected ? 'dh-list-item--selected bg-purple-50 border-l-4 border-l-purple-600' : 'border-l-4 border-l-transparent'
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className={`text-sm font-medium ${
+                    <span className={`dh-list-item__date text-sm font-medium ${
                       isSelected ? 'text-purple-700' : 'text-gray-900'
                     }`}>
                       {date}
                     </span>
                     {isToday && (
-                      <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      <span className="dh-badge dh-badge--success text-xs font-medium px-2 py-0.5 rounded-full">
                         今天
                       </span>
                     )}
