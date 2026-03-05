@@ -48,7 +48,7 @@ const AppleBlogList = ({ blogs }: AppleBlogListProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                onClick={() => handleNavigate(`/blog/${blog.id}`)}
+                onClick={() => handleNavigate(`/blogs/${blog.id}`)}
                 className="group bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer border border-slate-200/70"
               >
                 <div className="flex items-start justify-between gap-4">

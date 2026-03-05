@@ -215,7 +215,7 @@ export default function App() {
           <Route path="/works" element={<Works />} />
           <Route path="/works/:id" element={<WorkDetail />} />
           <Route path="/blogs" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Login />} />
           <Route path="/dashboard/tasks/:id" element={isAuthenticated ? <TaskDetailPage /> : <Login />} />
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Login />} />

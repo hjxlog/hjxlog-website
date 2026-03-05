@@ -269,7 +269,7 @@ const Blog: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className="group bg-white rounded-xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
-                  onClick={() => navigate(`/blog/${blog.id}`)}
+                  onClick={() => navigate(`/blogs/${blog.id}`)}
                 >
                   <div className="p-4 sm:p-5">
                     <div className="flex gap-4">

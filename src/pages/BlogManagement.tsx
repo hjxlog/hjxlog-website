@@ -245,7 +245,7 @@ const BlogManagement: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       <button
-                        onClick={() => navigate(`/blog/${blog.id}`)}
+                        onClick={() => navigate(`/blogs/${blog.id}`)}
                         className="p-2 text-gray-400 hover:text-gray-600"
                         title="查看"
                       >

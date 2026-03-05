@@ -332,7 +332,7 @@ const BlogDetail: React.FC = () => {
                       {relatedPostCards.map(post => (
                          <a 
                            key={post.id}
-                           href={`/blog/${post.id}`}
+                           href={`/blogs/${post.id}`}
                            className="block group"
                          >
                             <h4 className="text-sm font-medium text-slate-700 group-hover:text-blue-600 line-clamp-2 mb-1 transition-colors">
@@ -354,7 +354,7 @@ const BlogDetail: React.FC = () => {
            <h3 className="text-lg font-bold text-slate-900 mb-4">相关阅读</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {relatedPostCards.map(post => (
-                 <div key={post.id} onClick={() => navigate(`/blog/${post.id}`)} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
+                 <div key={post.id} onClick={() => navigate(`/blogs/${post.id}`)} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
                     <h4 className="font-medium text-slate-800 mb-2">{post.title}</h4>
                     <div className="flex justify-between items-center text-xs text-slate-500">
                        <span>{post.dateLabel}</span>
