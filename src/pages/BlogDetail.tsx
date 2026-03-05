@@ -291,7 +291,7 @@ const BlogDetail: React.FC = () => {
               </header>
 
               {/* Markdown Content */}
-              <article id="blog-content" className="prose max-w-[70ch] prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
+              <article id="blog-content" className="prose max-w-none prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
                  <MarkdownRenderer content={post.content} variant="detail" />
               </article>
 
