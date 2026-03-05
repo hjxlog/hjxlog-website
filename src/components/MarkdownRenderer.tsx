@@ -6,6 +6,8 @@ import { ghcolors } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 
+type MarkdownRendererVariant = 'default' | 'detail';
+
 // 代码块组件 - Typora 风格
 const CodeBlock = memo(({ language, children }: { language: string; children: string }) => {
   const [copied, setCopied] = useState(false);
@@ -66,7 +68,47 @@ const CodeBlock = memo(({ language, children }: { language: string; children: st
 
 
 // Markdown 包装组件
-export const MarkdownRenderer = memo(({ content, className = "" }: { content: string; className?: string }) => {
+export const MarkdownRenderer = memo(({
+  content,
+  className = "",
+  variant = 'default'
+}: {
+  content: string;
+  className?: string;
+  variant?: MarkdownRendererVariant;
+}) => {
+  const isDetail = variant === 'detail';
+
+  const classes = {
+    ul: isDetail
+      ? 'list-disc list-outside ml-4 md:ml-5 my-3 text-[#24292f] [&_p]:!my-0 pl-1'
+      : 'list-disc list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1',
+    ol: isDetail
+      ? 'list-decimal list-outside ml-4 md:ml-5 my-3 text-[#24292f] [&_p]:!my-0 pl-1'
+      : 'list-decimal list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1',
+    li: isDetail ? 'pl-1 leading-7 text-[#24292f] my-1.5' : 'pl-1 leading-7 text-[#24292f] my-2',
+    blockquote: isDetail
+      ? 'border-l-4 border-[#d0d7de] pl-4 py-1 my-3 text-[#57606a] italic'
+      : 'border-l-4 border-[#d0d7de] pl-4 py-1 my-4 text-[#57606a] italic',
+    h1: isDetail
+      ? 'text-2xl md:text-[26px] font-semibold mt-7 mb-3 pb-2 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f] leading-[1.35]'
+      : 'text-3xl font-semibold mt-8 mb-4 pb-2 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]',
+    h2: isDetail
+      ? 'text-xl md:text-[22px] font-semibold mt-6 mb-3 pb-1 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f] leading-[1.4]'
+      : 'text-2xl font-semibold mt-6 mb-4 pb-1 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]',
+    h3: isDetail
+      ? 'text-lg md:text-[19px] font-semibold mt-5 mb-2 flex items-center gap-2 scroll-mt-24 text-[#24292f] leading-[1.45]'
+      : 'text-xl font-semibold mt-6 mb-3 flex items-center gap-2 scroll-mt-24 text-[#24292f]',
+    p: isDetail ? 'my-3.5 leading-[1.75] text-[#24292f]' : 'my-4 leading-7 text-[#24292f]',
+    table: isDetail ? 'overflow-x-auto my-3' : 'overflow-x-auto my-4',
+    th: isDetail
+      ? 'px-3 py-2.5 text-left font-semibold text-[#24292f] border border-[#d0d7de]'
+      : 'px-4 py-3 text-left font-semibold text-[#24292f] border border-[#d0d7de]',
+    td: isDetail
+      ? 'px-3 py-2.5 text-[#24292f] border border-[#d0d7de]'
+      : 'px-4 py-3 text-[#24292f] border border-[#d0d7de]',
+  };
+
   // 生成唯一ID用于标题锚点
   const idCounts: Record<string, number> = {};
   const getUniqueId = (text: string) => {
@@ -122,17 +164,17 @@ export const MarkdownRenderer = memo(({ content, className = "" }: { content: st
     },
     // GitHub 风格列表
     ul: ({ children }) => (
-      <ul className="list-disc list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
+      <ul className={classes.ul}>
         {children}
       </ul>
     ),
     ol: ({ children }) => (
-      <ol className="list-decimal list-outside ml-4 md:ml-6 my-4 text-[#24292f] [&_p]:!my-0 pl-1">
+      <ol className={classes.ol}>
         {children}
       </ol>
     ),
     li: ({ children }) => (
-      <li className="pl-1 leading-7 text-[#24292f] my-2">
+      <li className={classes.li}>
         {children}
       </li>
     ),
@@ -172,7 +214,7 @@ export const MarkdownRenderer = memo(({ content, className = "" }: { content: st
     },
     // 引用块
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-[#d0d7de] pl-4 py-1 my-4 text-[#57606a] italic">
+      <blockquote className={classes.blockquote}>
         {children}
       </blockquote>
     ),
@@ -182,29 +224,29 @@ export const MarkdownRenderer = memo(({ content, className = "" }: { content: st
     h1: ({ children, ...props }) => {
       const text = getNodeText(children);
       const id = getUniqueId(text);
-      return <h1 id={id} className="text-3xl font-semibold mt-8 mb-4 pb-2 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h1>;
+      return <h1 id={id} className={classes.h1} {...props}>{children}</h1>;
     },
     h2: ({ children, ...props }) => {
       const text = getNodeText(children);
       const id = getUniqueId(text);
-      return <h2 id={id} className="text-2xl font-semibold mt-6 mb-4 pb-1 border-b border-[#d0d7de] flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h2>;
+      return <h2 id={id} className={classes.h2} {...props}>{children}</h2>;
     },
     h3: ({ children, ...props }) => {
       const text = getNodeText(children);
       const id = getUniqueId(text);
-      return <h3 id={id} className="text-xl font-semibold mt-6 mb-3 flex items-center gap-2 scroll-mt-24 text-[#24292f]" {...props}>{children}</h3>;
+      return <h3 id={id} className={classes.h3} {...props}>{children}</h3>;
     },
-    p: ({ children }) => <p className="my-4 leading-7 text-[#24292f]">{children}</p>,
+    p: ({ children }) => <p className={classes.p}>{children}</p>,
     // 表格
     table: ({ children }) => (
-      <div className="overflow-x-auto my-4">
+      <div className={classes.table}>
         <table className="min-w-full border-collapse block overflow-x-auto w-max">{children}</table>
       </div>
     ),
     thead: ({ children }) => <thead className="bg-[#f6f8fa]">{children}</thead>,
-    th: ({ children }) => <th className="px-4 py-3 text-left font-semibold text-[#24292f] border border-[#d0d7de]">{children}</th>,
-    td: ({ children }) => <td className="px-4 py-3 text-[#24292f] border border-[#d0d7de]">{children}</td>,
-  }), [content]);
+    th: ({ children }) => <th className={classes.th}>{children}</th>,
+    td: ({ children }) => <td className={classes.td}>{children}</td>,
+  }), [classes]);
 
   return (
     <div className={`markdown-body ${className}`}>

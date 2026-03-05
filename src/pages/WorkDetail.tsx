@@ -149,7 +149,7 @@ export default function WorkDetail() {
 
       <main className="pt-16">
         {/* 头部横幅 */}
-        <div className="relative h-96 overflow-hidden">
+        <div className="relative h-72 md:h-80 overflow-hidden">
           <img
             src={work.cover_image}
             alt={work.title}
@@ -159,20 +159,20 @@ export default function WorkDetail() {
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-white">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">{work.title}</h1>
-              <p className="text-xl md:text-2xl opacity-90 max-w-3xl mx-auto px-4">
+              <h1 className="text-3xl md:text-4xl font-bold mb-3">{work.title}</h1>
+              <p className="text-base md:text-lg opacity-90 max-w-2xl mx-auto px-4">
                 {work.description}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* 主要内容 */}
             <div className="lg:col-span-2">
               {/* 项目信息 */}
-              <div className="bg-white rounded-xl p-8 shadow-sm mb-8">
+              <div className="bg-white rounded-xl p-6 md:p-7 shadow-sm mb-8">
                 <div className="flex flex-wrap items-center gap-4 mb-6">
                   <span className="px-4 py-2 bg-[#165DFF]/10 text-[#165DFF] rounded-full font-medium">
                     {work.category}
@@ -195,8 +195,8 @@ export default function WorkDetail() {
                 </div>
 
                 {/* 项目内容 */}
-                <div className="prose prose-lg max-w-none prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
-                  <MarkdownRenderer content={work.content} />
+                <div className="prose max-w-[70ch] prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
+                  <MarkdownRenderer content={work.content} variant="detail" />
                 </div>
               </div>
 

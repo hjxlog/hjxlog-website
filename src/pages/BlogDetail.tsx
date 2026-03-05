@@ -234,10 +234,10 @@ const BlogDetail: React.FC = () => {
              initial={{ opacity: 0, y: 10 }}
              animate={{ opacity: 1, y: 0 }}
              transition={{ duration: 0.4 }}
-             className="lg:col-span-9 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-8 md:p-12"
+             className="lg:col-span-9 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8"
            >
               {/* Immersive Header Section */}
-              <header className={`relative -mx-8 -mt-8 md:-mx-12 md:-mt-12 mb-12 overflow-hidden rounded-t-2xl ${post.cover_image ? 'text-white' : 'mb-10 pb-8 border-b border-slate-100'}`}>
+              <header className={`relative -mx-6 -mt-6 md:-mx-8 md:-mt-8 mb-10 overflow-hidden rounded-t-2xl ${post.cover_image ? 'text-white' : 'mb-8 pb-6 border-b border-slate-100'}`}>
                  {post.cover_image && (
                    <div className="absolute inset-0 z-0">
                      <img 
@@ -249,7 +249,7 @@ const BlogDetail: React.FC = () => {
                    </div>
                  )}
 
-                 <div className={`relative z-10 px-8 md:px-12 flex flex-col justify-end ${post.cover_image ? 'pt-32 pb-12 min-h-[400px]' : 'pt-12'}`}>
+                 <div className={`relative z-10 px-6 md:px-8 flex flex-col justify-end ${post.cover_image ? 'pt-24 pb-10 min-h-[320px]' : 'pt-10'}`}>
                      <div className="flex flex-wrap gap-3 mb-6">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md border ${
                           post.cover_image 
@@ -269,11 +269,11 @@ const BlogDetail: React.FC = () => {
                         ))}
                      </div>
 
-                     <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight tracking-tight ${post.cover_image ? 'text-white drop-shadow-md' : 'text-slate-900'}`}>
+                     <h1 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-5 leading-tight tracking-tight ${post.cover_image ? 'text-white drop-shadow-md' : 'text-slate-900'}`}>
                         {post.title}
                      </h1>
 
-                     <div className={`flex flex-wrap items-center gap-6 text-sm font-medium ${post.cover_image ? 'text-slate-200' : 'text-slate-500'}`}>
+                     <div className={`flex flex-wrap items-center gap-4 text-sm font-medium ${post.cover_image ? 'text-slate-200' : 'text-slate-500'}`}>
                         <div className="flex items-center gap-2">
                            <img src="https://file.hjxlog.com/blog/images/avatar.jpg" alt="Author" className="w-8 h-8 rounded-full border-2 border-white/20" />
                            <span className={post.cover_image ? 'text-white' : 'text-slate-700'}>JianXian</span>
@@ -291,8 +291,8 @@ const BlogDetail: React.FC = () => {
               </header>
 
               {/* Markdown Content */}
-              <article id="blog-content" className="prose prose-lg max-w-none prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
-                 <MarkdownRenderer content={post.content} />
+              <article id="blog-content" className="prose max-w-[70ch] prose-slate prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-700 prose-a:text-blue-600 hover:prose-a:text-blue-700 prose-img:rounded-lg prose-headings:scroll-mt-20 prose-table:my-0">
+                 <MarkdownRenderer content={post.content} variant="detail" />
               </article>
 
               {/* Article Footer */}
