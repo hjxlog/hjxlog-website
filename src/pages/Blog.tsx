@@ -294,7 +294,6 @@ const Blog: React.FC = () => {
                             <Calendar className="w-3.5 h-3.5" />
                             <time>{dateLabel}</time>
                           </span>
-                          <span>{blog.views || 0} 阅读</span>
                         </div>
 
                         <h2 className="text-base md:text-lg font-semibold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
