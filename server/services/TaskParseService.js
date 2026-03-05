@@ -202,6 +202,25 @@ function inferProjectIdFromText(input, projects) {
   return best && bestScore > 0 ? best.id : null;
 }
 
+function getProjectNameById(projectId, projects) {
+  if (typeof projectId !== 'number') return '';
+  const project = projects.find((item) => item?.id === projectId);
+  const name = typeof project?.name === 'string' ? project.name.trim() : '';
+  return name;
+}
+
+function stripLeadingProjectPrefix(title) {
+  if (typeof title !== 'string') return '';
+  return title.trim().replace(/^【[^】]+】\s*/, '').trim();
+}
+
+function ensureTitleWithProjectPrefix(title, projectId, projects) {
+  const baseTitle = stripLeadingProjectPrefix(title);
+  const projectName = getProjectNameById(projectId, projects);
+  if (!projectName) return baseTitle;
+  return `【${projectName}】${baseTitle}`;
+}
+
 function parseTaskDrafts(llmRawText) {
   const jsonText = extractJsonText(llmRawText);
   if (!jsonText) {
@@ -299,7 +318,7 @@ export async function parseTasksFromText(inputText) {
       const today = getTodayDateString();
 
       const result = {
-        title,
+        title: ensureTitleWithProjectPrefix(title, projectId, projects),
         description: typeof item.description === 'string' ? item.description.trim() : '',
         project_id: projectId,
         priority,

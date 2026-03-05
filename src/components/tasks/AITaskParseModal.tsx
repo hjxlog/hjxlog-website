@@ -22,11 +22,29 @@ interface AITaskParseModalProps {
   onConfirmCreate: (tasks: ParsedTaskDraft[]) => Promise<void>;
 }
 
-function toEditableDraft(task: ParsedTaskDraft, index: number): EditableTaskDraft {
+function getProjectTitlePrefix(projectId: number | null, projects: Project[]) {
+  if (typeof projectId !== 'number') return '';
+  const projectName = projects.find((project) => project.id === projectId)?.name || '';
+  return projectName ? `【${projectName}】` : '';
+}
+
+function stripLeadingProjectPrefix(title: string) {
+  return title.trim().replace(/^【[^】]+】\s*/, '').trim();
+}
+
+function ensureTitleWithProjectPrefix(title: string, projectId: number | null, projects: Project[]) {
+  const baseTitle = stripLeadingProjectPrefix(title || '');
+  const prefix = getProjectTitlePrefix(projectId, projects);
+  return prefix ? `${prefix}${baseTitle}` : baseTitle;
+}
+
+function toEditableDraft(task: ParsedTaskDraft, index: number, projects: Project[]): EditableTaskDraft {
+  const normalizedTitle = ensureTitleWithProjectPrefix(task.title || '', task.project_id ?? null, projects);
   const result = {
     uid: `${Date.now()}-${index}`,
     selected: true,
     ...task,
+    title: normalizedTitle,
     tagsText: (task.tags || []).join(', ')
   };
   console.log(`[toEditableDraft] Task ${index}:`, {
@@ -72,7 +90,7 @@ const AITaskParseModal: React.FC<AITaskParseModalProps> = ({ projects, onClose, 
         return;
       }
 
-      const editableItems = items.map((item, index) => toEditableDraft(item, index));
+      const editableItems = items.map((item, index) => toEditableDraft(item, index, projects));
       console.log('[AITaskParseModal] Editable items:', JSON.stringify(editableItems, null, 2));
       setDrafts(editableItems);
       toast.success(`已解析 ${items.length} 条任务`);
@@ -193,7 +211,12 @@ const AITaskParseModal: React.FC<AITaskParseModalProps> = ({ projects, onClose, 
                       value={item.project_id ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
-                        updateDraft(item.uid, (prev) => ({ ...prev, project_id: value ? Number(value) : null }));
+                        const nextProjectId = value ? Number(value) : null;
+                        updateDraft(item.uid, (prev) => ({
+                          ...prev,
+                          project_id: nextProjectId,
+                          title: ensureTitleWithProjectPrefix(prev.title, nextProjectId, projects)
+                        }));
                       }}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                     >
