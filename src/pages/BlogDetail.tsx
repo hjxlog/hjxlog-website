@@ -216,18 +216,7 @@ const BlogDetail: React.FC = () => {
         <div className="absolute left-[-10%] top-[10%] w-[500px] h-[500px] bg-purple-50/40 rounded-full blur-[120px] opacity-40"></div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 py-8 pt-24 pb-20 max-w-7xl">
-        {/* Top Navigation Bar */}
-        <div className="mb-6 flex justify-between items-center">
-          <button 
-            onClick={() => navigate('/blogs')} 
-            className="group flex items-center text-slate-500 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/60"
-          >
-            <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">返回列表</span>
-          </button>
-        </div>
-
+      <div className="container mx-auto px-4 lg:px-8 py-8 pt-20 md:pt-24 pb-20 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
            {/* Main Article Content - 增加宽度占比 */}
            <motion.div 
@@ -249,7 +238,7 @@ const BlogDetail: React.FC = () => {
                    </div>
                  )}
 
-                 <div className={`relative z-10 px-6 md:px-8 flex flex-col justify-end ${post.cover_image ? 'pt-24 pb-10 min-h-[320px]' : 'pt-10'}`}>
+                 <div className={`relative z-10 px-6 md:px-8 flex flex-col justify-end ${post.cover_image ? 'pt-20 md:pt-24 pb-10 min-h-[320px]' : 'pt-10'}`}>
                      <div className="flex flex-wrap gap-3 mb-6">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md border ${
                           post.cover_image 
