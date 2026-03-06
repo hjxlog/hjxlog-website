@@ -6,9 +6,11 @@ import { MessageList, Message } from './MessageList';
 import { InputArea } from './InputArea';
 import { API_BASE_URL } from '@/config/api';
 import { Bot, X } from 'lucide-react';
+import type { FloatingPosition } from './AIAssistant';
 
 interface ChatWindowProps {
   onClose: () => void;
+  anchorPosition: FloatingPosition;
 }
 
 interface QuotaData {
@@ -16,11 +18,15 @@ interface QuotaData {
   globalRemaining: number;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose, anchorPosition }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [currentResponse, setCurrentResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [viewport, setViewport] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
   const [quota, setQuota] = useState<QuotaData>({
     remaining: 3,
     globalRemaining: 100,
@@ -62,6 +68,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
       document.body.style.overflow = '';
       window.removeEventListener('resize', lockScroll);
     };
+  }, []);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
   }, []);
 
   const sendMessage = useCallback(async (message: string) => {
@@ -160,8 +177,32 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
     }
   }, [isTyping, quota, sendMessage]);
 
+  const buttonSize = 56;
+  const margin = 16;
+  const gap = 12;
+  const isMobile = viewport.width < 640;
+  const panelWidth = isMobile ? Math.min(viewport.width - margin * 2, 420) : 384;
+  const panelHeight = isMobile
+    ? Math.min(Math.round(viewport.height * 0.8), viewport.height - margin * 2)
+    : Math.min(600, viewport.height - margin * 2);
+
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+  const left = clamp(
+    anchorPosition.x + buttonSize - panelWidth,
+    margin,
+    Math.max(margin, viewport.width - panelWidth - margin)
+  );
+  const preferredTop = anchorPosition.y - panelHeight - gap;
+  const fallbackTop = anchorPosition.y + buttonSize + gap;
+  const top = preferredTop >= margin ? preferredTop : fallbackTop;
+  const clampedTop = clamp(top, margin, Math.max(margin, viewport.height - panelHeight - margin));
+
   return (
-    <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 h-[80vh] sm:h-[600px] bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-[100] border border-white/20 overflow-hidden ring-1 ring-black/5 transition-all duration-300">
+    <div
+      style={{ left: `${left}px`, top: `${clampedTop}px`, width: `${panelWidth}px`, height: `${panelHeight}px` }}
+      className="fixed bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col z-[100] border border-white/20 overflow-hidden ring-1 ring-black/5 transition-all duration-300"
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/50 bg-white/50 backdrop-blur-md">
         <div className="flex items-center gap-3">
