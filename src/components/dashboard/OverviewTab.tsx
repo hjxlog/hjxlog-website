@@ -62,6 +62,8 @@ export default function OverviewTab({
     }
   }, []);
 
+  const recentActivityLimit = 10;
+
   // 1. 数据统计
   const stats = useMemo(() => ([
     { label: '总浏览量', value: totalViews, icon: 'fas fa-eye', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -77,8 +79,8 @@ export default function OverviewTab({
       ...moments.map(m => ({ type: 'moment', date: m.created_at, title: m.content.substring(0, 30) + (m.content.length > 30 ? '...' : ''), status: m.visibility === 'public' ? '公开' : '私密' }))
     ]
       .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
-      .slice(0, 5)
-  ), [blogs, works, moments]);
+      .slice(0, recentActivityLimit)
+  ), [blogs, works, moments, recentActivityLimit]);
 
   // 3. 内容分布 (Recharts 数据)
   const pieData = useMemo(() => (

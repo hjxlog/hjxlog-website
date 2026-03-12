@@ -80,6 +80,7 @@ export default function TodayHubTab({
   const [reportUpdatedAt, setReportUpdatedAt] = useState<string | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const recentActivityLimit = 10;
 
   const totalContent = works.length + blogs.length + moments.length;
 
@@ -118,8 +119,8 @@ export default function TodayHubTab({
       }))
     ]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 7);
-  }, [blogs, moments, works]);
+      .slice(0, recentActivityLimit);
+  }, [blogs, moments, recentActivityLimit, works]);
 
   const fetchReportByDate = useCallback(async (date: string) => {
     try {
