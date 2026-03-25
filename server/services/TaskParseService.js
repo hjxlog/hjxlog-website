@@ -42,79 +42,12 @@ function extractJsonText(rawText) {
   return text;
 }
 
-function toDateInputValue(value) {
-  if (!value || typeof value !== 'string') return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 function getTodayDateString() {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
-}
-
-function inferDateRangeFromText(input) {
-  const text = typeof input === 'string' ? input : '';
-  if (!text.trim()) return { start_date: null, due_date: null };
-
-  const today = new Date();
-  const toDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // 优先解析 YYYY-MM-DD 或 YYYY/MM/DD
-  const fullMatch = text.match(/\b(\d{4})[-/](\d{1,2})[-/](\d{1,2})\b/);
-  if (fullMatch) {
-    const candidate = new Date(Number(fullMatch[1]), Number(fullMatch[2]) - 1, Number(fullMatch[3]));
-    if (!Number.isNaN(candidate.getTime())) {
-      const date = toDate(candidate);
-      return { start_date: date, due_date: date };
-    }
-  }
-
-  // 解析 M-D / M/D（按当年）
-  const shortMatch = text.match(/(?:^|\D)(\d{1,2})[-/](\d{1,2})(?:\D|$)/);
-  if (shortMatch) {
-    const candidate = new Date(today.getFullYear(), Number(shortMatch[1]) - 1, Number(shortMatch[2]));
-    if (!Number.isNaN(candidate.getTime())) {
-      const date = toDate(candidate);
-      return { start_date: date, due_date: date };
-    }
-  }
-
-  if (text.includes('明天')) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 1);
-    const date = toDate(d);
-    return { start_date: date, due_date: date };
-  }
-  if (text.includes('后天')) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 2);
-    const date = toDate(d);
-    return { start_date: date, due_date: date };
-  }
-  if (text.includes('下周')) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 7);
-    const date = toDate(d);
-    return { start_date: toDate(today), due_date: date };
-  }
-
-  return { start_date: null, due_date: null };
 }
 
 function normalizeTags(rawTags) {
@@ -284,6 +217,7 @@ export async function parseTasksFromText(inputText) {
   const rawDrafts = parseTaskDrafts(responseText);
   console.log('[TaskParse] AI returned rawDrafts:', JSON.stringify(rawDrafts, null, 2));
   console.log('[TaskParse] Available projects:', JSON.stringify(projects, null, 2));
+  const today = getTodayDateString();
 
   const drafts = rawDrafts
     .map((item) => {
@@ -312,28 +246,20 @@ export async function parseTasksFromText(inputText) {
         localWarnings.push(`优先级已回退为 P2: ${item.priority}`);
       }
 
-      const parsedStartDate = toDateInputValue(item.start_date);
-      const parsedDueDate = toDateInputValue(item.due_date);
-      const inferredRange = inferDateRangeFromText(sourceText);
-      const today = getTodayDateString();
-
       const result = {
         title: ensureTitleWithProjectPrefix(title, projectId, projects),
         description: typeof item.description === 'string' ? item.description.trim() : '',
         project_id: projectId,
         priority,
         tags: normalizeTags(item.tags),
-        start_date: parsedStartDate || inferredRange.start_date || today,
-        due_date: parsedDueDate || inferredRange.due_date || parsedStartDate || inferredRange.start_date || today,
+        start_date: today,
+        due_date: today,
         warnings: normalizeWarnings(item.warnings, localWarnings)
       };
       console.log(`[TaskParse] Final task "${title}":`, JSON.stringify({
         project_id: result.project_id,
         start_date: result.start_date,
         due_date: result.due_date,
-        parsedStartDate,
-        parsedDueDate,
-        inferredRange,
         today
       }, null, 2));
       return result;
