@@ -159,6 +159,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
 
   const draggedTask = draggingPayload ? tasks.find(task => task.id === draggingPayload.taskId) || null : null;
   const draggedTaskRange = draggedTask ? getTaskRange(draggedTask) : null;
+  const isResizingActive = draggingPayload?.mode === 'resize';
   const previewLane = draggedTask ? (taskLaneMap.get(draggedTask.id) ?? 0) : 0;
   let previewRange: { start: Date; end: Date; mode: 'move' | 'resize' } | null = null;
   if (dragOverDate && draggingPayload && draggedTaskRange) {
@@ -484,7 +485,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                   }}
                 >
                   {segment.kind === 'start' || segment.kind === 'single'
-                    ? (segment.mode === 'move' ? '移动预览' : '延长预览')
+                    ? (segment.mode === 'move' ? '移动预览' : '调整预览')
                     : ''}
                 </div>
               );
@@ -521,6 +522,13 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
               : undefined;
             const showLabel = segment.kind === 'single' || segment.kind === 'start';
             const span = getDaysSpan(segment.range.start, segment.range.end);
+            const isDraggedTask = draggingPayload?.taskId === segment.task.id;
+            const shouldPassThroughDrop = isDraggedTask && isResizingActive;
+            const pointerEventsClass = shouldPassThroughDrop
+              ? 'pointer-events-none'
+              : (draggingPayload && !isDraggedTask)
+                ? 'pointer-events-none'
+                : 'pointer-events-auto';
 
               return (
                 <div
@@ -543,7 +551,7 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                   }}
                   onMouseEnter={() => setHoveredTaskId(segment.task.id)}
                   onMouseLeave={() => setHoveredTaskId((prev) => (prev === segment.task.id ? null : prev))}
-                  className={`absolute ${(draggingPayload && draggingPayload.taskId !== segment.task.id) ? 'pointer-events-none' : 'pointer-events-auto'} z-[1] text-sm h-[26px] leading-[26px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
+                  className={`absolute ${pointerEventsClass} z-[1] text-sm h-[26px] leading-[26px] border truncate cursor-pointer ${segmentShapeClass} ${colorClass} ${
                     segment.task.status === 'done' || segment.task.status === 'cancelled' ? 'line-through' : ''
                   } ${isHovered ? 'z-[2] brightness-95 saturate-110' : ''}`}
                   style={{
@@ -573,8 +581,8 @@ const TaskCalendar: React.FC<TaskCalendarProps> = ({ tasks, onTaskClick, onCreat
                           setDragOverDate(null);
                           setDragNavDirection(null);
                         }}
-                        title="拖拽到目标日期以延长截止"
-                        className="text-sm px-1 rounded bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
+                        title="拖拽到目标日期以调整截止时间"
+                        className="pointer-events-auto text-sm px-1 rounded bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20"
                       >
                         ⇢
                       </span>
