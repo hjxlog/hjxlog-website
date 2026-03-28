@@ -106,6 +106,24 @@ const AITaskParseModal: React.FC<AITaskParseModalProps> = ({ projects, onClose, 
     setDrafts((prev) => prev.map((item) => (item.uid === uid ? updater(item) : item)));
   };
 
+  const handleStartDateChange = (uid: string, startDate: string) => {
+    updateDraft(uid, (prev) => {
+      const nextStartDate = startDate || null;
+      if (nextStartDate && prev.due_date && prev.due_date < nextStartDate) {
+        return {
+          ...prev,
+          start_date: nextStartDate,
+          due_date: nextStartDate
+        };
+      }
+
+      return {
+        ...prev,
+        start_date: nextStartDate
+      };
+    });
+  };
+
   const handleCreate = async () => {
     const selectedDrafts = drafts.filter((item) => item.selected && item.title.trim());
     if (!selectedDrafts.length) {
@@ -264,7 +282,7 @@ const AITaskParseModal: React.FC<AITaskParseModalProps> = ({ projects, onClose, 
                       <input
                         type="date"
                         value={item.start_date || ''}
-                        onChange={(e) => updateDraft(item.uid, (prev) => ({ ...prev, start_date: e.target.value || null }))}
+                        onChange={(e) => handleStartDateChange(item.uid, e.target.value)}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                       />
                     </div>
