@@ -12,6 +12,17 @@ echo -e "${BLUE}           项目部署启动脚本${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo
 
+BUILD_ARGS=()
+if [ "$1" = "--no-cache" ]; then
+    BUILD_ARGS+=(--no-cache)
+    echo -e "${YELLOW}已启用无缓存构建模式${NC}"
+    echo
+elif [ -n "$1" ]; then
+    echo -e "${RED}未知参数：$1${NC}"
+    echo -e "用法：$0 [--no-cache]"
+    exit 1
+fi
+
 echo -e "${BLUE}[1/4] 正在拉取最新代码...${NC}"
 git pull origin main
 if [ $? -ne 0 ]; then
@@ -21,8 +32,8 @@ fi
 echo -e "${GREEN}✅ 代码拉取成功${NC}"
 echo
 
-echo -e "${BLUE}[2/4] 正在构建Docker镜像（无缓存）...${NC}"
-docker compose build --no-cache
+echo -e "${BLUE}[2/4] 正在构建Docker镜像...${NC}"
+docker compose build "${BUILD_ARGS[@]}"
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ 构建镜像失败！${NC}"
     exit 1

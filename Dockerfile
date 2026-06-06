@@ -8,9 +8,8 @@ COPY package*.json ./
 # 设置淘宝 NPM 镜像（加速 npm install）
 RUN npm config set registry https://registry.npmmirror.com
 
-# 安装依赖（优先使用 lock；如可选依赖缺失则回退重装）
-RUN npm install --include=optional --no-audit --no-fund \
-  || (rm -f package-lock.json && npm install --no-audit --no-fund)
+# 安装依赖（严格使用 lockfile，避免 Docker 构建时重新解析依赖版本）
+RUN npm ci --include=optional --no-audit --no-fund
 RUN ROLLUP_VERSION="$(node -p "require('./package-lock.json').packages?.['node_modules/rollup']?.version || require('./package-lock.json').dependencies?.rollup?.version || ''")" \
   && if [ -n "$ROLLUP_VERSION" ]; then npm install --no-save --no-audit --no-fund "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"; fi
 
