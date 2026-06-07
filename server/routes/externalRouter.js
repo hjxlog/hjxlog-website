@@ -1,6 +1,6 @@
 /**
  * 外部API路由
- * 用于外部系统推送数据到网站（如OpenClaw推送日记）
+ * 用于外部系统推送数据到网站
  */
 
 import express from 'express';
@@ -12,8 +12,6 @@ import {
 } from '../utils/ossConfig.js';
 import { createLogger } from '../utils/logMiddleware.js';
 import { createTokenAuthMiddleware } from '../utils/tokenValidator.js';
-import { parseOpenClawReportPayload } from './openclawReportsRouter.js';
-import { upsertOpenClawDailyReport } from '../services/openclawReportService.js';
 
 const logger = createLogger('ExternalAPI');
 
@@ -178,50 +176,6 @@ export function createExternalRouter(getDbClient) {
                 description: tokenInfo.description
             }
         });
-    });
-
-    /**
-     * POST /api/external/openclaw/reports
-     * OpenClaw 每日汇报推送（JSON）
-     */
-    router.post('/openclaw/reports', getTokenAuthMiddleware(), async (req, res) => {
-        const dbClient = getDbClient();
-        const tokenInfo = req.apiToken;
-
-        try {
-            const parsed = parseOpenClawReportPayload(req.body || {});
-            const source = tokenInfo?.source || 'openclaw';
-            const report = await upsertOpenClawDailyReport(dbClient, {
-                source,
-                reportDate: parsed.reportDate,
-                title: parsed.title,
-                content: parsed.content,
-                status: parsed.status,
-                tasks: parsed.tasks,
-                metadata: parsed.metadata
-            });
-
-            console.log('[ExternalAPI] OpenClaw 每日汇报推送成功', {
-                source,
-                reportDate: parsed.reportDate,
-                status: parsed.status
-            });
-
-            return res.status(201).json({
-                success: true,
-                message: '汇报推送成功',
-                data: report
-            });
-        } catch (error) {
-            console.error('[ExternalAPI] OpenClaw 每日汇报推送失败', {
-                source: tokenInfo?.source || 'openclaw',
-                error: error.message
-            });
-            return res.status(400).json({
-                success: false,
-                message: error.message
-            });
-        }
     });
 
     return router;

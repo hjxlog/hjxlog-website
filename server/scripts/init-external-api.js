@@ -71,7 +71,7 @@ async function initDatabase() {
         console.log('  ✅ 创建索引');
 
         // 生成并插入默认token
-        const defaultToken = generateApiToken('oc_');
+        const defaultToken = generateApiToken('api_');
         const defaultTokenHash = hashApiToken(defaultToken);
         const defaultTokenPrefix = buildApiTokenPrefix(defaultToken);
 
@@ -83,10 +83,10 @@ async function initDatabase() {
                 null,
                 defaultTokenHash,
                 defaultTokenPrefix,
-                'OpenClaw内部Token',
-                '用于OpenClaw系统推送日记和动态',
-                'openclaw',
-                JSON.stringify(['openclaw:reports:write']),
+                '默认外部API Token',
+                '用于外部系统推送动态',
+                'external',
+                JSON.stringify([]),
                 'admin'
             ]
         );

@@ -14,7 +14,6 @@ TRUNCATE TABLE
   tasks,
   projects,
   daily_thoughts,
-  openclaw_daily_reports,
   blog_views,
   view_logs,
   system_logs,

@@ -18,7 +18,6 @@ export const dashboardTabGroups = [
       { key: 'tasks', label: '待办事项', icon: 'fas fa-list-check' },
       { key: 'thoughts', label: '每日想法', icon: 'fas fa-lightbulb' },
       { key: 'daily-reports', label: '日报记录', icon: 'fas fa-clipboard-list' },
-      { key: 'openclaw-reports', label: 'OpenClaw汇报', icon: 'fas fa-robot' },
       { key: 'ai-signal', label: '情报雷达', icon: 'fas fa-satellite-dish' },
     ]
   },

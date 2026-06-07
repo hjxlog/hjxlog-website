@@ -20,7 +20,6 @@ import { createKnowledgeBaseRouter } from './routes/knowledgeBaseRouter.js';
 import { createPromptRouter } from './routes/promptRouter.js';
 import { createAIRouter } from './routes/aiRouter.js';
 import { createAiSignalRouter } from './routes/aiSignalRouter.js';
-import { createOpenClawReportsRouter } from './routes/openclawReportsRouter.js';
 import { createDataCenterRouter } from './routes/dataCenterRouter.js';
 import { scheduleAiSignalJob } from './jobs/aiSignalJob.js';
 import { scheduleDailyReportJob } from './jobs/dailyReportJob.js';
@@ -256,16 +255,8 @@ app.use('/api', dailyReportRouter);
 import taskRouter from './routes/taskRouter.js';
 app.use('/api/tasks', taskRouter);
 
-// 外部API（用于OpenClaw等外部系统推送数据）
+// 外部API
 app.use('/api/external', createExternalRouter(getDbClient));
-
-// OpenClaw 汇报查看API（Dashboard使用）
-app.use('/api/openclaw-reports', (req, res, next) => {
-  if (!dbClient) {
-    return res.status(503).json({ success: false, message: 'Database not connected' });
-  }
-  createOpenClawReportsRouter(() => dbClient)(req, res, next);
-});
 
 // ==================== 图片上传相关API ====================
 

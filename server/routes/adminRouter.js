@@ -981,14 +981,14 @@ export function createAdminRouter(getDbClient, getLogger) {
 
             const plainToken = typeof key === 'string' && key.trim()
                 ? key.trim()
-                : generateApiToken('oc_');
+                : generateApiToken('api_');
             const tokenHash = hashApiToken(plainToken);
             const maskedPrefix = buildApiTokenPrefix(plainToken);
 
             const result = await dbClient.query(
                 `INSERT INTO external_api_tokens
                     (token, token_hash, token_prefix, name, description, source, scopes, is_active, created_by)
-                 VALUES ($1, $2, $3, $4, $5, 'openclaw', '[]'::jsonb, true, $6)
+                 VALUES ($1, $2, $3, $4, $5, 'external', '[]'::jsonb, true, $6)
                  RETURNING id, description, token, token_prefix, is_active, created_at`,
                 [plainToken, tokenHash, maskedPrefix, description.trim(), description.trim(), created_by]
             );

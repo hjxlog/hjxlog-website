@@ -12,20 +12,20 @@ VALUES (
 )
 ON CONFLICT (username) DO NOTHING;
 
--- Default external API token for openclaw integration
+-- Default external API token
 INSERT INTO external_api_tokens (token, token_prefix, name, description, source, scopes, created_by)
 SELECT
-  'oc_' || md5(random()::text || clock_timestamp()::text),
-  'oc_default',
-  'OpenClaw内部Token',
-  '用于OpenClaw系统推送日记和动态',
-  'openclaw',
-  '["openclaw:reports:write"]'::jsonb,
+  'api_' || md5(random()::text || clock_timestamp()::text),
+  'api_default',
+  '默认外部API Token',
+  '用于外部系统推送动态',
+  'external',
+  '[]'::jsonb,
   'admin'
 WHERE NOT EXISTS (
   SELECT 1
   FROM external_api_tokens
-  WHERE source = 'openclaw' AND name = 'OpenClaw内部Token' AND is_active = true
+  WHERE source = 'external' AND name = '默认外部API Token' AND is_active = true
 );
 
 -- AI sources (minimal required baseline)

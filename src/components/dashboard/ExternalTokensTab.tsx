@@ -42,7 +42,7 @@ export default function ExternalTokensTab() {
   const activeCount = useMemo(() => tokens.filter((item) => item.is_active).length, [tokens]);
 
   const handleCreateKey = useCallback(async () => {
-    const descriptionInput = window.prompt('请输入 Key 描述', 'OpenClaw 每日汇报 Key');
+    const descriptionInput = window.prompt('请输入 Key 描述', '外部 API Key');
     if (!descriptionInput || !descriptionInput.trim()) return;
     const customKeyInput = window.prompt('可选：输入自定义 Key（留空自动生成）', '');
 

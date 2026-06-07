@@ -104,20 +104,6 @@ CREATE TABLE IF NOT EXISTS view_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS openclaw_daily_reports (
-  id SERIAL PRIMARY KEY,
-  source VARCHAR(50) NOT NULL DEFAULT 'openclaw',
-  report_date DATE NOT NULL,
-  title TEXT,
-  content TEXT NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'ok' CHECK (status IN ('ok', 'warning', 'error')),
-  tasks JSONB DEFAULT '[]'::jsonb,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (source, report_date)
-);
-
 CREATE TABLE IF NOT EXISTS system_logs (
   id BIGSERIAL PRIMARY KEY,
   log_type VARCHAR(50) NOT NULL,
@@ -360,10 +346,6 @@ CREATE INDEX IF NOT EXISTS idx_moments_created_at ON moments(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_moments_visibility ON moments(visibility);
 CREATE INDEX IF NOT EXISTS idx_moments_author_id ON moments(author_id);
 
-CREATE INDEX IF NOT EXISTS idx_openclaw_daily_reports_date ON openclaw_daily_reports(report_date DESC);
-CREATE INDEX IF NOT EXISTS idx_openclaw_daily_reports_source ON openclaw_daily_reports(source);
-CREATE INDEX IF NOT EXISTS idx_openclaw_daily_reports_status ON openclaw_daily_reports(status);
-
 CREATE INDEX IF NOT EXISTS idx_system_logs_log_type ON system_logs(log_type);
 CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(level);
 CREATE INDEX IF NOT EXISTS idx_system_logs_module ON system_logs(module);
@@ -430,9 +412,6 @@ CREATE TRIGGER trg_moments_updated_at BEFORE UPDATE ON moments FOR EACH ROW EXEC
 
 DROP TRIGGER IF EXISTS trg_photos_updated_at ON photos;
 CREATE TRIGGER trg_photos_updated_at BEFORE UPDATE ON photos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS trg_openclaw_daily_reports_updated_at ON openclaw_daily_reports;
-CREATE TRIGGER trg_openclaw_daily_reports_updated_at BEFORE UPDATE ON openclaw_daily_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 DROP TRIGGER IF EXISTS trg_projects_updated_at ON projects;
 CREATE TRIGGER trg_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
